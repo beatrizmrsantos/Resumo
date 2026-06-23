@@ -6,15 +6,17 @@ interface Props {
   searchQuery?: string
 }
 
-// Matches inline code tokens in plain prose text (no backticks needed in source)
-const TOKEN_RE = new RegExp(
+// Markdown inline tokens: **bold**, *italic*, `code`, CamelCase identifiers, etc.
+const INLINE_RE = new RegExp(
   [
-    '`[^`]+`',
-    '@[A-Z]\\w*',
-    '\\bO\\([^)]{1,24}\\)',
-    '\\b\\w+[\\w.]*\\([^)]{0,80}\\)',
-    '\\b(?:[A-Z][a-z]*)' + '{2,}' + '(?:<[\\w,.<> ]*>)?(?:\\[\\])?\\b',
-    '\\b[A-Z]\\w+<[\\w,.<> ]+>',
+    '\\*\\*([^*]+)\\*\\*',                          // **bold**
+    '\\*([^*]+)\\*',                                 // *italic*
+    '`([^`]+)`',                                     // `inline code`
+    '@[A-Z]\\w*',                                    // @Annotation
+    '\\bO\\([^)]{1,24}\\)',                          // O(n) complexity
+    '\\b\\w+[\\w.]*\\([^)]{0,80}\\)',               // method()
+    '\\b(?:[A-Z][a-z]*){2,}(?:<[\\w,.<> ]*>)?(?:\\[\\])?\\b',  // CamelCase
+    '\\b[A-Z]\\w+<[\\w,.<> ]+>',                   // Generic<Type>
     '\\b(?:null|undefined|true|false|NaN)\\b',
   ].join('|'),
   'g'
@@ -41,7 +43,6 @@ const INLINE_CODE_STYLE: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
-// Split "KEY — rest" or "KEY: rest" into [key, separator, value]
 function splitKeyVal(text: string): [string, string] {
   const dashIdx = text.indexOf(' — ')
   const colonIdx = text.indexOf(':')
@@ -58,24 +59,45 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
   const renderInline = (text: string): React.ReactNode => {
     const parts: React.ReactNode[] = []
     let last = 0
-    TOKEN_RE.lastIndex = 0
+    INLINE_RE.lastIndex = 0
 
     let match: RegExpExecArray | null
-    while ((match = TOKEN_RE.exec(text)) !== null) {
+    while ((match = INLINE_RE.exec(text)) !== null) {
       if (match.index > last) {
         const before = text.slice(last, match.index)
         parts.push(searchQuery.trim() ? highlightText(before, searchQuery) : before)
       }
-      const token = match[0]
-      const isBacktick = token.startsWith('`') && token.endsWith('`')
-      const display = isBacktick ? token.slice(1, -1) : token
-      parts.push(
-        <code key={match.index} style={INLINE_CODE_STYLE}>
-          {searchQuery.trim() ? highlightText(display, searchQuery) : display}
-        </code>
-      )
-      last = match.index + token.length
+
+      const full = match[0]
+      const boldContent  = match[1]
+      const italicContent = match[2]
+      const codeContent  = match[3]
+
+      if (boldContent !== undefined) {
+        parts.push(
+          <strong key={match.index} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+            {searchQuery.trim() ? highlightText(boldContent, searchQuery) : boldContent}
+          </strong>
+        )
+      } else if (italicContent !== undefined) {
+        parts.push(<em key={match.index}>{italicContent}</em>)
+      } else if (codeContent !== undefined) {
+        parts.push(
+          <code key={match.index} style={INLINE_CODE_STYLE}>
+            {searchQuery.trim() ? highlightText(codeContent, searchQuery) : codeContent}
+          </code>
+        )
+      } else {
+        parts.push(
+          <code key={match.index} style={INLINE_CODE_STYLE}>
+            {searchQuery.trim() ? highlightText(full, searchQuery) : full}
+          </code>
+        )
+      }
+
+      last = match.index + full.length
     }
+
     if (last < text.length) {
       const after = text.slice(last)
       parts.push(searchQuery.trim() ? highlightText(after, searchQuery) : after)
@@ -83,26 +105,29 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
     return parts.length === 0 ? text : parts.length === 1 ? parts[0] : <>{parts}</>
   }
 
-  const renderLine = (trimmed: string, li: number): React.ReactNode => {
+  const renderLine = (rawLine: string, li: number): React.ReactNode => {
+    const trimmed = rawLine.trim()
     if (!trimmed) return null
 
+    // Strip markdown bold/italic markers for pattern matching only
+    const bare = trimmed.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1')
+
     // ── Bullet ──────────────────────────────────────────────────────────────
-    if (/^[•\-\*]/.test(trimmed)) {
+    if (/^[-•*]\s/.test(bare)) {
       return (
         <div key={li} style={{
           display: 'flex', gap: 10, paddingLeft: 4,
           color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6,
         }}>
           <span style={{ color: section.partColor, flexShrink: 0, fontWeight: 700, marginTop: 2 }}>›</span>
-          <span>{renderInline(trimmed.replace(/^[•\-\*]\s*/, ''))}</span>
+          <span>{renderInline(bare.replace(/^[-•*]\s*/, ''))}</span>
         </div>
       )
     }
 
     // ── Category header: ALL_CAPS WORD(S) — description ─────────────────────
-    // e.g. "LIST — ordered sequence", "POD — smallest deployable unit"
-    if (/^[A-Z]{2,}(?:\s+[A-Z]+)*\s+[—–]/.test(trimmed)) {
-      const [catName, catDesc] = splitKeyVal(trimmed)
+    if (/^[A-Z]{2,}(?:\s+[A-Z0-9]+)*\s+[—–]/.test(bare)) {
+      const [catName, catDesc] = splitKeyVal(bare)
       return (
         <div key={li} style={{
           display: 'flex', alignItems: 'center', gap: 10,
@@ -126,13 +151,13 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
       )
     }
 
-    // ── Definition lines ─────────────────────────────────────────────────────
-    const isUpperDef  = /^[A-Z][A-Z\s/]+:/.test(trimmed)          // ALL CAPS KEY:
-    const isPascalDef = /^[A-Z][a-z]\w*:/.test(trimmed)           // PascalCase: (ArrayList:, HashMap:)
-    const isLowerDef  = /^[a-z_][\w-]*\s*[—:]/.test(trimmed)      // lowercase-key — or :
+    // ── Definition lines (tested on `bare`, rendered with `trimmed`) ─────────
+    const isUpperDef  = /^[A-Z][A-Z\s/]+:/.test(bare)
+    const isPascalDef = /^[A-Z][a-z]\w*[:(]/.test(bare) && /^[A-Z][a-z]\w*:/.test(bare)
+    const isLowerDef  = /^[a-z_][\w-]*\s*[—:]/.test(bare)
 
     if (isUpperDef || isPascalDef || isLowerDef) {
-      const [key, val] = splitKeyVal(trimmed)
+      const [key, val] = splitKeyVal(bare)
       return (
         <div key={li} style={{
           display: 'flex', alignItems: 'baseline', gap: 6,

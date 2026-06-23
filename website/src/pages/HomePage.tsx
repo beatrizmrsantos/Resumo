@@ -97,7 +97,7 @@ export default function HomePage() {
         <span style={{ fontSize: 18 }}>📄</span>
         <span>
           To add a new document: drop a{' '}
-          <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--border)', padding: '1px 5px', borderRadius: 4 }}>.txt</code>
+          <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--border)', padding: '1px 5px', borderRadius: 4 }}>.md</code>
           {' '}file in{' '}
           <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--border)', padding: '1px 5px', borderRadius: 4 }}>docs/</code>
           {' '}and register it in{' '}
