@@ -1,16 +1,19 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
-import { Search, X, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react'
+import { Search, X, ChevronUp, ChevronDown, ArrowLeft, ChevronRight } from 'lucide-react'
 import { documents, documentContents } from '../content'
 import { parseDocument, buildToc, searchDocument } from '../utils/parser'
 import Sidebar from '../components/Document/Sidebar'
 import SectionContent from '../components/Document/SectionContent'
+import { useMobile } from '../hooks/useMobile'
 import type { SearchMatch } from '../types'
 
 export default function DocumentPage() {
   const { docId } = useParams<{ docId: string }>()
+  const isMobile = useMobile()
   const [showTop, setShowTop] = useState(false)
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const pendingScrollRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -137,8 +140,14 @@ export default function DocumentPage() {
   const goBackToOverview = () => {
     setSelectedPartId(null)
     setActiveId('')
+    setMobileNavOpen(false)
     window.scrollTo(0, 0)
   }
+
+  const navigateToAndClose = useCallback((id: string) => {
+    if (isMobile) setMobileNavOpen(false)
+    navigateTo(id)
+  }, [isMobile, navigateTo])
 
   if (!meta || !rawContent) return <Navigate to="/" replace />
   if (!parsed) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading…</div>
@@ -261,7 +270,7 @@ export default function DocumentPage() {
       {/* Document header bar */}
       <div style={{
         borderBottom: '1px solid var(--border)',
-        padding: '12px 28px',
+        padding: isMobile ? '10px 14px' : '12px 28px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -270,7 +279,7 @@ export default function DocumentPage() {
         position: 'sticky',
         top: 56,
         zIndex: 90,
-        gap: 16,
+        gap: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {selectedPart && (
@@ -296,13 +305,13 @@ export default function DocumentPage() {
               }}
             >
               <ArrowLeft size={13} strokeWidth={2.5} />
-              All Parts
+              {isMobile ? '' : 'All Parts'}
             </button>
           )}
 
           <span style={{ fontSize: 20 }}>{meta.icon}</span>
           <div>
-            <h1 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+            <h1 style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
               {selectedPart
                 ? <>
                     <span style={{ color: selectedPart.color, fontWeight: 700, fontSize: 13 }}>
@@ -326,23 +335,25 @@ export default function DocumentPage() {
           <button
             onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50) }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '8px 16px', borderRadius: 10,
+              display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10,
+              padding: isMobile ? '8px 10px' : '8px 16px', borderRadius: 10,
               border: '1.5px solid var(--border)', background: 'var(--bg-card)',
               color: 'var(--text-muted)', fontSize: 13,
               fontFamily: 'var(--font-sans)', cursor: 'pointer',
-              width: 240, justifyContent: 'space-between',
+              ...(isMobile ? {} : { width: 240, justifyContent: 'space-between' }),
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Search size={15} />
-              <span>Search…</span>
+              {!isMobile && <span>Search…</span>}
             </div>
-            <kbd style={{
-              fontSize: 10, padding: '2px 6px', borderRadius: 5,
-              background: 'var(--bg-sidebar)', border: '1px solid var(--border)',
-              fontFamily: 'var(--font-mono)', color: 'var(--text-muted)',
-            }}>⌘K</kbd>
+            {!isMobile && (
+              <kbd style={{
+                fontSize: 10, padding: '2px 6px', borderRadius: 5,
+                background: 'var(--bg-sidebar)', border: '1px solid var(--border)',
+                fontFamily: 'var(--font-mono)', color: 'var(--text-muted)',
+              }}>⌘K</kbd>
+            )}
           </button>
 
           {searchQuery && searchResults.length > 0 && (
@@ -369,18 +380,18 @@ export default function DocumentPage() {
 
       {/* ── PARTS OVERVIEW ── */}
       {!selectedPart && (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px 80px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '32px 16px 60px' : '56px 24px 80px' }}>
           {/* Doc hero */}
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: 52, marginBottom: 14 }}>{meta.icon}</div>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? 32 : 56 }}>
+            <div style={{ fontSize: isMobile ? 40 : 52, marginBottom: 12 }}>{meta.icon}</div>
             <h2 style={{
-              fontSize: 38, fontWeight: 900, letterSpacing: '-1.2px',
-              color: 'var(--text-primary)', marginBottom: 12,
+              fontSize: isMobile ? 26 : 38, fontWeight: 900, letterSpacing: '-1.2px',
+              color: 'var(--text-primary)', marginBottom: 10,
             }}>
               {meta.title}
             </h2>
             <p style={{
-              fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.75,
+              fontSize: isMobile ? 14 : 15, color: 'var(--text-secondary)', lineHeight: 1.75,
               maxWidth: 520, margin: '0 auto',
             }}>
               {meta.description}
@@ -390,8 +401,8 @@ export default function DocumentPage() {
           {/* Parts grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
-            gap: 22,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(310px, 1fr))',
+            gap: isMobile ? 16 : 22,
           }}>
             {parsed.parts.map(part => {
               const chapters = part.sections.filter(s => s.level === 'chapter')
@@ -410,51 +421,133 @@ export default function DocumentPage() {
 
       {/* ── PART DETAIL VIEW ── */}
       {selectedPart && (
-        <div style={{
-          maxWidth: 1280, margin: '0 auto',
-          padding: '0 24px', display: 'flex', gap: 36,
-        }}>
-          {/* Sidebar */}
-          <div style={{ flexShrink: 0 }}>
-            <Sidebar toc={toc} activeId={activeId} onNavigate={navigateTo} />
-          </div>
+        <>
+          {/* Mobile: toggle tab on left edge */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileNavOpen(o => !o)}
+              style={{
+                position: 'fixed',
+                left: mobileNavOpen ? 272 : 0,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 160,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 64,
+                borderRadius: '0 10px 10px 0',
+                background: selectedPart.color,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '2px 0 16px rgba(0,0,0,0.2)',
+                transition: 'left 0.3s ease',
+                padding: 0,
+              }}
+            >
+              <ChevronRight
+                size={16}
+                color="white"
+                strokeWidth={2.5}
+                style={{
+                  transform: mobileNavOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease',
+                  display: 'block',
+                }}
+              />
+            </button>
+          )}
 
-          {/* Content */}
-          <div ref={contentRef} style={{ flex: 1, minWidth: 0, paddingTop: 28, paddingBottom: 80 }}>
-            {selectedPart.sections
-              .filter(s => s.level === 'chapter')
-              .map(chapter => {
-                const allSecs = selectedPart.sections
-                const chIdx = allSecs.indexOf(chapter)
-                const nextChIdx = allSecs.findIndex((s, i) => s.level === 'chapter' && i > chIdx)
-                const subsections = allSecs.filter((s, i) =>
-                  s.level === 'subsection' && i > chIdx && (nextChIdx === -1 || i < nextChIdx)
-                )
-                return (
-                  <div
-                    key={chapter.id}
-                    style={{
-                      background: 'var(--bg-card)',
-                      border: '1.5px solid var(--border)',
-                      borderRadius: 14,
-                      padding: '28px 32px',
-                      marginBottom: 16,
-                      borderLeft: `4px solid ${selectedPart.color}`,
-                      boxShadow: 'var(--shadow-sm)',
-                    }}
-                  >
-                    <SectionContent section={chapter} searchQuery={searchQuery} />
-                    {subsections.map(sub => (
-                      <div key={sub.id} style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 4 }}>
-                        <SectionContent section={sub} searchQuery={searchQuery} />
-                      </div>
-                    ))}
-                  </div>
-                )
-              })
-            }
+          {/* Mobile: backdrop */}
+          {isMobile && mobileNavOpen && (
+            <div
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 149,
+                background: 'rgba(0,0,0,0.4)',
+                backdropFilter: 'blur(2px)',
+              }}
+            />
+          )}
+
+          {/* Mobile: sliding sidebar panel */}
+          {isMobile && (
+            <div
+              style={{
+                position: 'fixed',
+                left: 0,
+                top: 56,
+                bottom: 0,
+                width: 272,
+                zIndex: 150,
+                transform: mobileNavOpen ? 'translateX(0)' : 'translateX(-100%)',
+                transition: 'transform 0.3s ease',
+                overflowY: 'auto',
+                background: 'var(--bg-sidebar)',
+                borderTop: `2px solid ${selectedPart.color}`,
+                borderRight: `2px solid ${selectedPart.color}`,
+                borderBottom: `2px solid ${selectedPart.color}`,
+                borderLeft: 'none',
+                borderRadius: '0 20px 20px 0',
+                boxShadow: mobileNavOpen ? `4px 0 24px ${selectedPart.color}25, 0 4px 20px rgba(0,0,0,0.12)` : 'none',
+              }}
+            >
+              <Sidebar toc={toc} activeId={activeId} onNavigate={navigateToAndClose} compact />
+            </div>
+          )}
+
+          <div style={{
+            maxWidth: 1280, margin: '0 auto',
+            padding: isMobile ? '0 12px' : '0 24px',
+            display: 'flex', gap: 36,
+          }}>
+            {/* Sidebar — desktop only */}
+            {!isMobile && (
+              <div style={{ flexShrink: 0 }}>
+                <Sidebar toc={toc} activeId={activeId} onNavigate={navigateTo} />
+              </div>
+            )}
+
+            {/* Content */}
+            <div ref={contentRef} style={{ flex: 1, minWidth: 0, paddingTop: isMobile ? 16 : 28, paddingBottom: 80 }}>
+              {selectedPart.sections
+                .filter(s => s.level === 'chapter')
+                .map(chapter => {
+                  const allSecs = selectedPart.sections
+                  const chIdx = allSecs.indexOf(chapter)
+                  const nextChIdx = allSecs.findIndex((s, i) => s.level === 'chapter' && i > chIdx)
+                  const subsections = allSecs.filter((s, i) =>
+                    s.level === 'subsection' && i > chIdx && (nextChIdx === -1 || i < nextChIdx)
+                  )
+                  return (
+                    <div
+                      key={chapter.id}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1.5px solid var(--border)',
+                        borderRadius: 12,
+                        padding: isMobile ? '16px 16px' : '28px 32px',
+                        marginBottom: isMobile ? 10 : 16,
+                        borderLeft: `4px solid ${selectedPart.color}`,
+                        boxShadow: 'var(--shadow-sm)',
+                      }}
+                    >
+                      <SectionContent section={chapter} searchQuery={searchQuery} />
+                      {subsections.map(sub => (
+                        <div key={sub.id} style={{ borderTop: '1px solid var(--border)', marginTop: 24, paddingTop: 4 }}>
+                          <SectionContent section={sub} searchQuery={searchQuery} />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })
+              }
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Back to top */}

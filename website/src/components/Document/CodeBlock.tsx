@@ -85,6 +85,8 @@ export default function CodeBlock({ code, language = 'text' }: Props) {
           fontSize: '13px',
           lineHeight: '1.65',
           fontFamily: 'var(--font-mono)',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
         showLineNumbers={code.split('\n').length > 5}
         lineNumberStyle={{

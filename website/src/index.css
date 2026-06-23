@@ -60,3 +60,14 @@ mark {
 
 /* Smooth transitions */
 * { transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html { font-size: 14px; }
+
+  /* Code blocks scroll horizontally */
+  pre { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+
+  /* Inline code wraps instead of breaking layout */
+  code { white-space: normal !important; word-break: break-word; }
+}
