@@ -25,7 +25,7 @@ export default function Sidebar({ toc, activeId, onNavigate, compact = false }: 
         fontWeight: 700,
         letterSpacing: '1.2px',
         textTransform: 'uppercase',
-        color: 'var(--text-muted)',
+        color: compact ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)',
         padding: '0 8px',
         marginBottom: 12,
       }}>
@@ -45,17 +45,19 @@ export default function Sidebar({ toc, activeId, onNavigate, compact = false }: 
               gap: 8,
               padding: '7px 8px',
               borderRadius: 8,
-              background: isPartActive ? `${part.color}12` : 'transparent',
-              color: isPartActive ? part.color : 'var(--text-primary)',
-              fontSize: 12,
+              background: compact
+                ? (isPartActive ? 'rgba(255,255,255,0.15)' : 'transparent')
+                : (isPartActive ? `${part.color}12` : 'transparent'),
+              color: compact ? 'white' : (isPartActive ? part.color : 'var(--text-primary)'),
+              fontSize: compact ? 14 : 12,
               fontWeight: 700,
               letterSpacing: '0.2px',
             }}>
               <div style={{
-                width: 6,
-                height: 6,
+                width: compact ? 8 : 6,
+                height: compact ? 8 : 6,
                 borderRadius: '50%',
-                background: part.color,
+                background: compact ? 'rgba(255,255,255,0.7)' : part.color,
                 flexShrink: 0,
               }} />
               <span style={{ lineHeight: 1.3 }}>
@@ -76,12 +78,18 @@ export default function Sidebar({ toc, activeId, onNavigate, compact = false }: 
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
-                      padding: '5px 8px',
+                      padding: compact ? '7px 8px' : '5px 8px',
                       borderRadius: 6,
-                      background: isActive ? `${part.color}18` : 'transparent',
-                      borderLeft: isActive ? `2px solid ${part.color}` : '2px solid transparent',
-                      color: isActive ? part.color : 'var(--text-secondary)',
-                      fontSize: 12,
+                      background: compact
+                        ? (isActive ? 'rgba(255,255,255,0.2)' : 'transparent')
+                        : (isActive ? `${part.color}18` : 'transparent'),
+                      borderLeft: isActive
+                        ? `2px solid ${compact ? 'white' : part.color}`
+                        : '2px solid transparent',
+                      color: compact
+                        ? (isActive ? 'white' : 'rgba(255,255,255,0.8)')
+                        : (isActive ? part.color : 'var(--text-secondary)'),
+                      fontSize: compact ? 13 : 12,
                       fontWeight: isActive ? 600 : 400,
                       textAlign: 'left',
                       cursor: 'pointer',
@@ -90,22 +98,24 @@ export default function Sidebar({ toc, activeId, onNavigate, compact = false }: 
                     }}
                     onMouseEnter={e => {
                       if (!isActive) {
-                        e.currentTarget.style.background = 'var(--bg-sidebar)'
-                        e.currentTarget.style.color = 'var(--text-primary)'
+                        e.currentTarget.style.background = compact ? 'rgba(255,255,255,0.12)' : 'var(--bg-sidebar)'
+                        e.currentTarget.style.color = compact ? 'white' : 'var(--text-primary)'
                       }
                     }}
                     onMouseLeave={e => {
                       if (!isActive) {
                         e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.color = 'var(--text-secondary)'
+                        e.currentTarget.style.color = compact ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)'
                       }
                     }}
                   >
                     {chapter.number && (
                       <span style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        color: isActive ? part.color : 'var(--text-muted)',
+                        fontSize: compact ? 11 : 10,
+                        color: compact
+                          ? (isActive ? 'white' : 'rgba(255,255,255,0.55)')
+                          : (isActive ? part.color : 'var(--text-muted)'),
                         flexShrink: 0,
                         minWidth: 28,
                       }}>

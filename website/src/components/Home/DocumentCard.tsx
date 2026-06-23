@@ -46,7 +46,7 @@ export default function DocumentCard({ doc }: Props) {
 
         {/* Folder body */}
         <div style={{
-          background: `${doc.color}45`,
+          background: `${doc.color}40`,
           borderRadius: '0 16px 16px 16px',
           padding: '34px 34px 28px',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',

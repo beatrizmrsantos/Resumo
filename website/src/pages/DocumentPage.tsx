@@ -31,6 +31,7 @@ export default function DocumentPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [activeId, setActiveId] = useState('')
   const [matchIndex, setMatchIndex] = useState(0)
+  const [chapterSearch, setChapterSearch] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -64,6 +65,16 @@ export default function DocumentPage() {
     if (!parsed || !searchQuery.trim()) return []
     return searchDocument(parsed, searchQuery)
   }, [parsed, searchQuery])
+
+  const chapterResults = useMemo(() => {
+    if (!chapterSearch.trim() || !parsed) return []
+    const q = chapterSearch.toLowerCase()
+    return parsed.parts.flatMap(part =>
+      part.sections
+        .filter(s => s.level === 'chapter' && s.title.toLowerCase().includes(q))
+        .map(s => ({ section: s, part }))
+    ).slice(0, 10)
+  }, [chapterSearch, parsed])
 
   // Scroll to pending target after a part renders
   useEffect(() => {
@@ -396,6 +407,88 @@ export default function DocumentPage() {
             }}>
               {meta.description}
             </p>
+
+            {/* Chapter search */}
+            <div style={{ position: 'relative', maxWidth: 480, margin: '28px auto 0' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: '1.5px solid var(--border)',
+                background: 'var(--bg-card)',
+                boxShadow: 'var(--shadow-sm)',
+              }}>
+                <Search size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                <input
+                  value={chapterSearch}
+                  onChange={e => setChapterSearch(e.target.value)}
+                  placeholder="Search chapters…"
+                  style={{
+                    flex: 1, border: 'none', outline: 'none',
+                    background: 'transparent', fontSize: 14,
+                    color: 'var(--text-primary)', fontFamily: 'var(--font-sans)',
+                  }}
+                />
+                {chapterSearch && (
+                  <button onClick={() => setChapterSearch('')} style={{ display: 'flex', padding: 2 }}>
+                    <X size={14} color="var(--text-muted)" />
+                  </button>
+                )}
+              </div>
+
+              {chapterResults.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+                  background: 'var(--bg-card)',
+                  border: '1.5px solid var(--border)',
+                  borderRadius: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                  overflow: 'hidden',
+                  zIndex: 50,
+                }}>
+                  {chapterResults.map(({ section, part }) => (
+                    <button
+                      key={section.id}
+                      onClick={() => {
+                        setChapterSearch('')
+                        navigateTo(section.id)
+                      }}
+                      style={{
+                        width: '100%', padding: '10px 16px',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        borderBottom: '1px solid var(--border)',
+                        textAlign: 'left', cursor: 'pointer',
+                        background: 'transparent', transition: 'background 0.1s',
+                        fontFamily: 'var(--font-sans)',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-sidebar)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: part.color, flexShrink: 0,
+                      }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                          {section.title.replace(/^\d+\.\d+\s+/, '')}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {part.title}
+                        </div>
+                      </div>
+                      {section.number && (
+                        <span style={{
+                          fontFamily: 'var(--font-mono)', fontSize: 10,
+                          color: part.color, flexShrink: 0,
+                        }}>
+                          {section.number}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Parts grid */}
@@ -486,13 +579,14 @@ export default function DocumentPage() {
                 transform: mobileNavOpen ? 'translateX(0)' : 'translateX(-100%)',
                 transition: 'transform 0.3s ease',
                 overflowY: 'auto',
-                background: 'var(--bg-sidebar)',
+                background: `${selectedPart.color}B0`,
+                backdropFilter: 'blur(12px)',
                 borderTop: `2px solid ${selectedPart.color}`,
                 borderRight: `2px solid ${selectedPart.color}`,
                 borderBottom: `2px solid ${selectedPart.color}`,
                 borderLeft: 'none',
                 borderRadius: '0 20px 20px 0',
-                boxShadow: mobileNavOpen ? `4px 0 24px ${selectedPart.color}25, 0 4px 20px rgba(0,0,0,0.12)` : 'none',
+                boxShadow: mobileNavOpen ? `4px 0 24px ${selectedPart.color}40, 0 4px 20px rgba(0,0,0,0.12)` : 'none',
               }}
             >
               <Sidebar toc={toc} activeId={activeId} onNavigate={navigateToAndClose} compact />
