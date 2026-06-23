@@ -13,47 +13,47 @@ export default function DocumentCard({ doc }: Props) {
   return (
     <Link to={`/doc/${doc.id}`} style={{ display: 'block', textDecoration: 'none' }}>
       <div
-        style={{ position: 'relative', paddingTop: 30 }}
+        style={{ position: 'relative', paddingTop: 34 }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* Folder tab */}
+        {/* Folder tab — starts at left edge, ~44% wide, like a macOS folder */}
         <div style={{
           position: 'absolute',
           top: 0,
-          left: 24,
-          height: 32,
-          padding: '0 22px',
+          left: 0,
+          width: '44%',
+          height: 34,
           background: doc.color,
-          borderRadius: '10px 10px 0 0',
+          borderRadius: '12px 12px 0 0',
           display: 'flex',
           alignItems: 'center',
-          gap: 7,
+          paddingLeft: 18,
+          gap: 8,
         }}>
-          <span style={{ fontSize: 13 }}>{doc.icon}</span>
+          <span style={{ fontSize: 14, lineHeight: 1 }}>{doc.icon}</span>
           <span style={{
             fontFamily: 'var(--font-hand)',
-            fontSize: 13,
+            fontSize: 18,
             fontWeight: 700,
             color: 'white',
-            letterSpacing: '0.3px',
+            letterSpacing: '0.2px',
             whiteSpace: 'nowrap',
           }}>
             notes
           </span>
         </div>
 
-        {/* Card body */}
+        {/* Folder body */}
         <div style={{
-          background: `${doc.color}30`,
-          border: `2px solid ${doc.color}60`,
-          borderRadius: '0 14px 14px 14px',
-          padding: '36px 36px 32px',
+          background: `${doc.color}45`,
+          borderRadius: '0 16px 16px 16px',
+          padding: '34px 34px 28px',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+          transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
           boxShadow: hovered
-            ? `0 16px 48px ${doc.color}22, 0 4px 16px rgba(0,0,0,0.07)`
-            : '0 2px 10px rgba(0,0,0,0.04)',
+            ? `0 20px 52px ${doc.color}30, 0 6px 20px rgba(0,0,0,0.08)`
+            : `0 4px 20px ${doc.color}18, 0 2px 8px rgba(0,0,0,0.04)`,
         }}>
           <h2 style={{
             fontSize: 26,
@@ -61,7 +61,7 @@ export default function DocumentCard({ doc }: Props) {
             color: 'var(--text-primary)',
             letterSpacing: '-0.6px',
             lineHeight: 1.15,
-            marginBottom: 14,
+            marginBottom: 12,
           }}>
             {doc.title}
           </h2>
@@ -70,7 +70,7 @@ export default function DocumentCard({ doc }: Props) {
             fontSize: 14,
             color: 'var(--text-secondary)',
             lineHeight: 1.7,
-            marginBottom: 32,
+            marginBottom: 28,
           }}>
             {doc.description}
           </p>
@@ -79,13 +79,13 @@ export default function DocumentCard({ doc }: Props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderTop: `1px solid ${doc.color}25`,
-            paddingTop: 20,
+            borderTop: `1px solid ${doc.color}30`,
+            paddingTop: 18,
           }}>
             <span style={{
               fontFamily: 'var(--font-hand)',
-              fontSize: 13,
-              color: `${doc.color}AA`,
+              fontSize: 17,
+              color: `${doc.color}99`,
             }}>
               {doc.filename}
             </span>
@@ -96,7 +96,6 @@ export default function DocumentCard({ doc }: Props) {
               fontSize: 13,
               fontWeight: 700,
               color: doc.color,
-              transition: 'gap 0.15s',
             }}>
               Open <ArrowRight size={14} strokeWidth={2.5} />
             </div>

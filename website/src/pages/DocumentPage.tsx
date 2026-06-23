@@ -326,19 +326,22 @@ export default function DocumentPage() {
           <button
             onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50) }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '7px 14px', borderRadius: 8,
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 16px', borderRadius: 10,
               border: '1.5px solid var(--border)', background: 'var(--bg-card)',
               color: 'var(--text-muted)', fontSize: 13,
               fontFamily: 'var(--font-sans)', cursor: 'pointer',
+              width: 240, justifyContent: 'space-between',
             }}
           >
-            <Search size={14} />
-            <span>Search</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={15} />
+              <span>Search…</span>
+            </div>
             <kbd style={{
-              fontSize: 10, padding: '1px 5px', borderRadius: 4,
+              fontSize: 10, padding: '2px 6px', borderRadius: 5,
               background: 'var(--bg-sidebar)', border: '1px solid var(--border)',
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-mono)', color: 'var(--text-muted)',
             }}>⌘K</kbd>
           </button>
 
@@ -503,6 +506,10 @@ function PartCard({ part, chapters, onClick }: PartCardProps) {
       onMouseLeave={() => setHovered(false)}
       style={{
         textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'stretch',
         background: `${part.color}0E`,
         border: `2px solid ${part.color}${hovered ? '55' : '28'}`,
         borderRadius: 16,
@@ -519,13 +526,14 @@ function PartCard({ part, chapters, onClick }: PartCardProps) {
     >
       {/* Part badge */}
       <div style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '4px 12px', borderRadius: 20, background: part.color,
+        alignSelf: 'flex-start',
+        display: 'inline-flex', alignItems: 'center',
+        padding: '5px 14px', borderRadius: 20, background: part.color,
         marginBottom: 16,
       }}>
         <span style={{
-          fontSize: 10, fontWeight: 800, color: 'white',
-          letterSpacing: '0.8px', textTransform: 'uppercase',
+          fontSize: 13, fontWeight: 800, color: 'white',
+          letterSpacing: '0.4px',
         }}>
           Part {part.number}
         </span>
@@ -539,8 +547,8 @@ function PartCard({ part, chapters, onClick }: PartCardProps) {
         {part.title}
       </h3>
 
-      {/* Chapter list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 20 }}>
+      {/* Chapter list — flex: 1 pushes footer to bottom */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 20, flex: 1 }}>
         {preview.map(ch => (
           <div key={ch.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{
