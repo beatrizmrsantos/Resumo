@@ -98,6 +98,7 @@ export default function DocumentPage() {
         setTimeout(() => searchInputRef.current?.focus(), 50)
       }
       if (e.key === 'Escape') {
+        searchInputRef.current?.blur()
         setSearchOpen(false)
         setSearchQuery('')
       }
@@ -178,7 +179,11 @@ export default function DocumentPage() {
             paddingTop: 100,
           }}
           onClick={e => {
-            if (e.target === e.currentTarget) { setSearchOpen(false); setSearchQuery('') }
+            if (e.target === e.currentTarget) {
+              searchInputRef.current?.blur()
+              setSearchOpen(false)
+              setSearchQuery('')
+            }
           }}
         >
           <div style={{
@@ -231,9 +236,12 @@ export default function DocumentPage() {
                 <button
                   key={result.sectionId}
                   onClick={() => {
-                    navigateTo(result.sectionId)
-                    setMatchIndex(idx)
+                    // Blur first so iOS dismisses keyboard and restores viewport
+                    // before navigating — prevents the zoom artifact on Safari
+                    searchInputRef.current?.blur()
                     setSearchOpen(false)
+                    setMatchIndex(idx)
+                    setTimeout(() => navigateTo(result.sectionId), 80)
                   }}
                   style={{
                     width: '100%', padding: '12px 18px',
