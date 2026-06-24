@@ -49,12 +49,16 @@ export function parseDocument(rawContent: string): ParsedDocument {
   let codeLines: string[] = []
   let paraLines: string[] = []
   let inToc = false
+  let blankCount = 0        // consecutive blank lines since last content
+  let paraSpacing = 0       // spacing captured when paragraph accumulation starts
+  let codeSpacing = 0       // spacing captured when code fence opens
 
   function flushPara() {
     if (!paraLines.length || !currentSection) { paraLines = []; return }
     const content = paraLines.join('\n').trim()
-    if (content) currentSection.blocks.push({ type: 'paragraph', content })
+    if (content) currentSection.blocks.push({ type: 'paragraph', content, spacingBefore: paraSpacing })
     paraLines = []
+    paraSpacing = 0
   }
 
   function flushCode() {
@@ -67,11 +71,16 @@ export function parseDocument(rawContent: string): ParsedDocument {
       .map(l => l.slice(Math.min(minIndent === Infinity ? 0 : minIndent, 2)))
       .join('\n')
       .replace(/^\n+|\n+$/g, '')
-    if (normalised) currentSection.blocks.push({ type: 'code', content: normalised, language: codeLang })
+    if (normalised) currentSection.blocks.push({ type: 'code', content: normalised, language: codeLang, spacingBefore: codeSpacing })
     codeLines = []
+    codeSpacing = 0
   }
 
-  for (const line of lines) {
+  const parseTableRow = (s: string): string[] =>
+    s.split('|').map(c => c.trim()).filter(c => c !== '')
+
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const line = lines[lineIdx]
     const trimmed = line.trim()
 
     // Inside code fence
@@ -79,6 +88,7 @@ export function parseDocument(rawContent: string): ParsedDocument {
       if (/^```\s*$/.test(trimmed)) {
         flushCode()
         inCode = false
+        blankCount = 0
       } else {
         codeLines.push(line)
       }
@@ -88,6 +98,8 @@ export function parseDocument(rawContent: string): ParsedDocument {
     // Code fence opener
     if (/^```/.test(trimmed)) {
       flushPara()
+      codeSpacing = blankCount
+      blankCount = 0
       codeLang = detectLanguage(trimmed)
       inCode = true
       codeLines = []
@@ -117,6 +129,7 @@ export function parseDocument(rawContent: string): ParsedDocument {
       parts.push(currentPart)
       currentSection = null
       currentChapterNum = null
+      blankCount = 0
       continue
     }
 
@@ -127,6 +140,7 @@ export function parseDocument(rawContent: string): ParsedDocument {
     const chapterMatch = trimmed.match(/^## (\d+)\.(\d+)\s+(.+)$/)
     if (chapterMatch) {
       flushPara()
+      blankCount = 0
       const partNum = chapterMatch[1]
       const num = `${chapterMatch[1]}.${chapterMatch[2]}`
       const title = chapterMatch[3].trim()
@@ -150,6 +164,7 @@ export function parseDocument(rawContent: string): ParsedDocument {
     // ### Subsection
     if (/^### /.test(trimmed) && currentPart) {
       flushPara()
+      blankCount = 0
       const title = trimmed.replace(/^### /, '').trim()
       const prefix = currentChapterNum ? `${currentChapterNum.replace('.', '-')}-` : ''
       currentSection = {
@@ -167,21 +182,49 @@ export function parseDocument(rawContent: string): ParsedDocument {
     if (/^#### /.test(trimmed) && currentSection) {
       flushPara()
       const content = trimmed.replace(/^#### /, '').trim()
-      currentSection.blocks.push({ type: 'heading', content })
+      currentSection.blocks.push({ type: 'heading', content, spacingBefore: blankCount })
+      blankCount = 0
       continue
     }
 
-    // Blank line → end of paragraph
+    // Blank line → end of paragraph, increment blank counter
     if (!trimmed) {
-      flushPara()
+      if (paraLines.length) flushPara()
+      blankCount++
       continue
     }
 
     // Skip horizontal rules
     if (/^[-─═]{3,}$/.test(trimmed)) continue
 
+    // Table detection: line has | and next line is a separator (---|---|---)
+    if (currentSection && trimmed.includes('|')) {
+      const nextTrimmed = lines[lineIdx + 1]?.trim() ?? ''
+      if (/^[-|:\s]+$/.test(nextTrimmed) && nextTrimmed.includes('-')) {
+        flushPara()
+        const headers = parseTableRow(trimmed)
+        lineIdx += 2 // skip header row + separator row
+        const rows: string[][] = []
+        while (lineIdx < lines.length) {
+          const rowLine = lines[lineIdx].trim()
+          if (!rowLine || !rowLine.includes('|')) break
+          rows.push(parseTableRow(rowLine))
+          lineIdx++
+        }
+        lineIdx-- // back up: loop will increment
+        currentSection.blocks.push({ type: 'table', content: '', headers, rows, spacingBefore: blankCount })
+        blankCount = 0
+        continue
+      }
+    }
+
     // Accumulate paragraph/list content
     if (currentSection) {
+      if (paraLines.length === 0) {
+        // First line of a new paragraph — capture how many blanks preceded it
+        paraSpacing = blankCount
+        blankCount = 0
+      }
       paraLines.push(trimmed)
     }
   }

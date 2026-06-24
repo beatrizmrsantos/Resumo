@@ -17,10 +17,10 @@ Code examples are part of the learning — read them as explanatory text.
 - 1.02 TypeScript
 - 1.03 JavaScript
 - 1.04 Dart
-- 1.05 C
-- 1.06 HTML
-- 1.07 CSS
-- 1.08 Python
+- 1.05 HTML
+- 1.06 CSS
+- 1.07 Python
+- 1.08 C
 
 
 **Part 2 — Backend Engineering**
@@ -32,25 +32,27 @@ Code examples are part of the learning — read them as explanatory text.
 - 2.06 API Integration
 - 2.07 WebSockets
 - 2.08 SOAP
-- 2.09 JSON / XML
-- 2.10 GraphQL
+- 2.09 JSON
+- 2.10 XML
+- 2.11 Network protocols
 
 
 **Part 3 — Frontend & Mobile**
 - 3.01 React
 - 3.02 Angular
 - 3.03 Three.js
-- 3.04 React Native
-- 3.05 Flutter
-- 3.06 Kotlin
-- 3.07 Swift
-- 3.08 Vite
-- 3.09 Tailwind CSS
-- 3.10 SPA (Single-Page Applications)
-- 3.11 Responsive UI
-- 3.12 Cross-Platform Development
-- 3.13 Next.js
-- 3.14 SCSS
+- 3.04 Next.js
+- 3.05 React Native
+- 3.06 Flutter
+- 3.07 Kotlin
+- 3.08 Swift
+- 3.09 Vite
+- 3.10 Tailwind CSS
+- 3.11 SCSS
+- 3.12 SPA (Single-Page Applications)
+- 3.13 Responsive UI
+- 3.14 Cross-Platform Development
+
 
 
 **Part 4 — Cloud & Devops**
@@ -73,6 +75,7 @@ Code examples are part of the learning — read them as explanatory text.
 - 5.03 SQL — Querying & Optimization
 - 5.04 Data Modelling
 - 5.05 PostgreSQL
+- 5.06 GraphQL
 
 
 **Part 6 — Testing & Quality**
@@ -105,12 +108,7 @@ Code examples are part of the learning — read them as explanatory text.
 
 ### Overview
 
-Java is a compiled-to-bytecode language, which means your source file (.java)
-is transformed into an intermediate format (.class) that is then executed by the
-JVM (Java Virtual Machine). This extra layer is what makes Java "write once, run
-anywhere" — the same bytecode runs on any operating system that has a JVM. Java
-is strongly typed (you must declare the type of every variable) and
-object-oriented, meaning code is organized into classes and objects.
+Java is a compiled-to-bytecode language, which means your source file (.java) is transformed into an intermediate format (.class) that is then executed by the JVM (Java Virtual Machine). This extra layer is what makes Java "write once, run anywhere" — the same bytecode runs on any operating system that has a JVM. Java is strongly typed (you must declare the type of every variable) and object-oriented, meaning code is organized into classes and objects.
 
 
 ### The Four Pillars of OOP
@@ -119,14 +117,9 @@ object-oriented, meaning code is organized into classes and objects.
 
 #### Encapsulation
 
-Encapsulation means hiding the internal details of a class and exposing only
-what is necessary through public methods. Think of a bank account: the balance
-is private — you cannot directly access and change it. Instead, there are
-deposit() and withdraw() methods that control how the balance changes, including
-validations (e.g. you cannot withdraw more than you have). This protects the
-integrity of the object. In Java, encapsulation is done with private fields and
-public methods (getters/setters).
-
+Encapsulation means hiding the internal details of a class and exposing only what is necessary through public methods. 
+Think of a bank account: the balance is private — you cannot directly access and change it. Instead, there are deposit() and withdraw() methods that control how the balance changes, including validations (e.g. you cannot withdraw more than you have). This protects the integrity of the object. 
+In Java, encapsulation is done with private fields and public methods (getters/setters).
 
 ```java
 class BankAccount {
@@ -149,12 +142,9 @@ class BankAccount {
 
 #### Inheritance
 
-Inheritance allows a class (subclass) to inherit fields and methods from another
-class (superclass), avoiding code duplication. It represents an IS-A relationship:
-a Dog IS-A Animal. The subclass can use everything the superclass has and add or
-override behaviour. A class can only have ONE superclass (single inheritance) but
-can implement multiple interfaces.
-
+Inheritance allows a class (subclass) to inherit fields and methods from another class (superclass), avoiding code duplication. 
+It represents an IS-A relationship: a Dog IS-A Animal. 
+The subclass can use everything the superclass has and add or override behaviour. A class can only have ONE superclass (single inheritance) but can implement multiple interfaces.
 
 ```java
 class Animal {
@@ -175,12 +165,7 @@ dog.bark();   // own method
 
 #### Polymorphism
 
-Polymorphism means "many forms". It allows the same reference type to behave
-differently depending on the actual object it holds. In the example below, both
-dog and cat are declared as Animal, but when you call speak(), each executes its
-own version. This lets you write generic code that works with any Animal without
-knowing the concrete type.
-
+Polymorphism means "many forms". It allows the same reference type to behave differently depending on the actual object it holds. In the example below, both dog and cat are declared as Animal, but when you call speak(), each executes its own version. This lets you write generic code that works with any Animal without knowing the concrete type.
 
 ```java
 class Animal  { void speak() { System.out.println("..."); } }
@@ -194,17 +179,13 @@ for (Animal a : animals) {
 ```
 
 Two kinds of polymorphism:
-  - **Compile-time (overloading)**: same method name, different parameter types.
-Java picks which version to call based on the argument types at compile time.
+  - **Compile-time (overloading)**: same method name, different parameter types. Java picks which version to call based on the argument types at compile time.
   - **Runtime (overriding)**: subclass redefines a parent's method. Java picks which version to call based on the actual object type at runtime.
+
 
 #### Abstraction
 
-Abstraction means hiding complexity and exposing only a simple interface. An
-abstract class or interface defines WHAT an object does, not HOW it does it.
-This allows you to change the implementation without affecting the code that
-uses the interface.
-
+Abstraction means hiding complexity and exposing only a simple interface. An abstract class or interface defines WHAT an object does, not HOW it does it. This allows you to change the implementation without affecting the code that uses the interface.
 
 ```java
 interface PaymentGateway {
@@ -220,21 +201,20 @@ PaymentGateway gateway = new StripeGateway();
 gateway.processPayment(99.99, "EUR");
 ```
 
+
 ### PRIMITIVES vs OBJECT TYPES
 
 Java has two fundamentally different kinds of data:
 
-
 **Primitive Types**: int, long, double, float, boolean, char, byte, short
 
-Stored directly in memory (stack), not objects, cannot be null, passed by value
-(a copy is made). They are much more efficient than objects.
+- Stored directly in memory (stack), not objects, cannot be null, passed by value (a copy is made). They are much more efficient than objects.
 
 
 **Object (reference) Types**: Integer, Long, Double, String, List, etc.
 
-Stored in the heap, are objects with methods, can be null, and are passed by
-reference (the variable points to the same object in memory).
+- Stored in the heap, are objects with methods, can be null, and are passed by reference (the variable points to the same object in memory).
+
 
 
 Converting between the two is called boxing/unboxing:
@@ -247,9 +227,9 @@ Integer c = null;             // valid for object type
 // int d = null;              // ERROR — primitive cannot be null
 ```
 
-Why does this matter? Collections like List<Integer> cannot store primitives
-directly. Also, comparing object types with == compares references (addresses),
-not values — always use .equals() for objects.
+Why does this matter? 
+
+Collections like List<Integer> cannot store primitives directly. Also, comparing object types with == compares references (addresses), not values — always use .equals() for objects.
 
 
 ```java
@@ -266,13 +246,12 @@ System.out.println(x.equals(y));  // true — compares values
 
 Control who can access a class, field, or method:
 
-
-```java
 public            — accessible from any class in any package
 protected         — accessible within the same class, subclasses, and same package
-(package-private) — accessible only within the same package (no keyword written)
+package-private — accessible only within the same package (no keyword written)
 private           — accessible only within the same class
 
+```java
 class Example {
     public    String name;      // everyone can see
     protected int    age;       // subclasses and same package
@@ -281,8 +260,7 @@ class Example {
 }
 ```
 
-**General rule**: make fields private, expose only what is necessary through public
-methods. The more restricted, the smaller the dependency surface.
+**General rule**: make fields private, expose only what is necessary through public methods. The more restricted, the smaller the dependency surface.
 
 
 ### Collections Framework
@@ -294,70 +272,58 @@ Java has a hierarchy of interfaces and implementations for collecting data:
 #### List
 ordered sequence, allows duplicates, access by index
 
-```text
-ArrayList:  dynamic array — O(1) read by index, O(n) insertion in the middle
-LinkedList: doubly-linked list — O(1) insertion/removal at ends, O(n) access by index
-```
+- ArrayList:  dynamic array — O(1) read by index, O(n) insertion in the middle
+- LinkedList: doubly-linked list — O(1) insertion/removal at ends, O(n) access by index
+
+
 #### SET
 no duplicates, no guaranteed order (depends on implementation)
 
-```text
-HashSet:      uses HashMap internally — O(1) add/contains/remove, no order
-LinkedHashSet: insertion-order preserved
-TreeSet:      sorted order — O(log n) operations
-```
+- HashSet:      uses HashMap internally — O(1) add/contains/remove, no order
+- LinkedHashSet: insertion-order preserved
+- TreeSet:      sorted order — O(log n) operations
+
 
 #### MAP
 key-value pairs, keys are unique
 
-```text
-HashMap:     O(1) amortised get/put, not thread-safe, allows null key/value
-LinkedHashMap: insertion-order preserved
-TreeMap:     sorted by key — O(log n)
-ConcurrentHashMap: thread-safe, for concurrent use
-```
+- HashMap:     O(1) amortised get/put, not thread-safe, allows null key/value
+- LinkedHashMap: insertion-order preserved
+- TreeMap:     sorted by key — O(log n)
+- ConcurrentHashMap: thread-safe, for concurrent use
+
 
 
 #### Queue
 FIFO or priority-based
 
-```text
-ArrayDeque:    fast double-ended queue
-PriorityQueue: always removes the element with the highest priority
-```
+- ArrayDeque:    fast double-ended queue
+- PriorityQueue: always removes the element with the highest priority
 
-**Stack** — LIFO (Last In, First Out)
 
-```tsx
-ArrayDeque:  preferred modern implementation — push()/pop()/peek(), faster than Stack
-Stack:       legacy class (extends Vector) — avoid in new code, kept for historical reasons
+#### Stack
+LIFO (Last In, First Out)
 
-// Preferred: use ArrayDeque as a stack
-Deque<Integer> stack = new ArrayDeque<>();
-stack.push(1);       // adds to the front
-stack.push(2);
-stack.push(3);
-System.out.println(stack.peek());  // 3 — look at top without removing
-System.out.println(stack.pop());   // 3 — removes and returns top
-System.out.println(stack.pop());   // 2
-```
+- ArrayDeque:  preferred modern implementation — push()/pop()/peek(), faster than Stack
+- Stack:       legacy class (extends Vector) — avoid in new code, kept for historical reasons
+
+
 
 How to choose:
-  - Need fast random access? → ArrayList
-  - Insert/remove at ends often? → ArrayDeque or LinkedList
-  - Need unique elements? → HashSet (unordered) or TreeSet (sorted)
-  - Need key-value lookup? → HashMap
-  - Concurrent access? → ConcurrentHashMap
-  - Need LIFO behaviour? → ArrayDeque (as a stack)
+  - Need fast random access? → **ArrayList**
+  - Insert/remove at ends often? → **ArrayDeque** or **LinkedList**
+  - Need unique elements? → **HashSet** (unordered) or **TreeSet** (sorted)
+  - Need key-value lookup? → **HashMap**
+  - Concurrent access? → **ConcurrentHashMap**
+  - Need LIFO behaviour? → **ArrayDeque** (as a stack)
 
 
 ### Generics
 
 
-Generics allow you to write code that works with any type but is type-checked at
-compile time. Before generics (Java < 5), List accepted any Object — type errors
-only appeared at runtime. With generics, errors appear at compile time:
-
+Generics allow you to write code that works with any type but is type-checked at compile time. 
+Before generics (Java < 5), List accepted any Object — type errors only appeared at runtime. 
+With generics, errors appear at compile time:
 
 ```java
 // Without generics (pre-Java 5) — runtime crash possible
@@ -372,12 +338,12 @@ List<String> strings = new ArrayList<>();
 String s = strings.get(0);  // no cast needed
 ```
 
-The type between <> is erased at runtime (type erasure) — generics are only for
-the compiler. At runtime, a List<String> is just a List.
+The type between <> is erased at runtime (type erasure) — generics are only for the compiler. At runtime, a List<String> is just a List.
 
 Wildcards:
 ? extends T  — "any type that is T or a subtype of T" (covariant, read-only)
 ? super T    — "any type that is T or a supertype of T" (contravariant, write-only)
+
 
 ### Exceptions
 
@@ -385,17 +351,15 @@ Wildcards:
 In Java, exceptions are objects that represent errors or exceptional conditions.
 
 
-**Checked Exceptions**: extend Exception (but not RuntimeException). The compiler
-FORCES you to handle them or declare with throws. They represent recoverable
-conditions — file not found, database connection failed.
+**Checked Exceptions**: extend Exception (but not RuntimeException). 
+The compiler FORCES you to handle them or declare with throws. They represent recoverable conditions — file not found, database connection failed.
 
 
-**Unchecked Exceptions**: extend RuntimeException. The compiler does NOT force you
-to handle them. They represent programming errors — NullPointerException,
-ArrayIndexOutOfBoundsException, IllegalArgumentException.
+**Unchecked Exceptions**: extend RuntimeException. 
+The compiler does NOT force you to handle them. They represent programming errors — NullPointerException, ArrayIndexOutOfBoundsException, IllegalArgumentException.
 
-**try-with-resources**: ensures resources are automatically closed, even if an
-exception occurs:
+
+**try-with-resources**: ensures resources are automatically closed, even if an exception occurs:
 
 
 ```java
@@ -407,16 +371,13 @@ try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"))) {
 // reader.close() is called automatically here
 ```
 
-General rule: use unchecked exceptions for programming errors (bugs) and checked
-exceptions for conditions the caller can reasonably try to recover from.
+**General rule**: use unchecked exceptions for programming errors (bugs) and checked exceptions for conditions the caller can reasonably try to recover from.
 
 
 ### Lambdas, Streams, and Functional Interfaces
 
 
-Instead of writing imperative loops (HOW to do something), you describe WHAT you
-want to do. A lambda is an anonymous function — a function without a name that
-you can pass as a value.
+Instead of writing imperative loops (HOW to do something), you describe WHAT you want to do. A lambda is an anonymous function — a function without a name that you can pass as a value.
 
 
 ```java
@@ -434,9 +395,10 @@ List<String> result = names.stream()
     .collect(Collectors.toList());           // collect back into a list
 ```
 
-#### Intermediate operations (lazy — only execute when there is a terminal operation)
+#### Intermediate operations 
+lazy — only execute when there is a terminal operation
 
-```text
+
 filter(predicate)   — keep elements matching the condition
 map(function)       — transform each element
 flatMap(function)   — flatten nested collections
@@ -444,34 +406,33 @@ sorted()            — sort elements
 distinct()          — remove duplicates
 limit(n)            — take at most n elements
 peek(consumer)      — inspect without transforming (useful for debugging)
-```
+
+
 #### Terminal operations (trigger execution)
 
-```text
+
 collect(collector)  — collect into a list, set, or map
 forEach(consumer)   — execute side effect for each element
 count()             — count elements
 findFirst()         — return the first element as Optional
 anyMatch/allMatch   — boolean checks
-```
+
 
 #### Functional Interfaces
 interfaces with exactly one abstract method
 
-```text
+
 Function<T,R>  — transforms T to R: R apply(T t)
 Predicate<T>   — tests condition: boolean test(T t)
 Consumer<T>    — consumes without returning: void accept(T t)
 Supplier<T>    — provides without input: T get()
 BiFunction<T,U,R> — function with two inputs
-```
+
 
 ### Optional
 
 
-Optional is a container that may or may not hold a value, forcing you to
-explicitly handle the absence of a value instead of returning null and risking
-a NullPointerException.
+Optional is a container that may or may not hold a value, forcing you to explicitly handle the absence of a value instead of returning null and risking a NullPointerException.
 
 
 ```java
@@ -503,15 +464,13 @@ user.filter(predicate)        // keep value if predicate matches
 Concurrency in Java is complex because multiple threads share memory.
 
 
-**Race Condition**: two threads read and write the same variable simultaneously,
-producing unpredictable results because the interleaving is non-deterministic.
+**Race Condition**: two threads read and write the same variable simultaneously, producing unpredictable results because the interleaving is non-deterministic.
 
 
-**Deadlock**: Thread A waits for the lock that Thread B holds, and Thread B waits
-for the lock that Thread A holds. Both block forever.
+**Deadlock**: Thread A waits for the lock that Thread B holds, and Thread B waits for the lock that Thread A holds. Both block forever.
 
-**synchronized** — ensures only one thread executes the block at a time:
 
+- **synchronized**- ensures only one thread executes the block at a time:
 
 ```java
 class Counter {
@@ -521,11 +480,9 @@ class Counter {
 }
 ```
 
-**volatile** — ensures the variable is always read from main memory, not a thread's
-local cache. Does NOT fix race conditions on compound operations.
+- **volatile**- ensures the variable is always read from main memory, not a thread's local cache. Does NOT fix race conditions on compound operations.
 
-**ExecutorService** — pool of reusable threads. You don't create threads manually:
-
+- **ExecutorService**- pool of reusable threads. You don't create threads manually:
 
 ```java
 ExecutorService pool = Executors.newFixedThreadPool(4);
@@ -533,7 +490,7 @@ Future<Integer> future = pool.submit(() -> heavyComputation());
 Integer result = future.get();    // blocks until result is ready
 ```
 
-**CompletableFuture** (Java 8+) — non-blocking async, with chaining:
+**CompletableFuture** (Java 8+)- non-blocking async, with chaining:
 
 
 ```java
@@ -552,31 +509,20 @@ A HashMap is backed by an array of "buckets". When you put(key, value):
 2. That integer is mapped to a bucket index (array position)
 3. The entry is stored in that bucket
 
-When two keys hash to the same bucket (collision), they form a linked list in
-that bucket (Java 8+: converts to a red-black tree when the list grows past 8
-entries, for O(log n) rather than O(n) worst-case).
+When two keys hash to the same bucket (collision), they form a linked list in that bucket (Java 8+: converts to a red-black tree when the list grows past 8 entries, for O(log n) rather than O(n) worst-case).
 
-get(key) works the same: compute hash → find bucket → walk the list/tree,
-comparing with key.equals().
+get(key) works the same: compute hash → find bucket → walk the list/tree, comparing with key.equals().
 
 Why you must override BOTH hashCode() AND equals():
-  - If equal objects had different hash codes → they'd be in different buckets
-
-```java
-  and get() would not find the value put() stored.
+  - If equal objects had different hash codes → they'd be in different buckets and get() would not find the value put() stored.
 • Contract: if a.equals(b) then a.hashCode() == b.hashCode()
-```
 
-Default load factor is 0.75 — when 75% of buckets are used, the array doubles
-in size and all entries are rehashed. This is why initial capacity matters for
-performance when you know the approximate size.
+
+Default load factor is 0.75 — when 75% of buckets are used, the array doubles in size and all entries are rehashed. This is why initial capacity matters for performance when you know the approximate size.
 
 ### @TRANSACTIONAL — HOW IT WORKS
 
-@Transactional is a Spring annotation that wraps a method call in a database
-transaction. Spring uses AOP (Aspect-Oriented Programming) to create a proxy
-around your class. The proxy opens a transaction before calling your method and
-commits (or rolls back) after it returns (or throws).
+@Transactional is a Spring annotation that wraps a method call in a database transaction. Spring uses AOP (Aspect-Oriented Programming) to create a proxy around your class. The proxy opens a transaction before calling your method and commits (or rolls back) after it returns (or throws).
 
 
 ```java
@@ -592,13 +538,11 @@ public class OrderService {
 
 #### Key propagation levels
 
-```text
 REQUIRED (default) — join existing transaction, or create a new one
 REQUIRES_NEW       — always create a new transaction (suspends the outer one)
 SUPPORTS           — join if one exists, otherwise run without transaction
-```
-Rollback rules: by default, only RuntimeException triggers rollback. For checked
-exceptions, you need @Transactional(rollbackFor = Exception.class).
+
+**Rollback rules**: by default, only RuntimeException triggers rollback. For checked exceptions, you need @Transactional(rollbackFor = Exception.class).
 
 
 ## 1.02 TypeScript
@@ -607,19 +551,13 @@ exceptions, you need @Transactional(rollbackFor = Exception.class).
 
 ### Overview
 
-TypeScript is a superset of JavaScript developed by Microsoft. This means that
-any valid JavaScript is also valid TypeScript — you can adopt TypeScript
-gradually. The compiler (tsc) transforms TypeScript into plain JavaScript, so
-it runs in any environment that runs JavaScript: browser, Node.js, Deno. The big
-advantage is static type checking at compile time — you find errors before
-running the code, and your editor gives you much more precise autocomplete.
+TypeScript is a superset of JavaScript developed by Microsoft. This means that any valid JavaScript is also valid TypeScript — you can adopt TypeScript gradually. The compiler (tsc) transforms TypeScript into plain JavaScript, so it runs in any environment that runs JavaScript: browser, Node.js, Deno. The big advantage is static type checking at compile time — you find errors before running the code, and your editor gives you much more precise autocomplete.
 
 
 ### The Type System
 
 
-TypeScript's type system is structural (also called "duck typing") — two types
-are compatible if they have the same shape, regardless of their names.
+TypeScript's type system is structural (also called "duck typing") — two types are compatible if they have the same shape, regardless of their names.
 
 
 ```typescript
@@ -677,9 +615,7 @@ type Point = { x: number; y: number };
 type AdminUser = User & { role: "admin" };   // intersection
 ```
 
-Rule of thumb: use interface for object shapes that may be extended or
-implemented by a class. Use type for everything else (unions, mapped types,
-utility compositions).
+**Rule of thumb**: use interface for object shapes that may be extended or implemented by a class. Use type for everything else (unions, mapped types, utility compositions).
 
 
 ### Generics
@@ -781,8 +717,7 @@ function isUser(obj: User | Admin): obj is User {
 ### Decorators
 
 
-Decorators are a TypeScript (and stage-3 JS) feature that lets you annotate
-classes, methods, and properties with metadata or modify their behaviour:
+Decorators are a TypeScript (and stage-3 JS) feature that lets you annotate classes, methods, and properties with metadata or modify their behaviour:
 
 
 ```typescript
@@ -810,16 +745,12 @@ This is how NestJS, TypeORM, and Angular use decorators extensively.
 
 ### Overview
 
-JavaScript is the only language that runs natively in browsers, making it the
-universal language of the web. It has evolved dramatically: from a simple
-scripting language (ES5) to a mature language with classes, modules, async/await,
-optional chaining, and more (ES2015+). Node.js brought JavaScript to the server.
+JavaScript is the only language that runs natively in browsers, making it the universal language of the web. It has evolved dramatically: from a simple scripting language (ES5) to a mature language with classes, modules, async/await, optional chaining, and more (ES2015+). Node.js brought JavaScript to the server.
 
 
 ### The Event Loop — HOW JAVASCRIPT HANDLES CONCURRENCY
 
-JavaScript is single-threaded — there is only one call stack. Yet it handles
-asynchronous operations (network requests, timers) without blocking. How?
+JavaScript is single-threaded — there is only one call stack. Yet it handles asynchronous operations (network requests, timers) without blocking. How?
 
 The EVENT LOOP continuously checks:
 1. Is the CALL STACK empty?
@@ -837,16 +768,14 @@ console.log("4");           // synchronous → executes immediately
 // Output: 1, 4, 2, 3
 ```
 
-Why "2" before "3"? Microtasks (Promises, queueMicrotask) have a separate
-queue that is ALWAYS fully drained before the event loop picks the next
-macrotask (setTimeout, setInterval, I/O callbacks). So the order is:
-synchronous code → microtasks → one macrotask → microtasks → one macrotask...
+Why "2" before "3"? 
+Microtasks (Promises, queueMicrotask) have a separate queue that is ALWAYS fully drained before the event loop picks the next macrotask (setTimeout, setInterval, I/O callbacks). 
+So the order is: synchronous code → microtasks → one macrotask → microtasks → one macrotask...
 
 ### Closures
 
 
-A closure is a function that remembers the variables from the scope where it was
-defined, even after that scope has finished executing.
+A closure is a function that remembers the variables from the scope where it was defined, even after that scope has finished executing.
 
 
 ```javascript
@@ -864,15 +793,12 @@ counter();  // 2
 counter();  // 3
 ```
 
-Each call to makeCounter() creates a new closure with its own count. This is
-how React's useState works internally — each component instance has its own
-enclosed state.
+Each call to makeCounter() creates a new closure with its own count. This is how React's useState works internally — each component instance has its own enclosed state.
 
 
 ### This — THE MOST CONFUSING PART OF JAVASCRIPT
 
-In JavaScript, this is determined by HOW a function is called, not where it is
-defined (except arrow functions, which close over the surrounding this).
+In JavaScript, this is determined by HOW a function is called, not where it is defined (except arrow functions, which close over the surrounding this).
 
 
 ```javascript
@@ -896,21 +822,16 @@ const bound = fn.bind(obj);
 bound();       // "Beatriz"
 ```
 
-Rule: use regular functions when you need dynamic this (event handlers, methods).
-Use arrow functions when you want to inherit the outer this (callbacks inside
-class methods, setTimeout inside methods).
+**Rule**: use regular functions when you need dynamic this (event handlers, methods). Use arrow functions when you want to inherit the outer this (callbacks inside class methods, setTimeout inside methods).
 
 
 ### Prototype Chain
 
 
-Every JavaScript object has an internal [[Prototype]] property that points to
-another object (or null). When you access a property, JavaScript first looks at
-the object itself, then walks up the prototype chain until it finds it or
-reaches null. This is JavaScript's inheritance mechanism.
+Every JavaScript object has an internal [[Prototype]] property that points to another object (or null). When you access a property, JavaScript first looks at the object itself, then walks up the prototype chain until it finds it or reaches null. This is JavaScript's inheritance mechanism.
 
 
-```python
+```javascript
 function Animal(name) { this.name = name; }
 Animal.prototype.eat = function() { console.log(this.name + " eats"); };
 
@@ -929,8 +850,8 @@ class Animal {
 ### Async/Await and Promises
 
 
-A Promise represents a value that will be available in the future. It has three
-states: pending, fulfilled, rejected.
+A Promise represents a value that will be available in the future. 
+It has three states: pending, fulfilled, rejected.
 
 
 ```javascript
@@ -967,7 +888,7 @@ const result = await Promise.race([slowApi(), fastApi()]);
 ### ES2015+ FEATURES
 
 
-```python
+```javascript
 // Destructuring
 const { name, age = 0 } = user;                    // object with default
 const [first, ...rest] = [1, 2, 3, 4];             // array
@@ -1002,21 +923,17 @@ import add, { PI } from "./math.js";
 
 ### Overview
 
-Dart is a typed, object-oriented language developed by Google. It powers Flutter
-for mobile/web/desktop apps, and can also compile to native executables or
-JavaScript. Dart is ahead-of-time (AOT) compiled for production (fast startup,
-good performance) and just-in-time (JIT) compiled during development (hot reload).
+Dart is a typed, object-oriented language developed by Google. It powers Flutter for mobile/web/desktop apps, and can also compile to native executables or JavaScript. 
+Dart is ahead-of-time (AOT) compiled for production (fast startup, good performance) and just-in-time (JIT) compiled during development (hot reload).
 
 
 ### NULL Safety
 
 
-Dart has sound null safety — the type system distinguishes between types that can
-be null and those that cannot. A variable of type String cannot be null; only
-String? (with ?) can.
+Dart has sound null safety — the type system distinguishes between types that can be null and those that cannot. 
+A variable of type String cannot be null; only String? (with ?) can.
 
-
-```java
+```dart
 String name = "Beatriz";     // cannot be null — compiler enforces this
 String? nickname = null;     // can be null
 
@@ -1038,8 +955,7 @@ String value = nickname!;  // throws if null at runtime
 
 Both prevent reassignment, but differ in when the value must be known:
 
-
-```java
+```dart
 final String name = "Beatriz";     // set once at runtime
 final DateTime now = DateTime.now(); // determined at runtime, then fixed
 
@@ -1048,16 +964,14 @@ const double PI = 3.14159;          // compile-time constant — must be known
 const List<int> primes = [2, 3, 5, 7];  // entire object is compile-time constant
 ```
 
-In Flutter: const widgets are created at compile time and reused, making them
-much more efficient than non-const widgets (they skip the rebuild phase).
+In Flutter: const widgets are created at compile time and reused, making them much more efficient than non-const widgets (they skip the rebuild phase).
 
 
-**Async** — FUTURE AND STREAM
+### Async — FUTURE AND STREAM
 
 **Future<T>** — represents a single value available asynchronously (like a Promise):
 
-
-```kotlin
+```dart
 Future<User> fetchUser(int id) async {
     final response = await http.get(Uri.parse('/api/users/$id'));
     return User.fromJson(json.decode(response.body));
@@ -1071,10 +985,8 @@ fetchUser(1).then((user) => print(user.name))
              .catchError((e) => print("Error: $e"));
 ```
 
-**Stream<T>** — represents multiple values over time (like an async generator or
-an Observable). Perfect for real-time data: WebSocket messages, sensor readings,
-database snapshots.
 
+**Stream<T>** — represents multiple values over time (like an async generator or an Observable). Perfect for real-time data: WebSocket messages, sensor readings, database snapshots.
 
 ```dart
 Stream<int> countUp(int to) async* {
@@ -1102,12 +1014,10 @@ StreamBuilder<User>(
 ### Isolates
 
 
-The key fact about Dart concurrency: isolates DO NOT share memory. Each isolate
-has its own heap. This means no shared state, no race conditions, no mutex
-locks. Communication happens by passing messages (copies of data) through ports.
+The key fact about Dart concurrency: isolates DO NOT share memory. Each isolate has its own heap. This means no shared state, no race conditions, no mutex locks. Communication happens by passing messages (copies of data) through ports.
 
 
-```kotlin
+```dart
 import 'dart:isolate';
 
 void heavyTask(SendPort sendPort) {
@@ -1124,105 +1034,15 @@ void main() async {
 }
 ```
 
+
 In Flutter, use compute() for a simpler API that runs a function in an isolate:
 
-
-```javascript
+```dart
 final result = await compute(parseJsonList, jsonString);
 ```
 
 
-
-## 1.05 C
-
-
-
-### Overview
-
-C is a low-level, compiled, procedural language. Unlike Java or Python, C does
-not have a garbage collector — you manage memory manually. C runs directly on
-the hardware with no virtual machine overhead, which is why operating systems,
-embedded systems, databases (SQLite, PostgreSQL), and device drivers are written
-in C. Understanding C gives you a deep mental model of how programs actually
-work at the machine level.
-
-
-### Pointers
-
-
-A pointer is a variable that stores the memory address of another variable.
-Think of memory as a long row of boxes, each with an address. A pointer holds
-one of those addresses.
-
-
-```java
-int x = 42;
-int *p = &x;   // p holds the address of x (&x means "address of x")
-
-printf("x = %d\n", x);    // 42
-printf("&x = %p\n", &x);  // 0x7fff... (the memory address)
-printf("p = %p\n", p);    // same address as &x
-printf("*p = %d\n", *p);  // 42 — dereference: "value at the address p holds"
-
-*p = 100;                  // change the value AT the address
-printf("x = %d\n", x);    // 100 — x was changed through the pointer
-```
-
-Why pointers matter:
-  - Pass large data structures to functions without copying (pass by reference)
-  - Dynamic memory allocation — the only way to have variable-size data
-  - Building data structures: linked lists, trees
-  - Direct hardware access (memory-mapped I/O)
-
-### STACK vs HEAP
-
-
-**Stack** — automatic, fast, size known at compile time, freed when function returns
-  - Local variables, function arguments live here
-  - Allocated and freed automatically (LIFO order)
-  - Limited in size (~8MB on most systems)
-
-
-**Heap** — manual, flexible size, persists until you free it
-  - Allocated with malloc(), freed with free()
-  - Unlimited size (constrained only by system RAM)
-  - Risk: memory leaks (forget to free), use-after-free bugs
-
-
-```c
-// Stack allocation — automatic
-int arr[100];               // 100 ints on the stack
-
-// Heap allocation — manual
-int *arr = malloc(100 * sizeof(int));   // allocate 100 ints on the heap
-if (arr == NULL) {                      // malloc can fail — always check!
-    fprintf(stderr, "Out of memory\n");
-    return -1;
-}
-arr[0] = 1;                             // use it like an array
-free(arr);                              // MUST free — otherwise memory leak
-arr = NULL;                             // good habit: prevent dangling pointer
-```
-
-
-### Buffer Overflow
-
-
-A buffer overflow happens when you write beyond the end of an array, overwriting
-adjacent memory. This is the source of countless security vulnerabilities:
-
-
-```c
-char buffer[8];
-strcpy(buffer, "Hello, this is much too long!");  // writes past buffer end!
-// Overwrites adjacent memory — could be return address, other variables
-```
-
-Safe alternatives: strncpy, snprintf, strlcpy, or better — use a memory-safe
-language (Rust) or careful bounds checking.
-
-
-## 1.06 HTML
+## 1.05 HTML
 
 
 
@@ -1237,9 +1057,7 @@ Object Model), a tree of nodes that JavaScript and CSS then manipulate.
 ### Semantic Elements
 
 
-Every HTML element has a semantic meaning that tells browsers, screen readers,
-and search engines what the content IS. Using <div> for everything is an
-anti-pattern — semantic elements improve accessibility and SEO.
+Every HTML element has a semantic meaning that tells browsers, screen readers, and search engines what the content IS. Using <div> for everything is an anti-pattern — semantic elements improve accessibility and SEO.
 
 
 ```html
@@ -1273,11 +1091,10 @@ anti-pattern — semantic elements improve accessibility and SEO.
 ```
 
 
-### The DOM
+### The DOM (Document Object Model)
 
 
-The DOM (Document Object Model) is a tree-like in-memory representation of the
-HTML document. JavaScript interacts with web pages through the DOM API.
+The DOM (Document Object Model) is a tree-like in-memory representation of the HTML document. JavaScript interacts with web pages through the DOM API.
 
 
 ```html
@@ -1308,15 +1125,15 @@ document.querySelector("ul").appendChild(li);
 ```
 
 
-**Script Loading**: defer vs async
+### Script Loading: defer vs async
 
 <script src="app.js"></script>          — blocks HTML parsing while downloading and executing
-<script async src="analytics.js"></script> — downloads in parallel, executes immediately when
-ready (may interrupt parsing); order not guaranteed
+<script async src="analytics.js"></script> — downloads in parallel, executes immediately when ready (may interrupt parsing); order not guaranteed
 <script defer src="app.js"></script>    — downloads in parallel, executes AFTER HTML is fully parsed, in order; almost always what you want
 
 Use defer for your application scripts. 
 Use async only for independent scripts (analytics, ads) that don't depend on the DOM or other scripts.
+
 
 ### ACCESSIBILITY (a11y)
 
@@ -1341,15 +1158,13 @@ Screen readers narrate the page; keyboard users tab through interactive elements
 
 
 
-## 1.07 CSS
+## 1.06 CSS
 
 
 
 ### Overview
 
-CSS (Cascading Style Sheets) controls the visual presentation of HTML. The
-"cascading" part means styles can come from multiple sources (browser defaults,
-author stylesheets, inline styles) and rules for which one wins are well-defined.
+CSS (Cascading Style Sheets) controls the visual presentation of HTML. The "cascading" part means styles can come from multiple sources (browser defaults, author stylesheets, inline styles) and rules for which one wins are well-defined.
 
 
 ### The Box Model
@@ -1370,7 +1185,8 @@ CONTENT → PADDING → BORDER → MARGIN
 │  │  └─────────────────────┘  │  │
 │  └───────────────────────────┘  │
 └─────────────────────────────────┘
-**Critical**: box-sizing
+
+#### Critical: box-sizing
 
 ```css
 /* Default: width applies to content only */
@@ -1378,9 +1194,9 @@ box-sizing: content-box;   /* width=200 + 20 padding + 2 border = 222px total */
 
 /* More intuitive: width includes padding and border */
 box-sizing: border-box;    /* width=200 always, padding and border are inside */
-```
 
 Best practice: set * { box-sizing: border-box; } globally.
+```
 
 
 ### Specificity
@@ -1395,14 +1211,15 @@ B — IDs: #header                         weight: 0100
 C — classes, attributes, pseudo-classes  weight: 0010
 D — elements, pseudo-elements            weight: 0001
 ```
+
 ```css
 p { color: blue; }                /* 0,0,0,1 */
 .intro { color: green; }          /* 0,0,1,0 — wins over p */
 #hero { color: red; }             /* 0,1,0,0 — wins over .intro */
 style="color: orange"             /* 1,0,0,0 — wins over #hero */
+
 !important overrides everything — a last resort, signals a design problem.
-The cascade also considers source order: when specificity is equal, the later
-rule wins.
+The cascade also considers source order: when specificity is equal, the later rule wins.
 ```
 
 ### Flexbox
@@ -1456,24 +1273,490 @@ Use Grid for page-level layouts; use Flexbox for component-level alignment.
 
 
 
-```javascript
+```css
 :root {
+    /* Global CSS variables available throughout the application */
     --color-primary: #3b82f6;
     --spacing-md: 16px;
     --border-radius: 8px;
 }
 
 .button {
+    /* Uses the CSS variables defined in :root */
     background: var(--color-primary);
     padding: var(--spacing-md);
     border-radius: var(--border-radius);
 }
 
-/* Theme switching with custom properties */
+/* Overrides variable values when an element has data-theme="dark" */
 [data-theme="dark"] {
     --color-primary: #60a5fa;
 }
 ```
+
+
+## 1.07 Python
+
+
+
+### Overview
+
+Python is an interpreted, dynamically typed language with very clean syntax. It is the most versatile language in the market: used in web backends (Flask, Django, FastAPI), data science (pandas, numpy), machine learning (TensorFlow, PyTorch), scripting, automation, and testing. Python values readability — there is always "one obvious way to do things" (the Zen of Python). Python does not need compilation — the interpreter executes the .py file directly, line by line. This makes development fast, but type errors appear at runtime (not at compile time like in Java).
+
+### MUTABLE vs IMMUTABLE TYPES
+
+Python types are either mutable (can be changed after creation) or immutable (cannot be changed — "changing" a string creates a new string).
+
+
+```python
+IMMUTABLE:
+  int:    42, -7, 0
+  float:  3.14, -0.5
+  str:    "hello"  — individual characters cannot be changed
+  bool:   True, False  (note: capitalised! They are a subclass of int: True == 1)
+  bytes:  b"raw bytes"
+  tuple:  (1, 2, 3)  — like a list but immutable
+
+MUTABLE:
+  list:   [1, 2, 3]       — ordered sequence, heterogeneous, allows duplicates
+  dict:   {"key": "value"} — key-value pairs; since Python 3.7 preserves insertion order
+  set:    {1, 2, 3}       — no duplicates, no order, supports set operations
+
+# IMPORTANT: the type of a variable is determined at runtime
+x = 42         # x is int
+x = "hello"    # now x is str — Python doesn't complain!
+x = [1, 2, 3]  # now x is list
+```
+
+Why mutability matters: passing a mutable object to a function lets the function modify the original (pass by reference semantics). Immutable objects cannot be modified — the function would have to return a new value.
+
+
+```python
+def add_item(lst, item):
+    lst.append(item)   # modifies the original list!
+
+my_list = [1, 2]
+add_item(my_list, 3)
+print(my_list)   # [1, 2, 3] — original was changed
+```
+
+
+### Lists — THE WORKHORSE COLLECTION
+
+
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# Access by index (0-based; negative counts from end)
+fruits[0]    # "apple"
+fruits[-1]   # "cherry"
+fruits[1:3]  # ["banana", "cherry"] — slice: [start:end] (end is exclusive)
+fruits[:2]   # ["apple", "banana"]
+fruits[::-1] # ["cherry", "banana", "apple"] — reversed
+
+# Common operations
+fruits.append("date")          # add to end
+fruits.insert(1, "avocado")    # insert at index 1
+fruits.remove("banana")        # remove first occurrence
+popped = fruits.pop()          # remove and return last item
+fruits.sort()                  # sort in-place
+sorted_copy = sorted(fruits)   # return a new sorted list, don't modify original
+len(fruits)                    # number of items
+```
+
+
+### Dictionaries
+
+
+```python
+user = {"name": "Beatriz", "age": 25, "role": "admin"}
+
+user["name"]                    # "Beatriz" — KeyError if missing
+user.get("email")               # None — no error if missing
+user.get("email", "no email")   # "no email" — default value
+user["email"] = "b@example.com" # add or update a key
+del user["role"]                # delete a key
+"name" in user                  # True — membership test
+
+# Iterate
+for key, value in user.items():
+    print(f"{key}: {value}")
+
+# Dictionary comprehension
+squares = {n: n**2 for n in range(1, 6)}  # {1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
+```
+
+
+### List Comprehensions and Generators
+
+
+List comprehensions are a concise, Pythonic way to create lists — more readable than equivalent for loops, and often faster.
+
+
+```python
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Without comprehension
+evens = []
+for n in numbers:
+    if n % 2 == 0:
+        evens.append(n)
+
+# With comprehension — [expression for item in iterable if condition]
+evens = [n for n in numbers if n % 2 == 0]       # [2, 4, 6, 8, 10]
+squares = [n**2 for n in numbers]                 # [1, 4, 9, 16, ...]
+upper = [s.upper() for s in ["hello", "world"]]   # ["HELLO", "WORLD"]
+
+# Dict comprehension
+word_lengths = {word: len(word) for word in ["apple", "banana", "cherry"]}
+```
+
+
+#### Generators
+like comprehensions but lazy (do not load everything into memory)
+
+
+```python
+# List comprehension: creates the full list in memory immediately
+squares_list = [n**2 for n in range(10_000_000)]   # uses ~80MB
+
+# Generator expression: produces values one at a time, on demand
+squares_gen = (n**2 for n in range(10_000_000))    # uses ~100 bytes
+
+# Generator function — yields values one at a time
+def fibonacci():
+    a, b = 0, 1
+    while True:
+        yield a           # pause here, return a, resume on next()
+        a, b = b, a + b
+
+fib = fibonacci()
+print(next(fib))   # 0
+print(next(fib))   # 1
+print(next(fib))   # 1
+# Infinite sequence — uses no memory for future values
+```
+
+
+### Functions — *args, **kwargs, AND MORE
+
+
+```python
+def greet(name, greeting="Hello"):   # default parameter
+    return f"{greeting}, {name}!"
+
+greet("Beatriz")            # "Hello, Beatriz!"
+greet("Beatriz", "Hi")      # "Hi, Beatriz!"
+greet(greeting="Hey", name="Beatriz")  # keyword arguments (order doesn't matter)
+
+# *args — captures extra positional arguments as a tuple
+def add(*numbers):
+    return sum(numbers)
+add(1, 2, 3, 4)   # 10
+
+# **kwargs — captures extra keyword arguments as a dictionary
+def log_event(event_type, **details):
+    print(f"Event: {event_type}, Details: {details}")
+log_event("login", userId=123, ip="1.2.3.4")
+```
+
+
+### Decorators
+
+
+A decorator is a function that wraps another function to add behaviour before, after, or around its execution — without modifying the original function's code.
+
+
+```python
+import functools, time
+
+def timing(func):
+    @functools.wraps(func)   # preserves the original function's name/docstring
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} took {time.time()-start:.3f}s")
+        return result
+    return wrapper
+
+@timing                      # equivalent to: process_data = timing(process_data)
+def process_data(items):
+    return [item * 2 for item in items]
+
+process_data([1, 2, 3])     # "process_data took 0.000s"
+```
+
+Decorators are the foundation of Flask routes (@app.route), FastAPI endpoints (@router.get), and Python's @property, @staticmethod, @classmethod.
+
+
+### Classes and OOP in Python
+
+```python
+class BankAccount:
+    # Class variable — shared by ALL instances
+    interest_rate = 0.05
+
+    def __init__(self, owner: str, initial_balance: float = 0):
+        # Instance variables — unique to each instance
+        self.owner = owner
+        self._balance = initial_balance   # _ prefix = convention for "protected"
+
+    def deposit(self, amount: float) -> None:
+        if amount <= 0:
+            raise ValueError("Deposit must be positive")
+        self._balance += amount
+
+    def withdraw(self, amount: float) -> bool:
+        if amount > self._balance:
+            return False
+        self._balance -= amount
+        return True
+
+    # Property — access as attribute but with logic
+    @property
+    def balance(self) -> float:
+        return self._balance
+
+    @classmethod
+    def with_bonus(cls, owner: str, bonus: float) -> "BankAccount":
+        """Factory method — creates account with initial bonus balance"""
+        return cls(owner, bonus)
+
+    def __repr__(self) -> str:
+        return f"BankAccount(owner={self.owner!r}, balance={self._balance})"
+
+# Inheritance
+class SavingsAccount(BankAccount):
+    def __init__(self, owner: str, initial: float = 0):
+        super().__init__(owner, initial)   # call parent __init__
+
+    def apply_interest(self) -> None:
+        self._balance *= (1 + self.interest_rate)
+```
+
+#### Key dunder (double underscore) methods — Python's "magic methods"
+
+__init__    — constructor
+__repr__    — unambiguous string representation (for developers)
+__str__     — human-readable string (for users)
+__eq__      — defines == comparison
+__len__     — defines len(obj)
+__iter__    — makes the object iterable
+
+
+### Context Managers
+
+
+Context managers guarantee that resources are properly initialised and cleaned up, even if an exception occurs. The with statement calls __enter__ and __exit__.
+
+
+```python
+# Built-in context manager for files
+with open("data.txt", "r") as file:
+    content = file.read()
+# file.close() called automatically here, even if an exception occurred
+
+# Custom context manager using contextlib
+from contextlib import contextmanager
+
+@contextmanager
+def timer(name: str):
+    start = time.time()
+    try:
+        yield             # body of the with block runs here
+    finally:
+        print(f"{name}: {time.time() - start:.3f}s")
+
+with timer("processing"):
+    process_data()
+```
+
+
+### Type Hints
+
+
+Type hints add optional static typing to Python. They don't enforce types at runtime — Python remains dynamically typed — but they enable IDE autocomplete, catch bugs with mypy (static type checker), and serve as documentation.
+
+
+```python
+from typing import Optional, List, Dict, Tuple, Union
+from collections.abc import Callable
+
+def get_user(user_id: int) -> Optional[dict]:
+    ...
+
+def process_users(users: List[str], limit: int = 10) -> Dict[str, int]:
+    ...
+
+# Python 3.10+ union shorthand
+def parse(value: str | int | None) -> str:
+    ...
+```
+
+
+### Async/Await and Fastapi
+
+
+Python has async/await for non-blocking I/O, similar to JavaScript. The asyncio event loop runs coroutines concurrently on a single thread — perfect for I/O-bound workloads (HTTP calls, database queries).
+
+
+```python
+import asyncio, aiohttp
+
+async def fetch_user(session: aiohttp.ClientSession, user_id: int) -> dict:
+    async with session.get(f"https://api.example.com/users/{user_id}") as resp:
+        return await resp.json()
+
+async def main():
+    async with aiohttp.ClientSession() as session:
+        # Run 100 requests concurrently — not sequentially!
+        tasks = [fetch_user(session, i) for i in range(100)]
+        users = await asyncio.gather(*tasks)
+```
+
+FastAPI is the most modern Python framework for APIs — async by default, uses Pydantic for validation, auto-generates OpenAPI docs.
+
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, EmailStr
+
+app = FastAPI()
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr   # Pydantic validates email format automatically
+    age: int
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    # password is NOT here — never returned in the response!
+
+@app.post("/users", response_model=UserResponse, status_code=201)
+async def create_user(user: UserCreate):
+    # FastAPI automatically:
+    #   - parses JSON body into UserCreate
+    #   - validates all fields (required, format, type)
+    #   - returns 422 if validation fails
+    #   - serialises the response as UserResponse (excluding password)
+    db_user = await user_service.create(user)
+    return db_user
+
+@app.get("/users/{user_id}", response_model=UserResponse)
+async def get_user(user_id: int):
+    user = await user_service.find_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+```
+
+### VIRTUAL ENVIRONMENTS AND pip
+
+Python uses virtual environments to isolate dependencies per project. Without a venv, all packages install globally and different projects can conflict.
+
+
+```python
+# Create a virtual environment
+python3 -m venv venv
+
+# Activate (macOS/Linux)
+source venv/bin/activate
+
+# Activate (Windows)
+venv\Scripts\activate
+
+pip install fastapi uvicorn    # installs into venv, not globally
+pip freeze > requirements.txt  # save dependencies
+
+pip install -r requirements.txt  # restore from requirements file
+```
+
+Modern projects use pyproject.toml (PEP 517/518) with tools like Poetry or uv instead of requirements.txt — they provide dependency locking and resolution.
+
+
+
+## 1.08 C
+
+
+
+### Overview
+
+C is a low-level, compiled, procedural language. Unlike Java or Python, C does not have a garbage collector — you manage memory manually. C runs directly on the hardware with no virtual machine overhead, which is why operating systems, embedded systems, databases (SQLite, PostgreSQL), and device drivers are written in C. Understanding C gives you a deep mental model of how programs actually work at the machine level.
+
+
+### Pointers
+
+
+A pointer is a variable that stores the memory address of another variable. Think of memory as a long row of boxes, each with an address. A pointer holds one of those addresses.
+
+
+```c
+int x = 42;
+int *p = &x;   // p holds the address of x (&x means "address of x")
+
+printf("x = %d\n", x);    // 42
+printf("&x = %p\n", &x);  // 0x7fff... (the memory address)
+printf("p = %p\n", p);    // same address as &x
+printf("*p = %d\n", *p);  // 42 — dereference: "value at the address p holds"
+
+*p = 100;                  // change the value AT the address
+printf("x = %d\n", x);    // 100 — x was changed through the pointer
+```
+
+Why pointers matter:
+  - Pass large data structures to functions without copying (pass by reference)
+  - Dynamic memory allocation — the only way to have variable-size data
+  - Building data structures: linked lists, trees
+  - Direct hardware access (memory-mapped I/O)
+
+
+### STACK vs HEAP
+
+
+**Stack** — automatic, fast, size known at compile time, freed when function returns
+  - Local variables, function arguments live here
+  - Allocated and freed automatically (LIFO order)
+  - Limited in size (~8MB on most systems)
+
+
+**Heap** — manual, flexible size, persists until you free it
+  - Allocated with malloc(), freed with free()
+  - Unlimited size (constrained only by system RAM)
+  - Risk: memory leaks (forget to free), use-after-free bugs
+
+
+```c
+// Stack allocation — automatic
+int arr[100];               // 100 ints on the stack
+
+// Heap allocation — manual
+int *arr = malloc(100 * sizeof(int));   // allocate 100 ints on the heap
+if (arr == NULL) {                      // malloc can fail — always check!
+    fprintf(stderr, "Out of memory\n");
+    return -1;
+}
+arr[0] = 1;                             // use it like an array
+free(arr);                              // MUST free — otherwise memory leak
+arr = NULL;                             // good habit: prevent dangling pointer
+```
+
+
+### Buffer Overflow
+
+
+A buffer overflow happens when you write beyond the end of an array, overwriting adjacent memory. This is the source of countless security vulnerabilities:
+
+
+```c
+char buffer[8];
+strcpy(buffer, "Hello, this is much too long!");  // writes past buffer end!
+// Overwrites adjacent memory — could be return address, other variables
+```
+
+**Safe alternatives**: strncpy, snprintf, strlcpy, or better — use a memory-safe language (Rust) or careful bounds checking.
+
 
 
 ---
@@ -1488,27 +1771,18 @@ Use Grid for page-level layouts; use Flexbox for component-level alignment.
 
 ### Overview
 
-Spring Boot is the most popular way to build production Java applications. It
-builds on the Spring Framework (a vast ecosystem of Java modules) but adds
-auto-configuration and an embedded server (Tomcat by default). Without Spring
-Boot, configuring a Spring application required hundreds of lines of XML. With
-Spring Boot, a single class annotated with @SpringBootApplication gives you a
-running web application.
+Spring Boot is the most popular way to build production Java applications. It builds on the Spring Framework (a vast ecosystem of Java modules) but adds auto-configuration and an embedded server (Tomcat by default). Without Spring Boot, configuring a Spring application required hundreds of lines of XML. With Spring Boot, a single class annotated with @SpringBootApplication gives you a running web application.
 
 
 ### Inversion of Control and Dependency Injection
 
 
-**IoC (Inversion of Control)** : instead of your code creating the objects it needs
-(new Service()), the framework creates them and hands them to you. You "invert"
-who controls object creation.
+**IoC (Inversion of Control)** : instead of your code creating the objects it needs (new Service()), the framework creates them and hands them to you. You "invert" who controls object creation.
 
-**DI (Dependency Injection)** : the mechanism that implements IoC. The framework
-injects dependencies into your class, rather than you creating them.
+**DI (Dependency Injection)** : the mechanism that implements IoC. The framework injects dependencies into your class, rather than you creating them.
 
 Why does this matter? 
-It decouples classes — your UserService does not decide
-which EmailService implementation to use; it just declares it needs one:
+It decouples classes — your UserService does not decide which EmailService implementation to use; it just declares it needs one:
 
 
 ```java
@@ -1528,26 +1802,21 @@ public class UserService {
 }
 ```
 
-Constructor injection (above) is preferred over field injection (@Autowired on
-fields) because it makes dependencies explicit, supports immutability (final),
-and makes the class testable without Spring.
+Constructor injection (above) is preferred over field injection (@Autowired on fields) because it makes dependencies explicit, supports immutability (final), and makes the class testable without Spring.
 
 
 ### Beans and the Application Context
 
 
-A Spring Bean is an object managed by the Spring container (called the
-ApplicationContext). Spring creates it, configures it, and injects it where
-needed. You declare beans with annotations:
+A Spring Bean is an object managed by the Spring container (called the ApplicationContext). Spring creates it, configures it, and injects it where needed. You declare beans with annotations:
 
-```text
 @Component          — generic bean (component scan finds it automatically)
 @Service            — business logic layer (alias for @Component with semantic meaning)
 @Repository         — data access layer (adds exception translation)
 @Controller         — MVC controller
 @RestController     — REST endpoint (@Controller + @ResponseBody)
 @Configuration+@Bean — explicit bean definition method
-```
+
 
 #### BEAN SCOPES
 
@@ -1560,20 +1829,17 @@ needed. You declare beans with annotations:
 ### Auto-configuration
 
 
-Spring Boot reads your classpath and application.yml/properties and automatically
-configures beans. If it sees spring-boot-starter-data-jpa on the classpath plus
-a datasource URL in properties, it auto-configures a DataSource, EntityManager,
-and transaction manager. You don't write any of that code.
+Spring Boot reads your classpath and application.yml/properties and automatically configures beans. If it sees spring-boot-starter-data-jpa on the classpath plus a datasource URL in properties, it auto-configures a DataSource, EntityManager, and transaction manager. You don't write any of that code.
 
-You can always override auto-configuration by providing your own bean of the
-same type — Spring Boot backs off when it detects yours.
+You can always override auto-configuration by providing your own bean of the same type — Spring Boot backs off when it detects yours.
+
 
 ### SPRING DATA JPA AND THE N+1 PROBLEM
 
 Spring Data JPA lets you write database queries by just defining a method name:
 
 
-```sql
+```java
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEmailAndActive(String email, boolean active);
     Optional<User> findByEmail(String email);
@@ -1585,7 +1851,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 THE N+1 PROBLEM — the most important JPA performance pitfall:
 
 
-```sql
+```java
 // If Post has a lazily loaded Author field:
 List<Post> posts = postRepository.findAll();   // 1 query: SELECT * FROM posts
 for (Post post : posts) {
@@ -1598,7 +1864,7 @@ for (Post post : posts) {
 Fix with JPQL JOIN FETCH or @EntityGraph:
 
 
-```sql
+```java
 @Query("SELECT p FROM Post p JOIN FETCH p.author")
 List<Post> findAllWithAuthors();
 
@@ -1610,7 +1876,6 @@ List<Post> findAll();
 
 ### Key Annotations
 
-```text
 @SpringBootApplication   — combines @Configuration + @EnableAutoConfiguration + @ComponentScan
 @RestController          — marks class as REST endpoint handler
 @GetMapping("/path")     — HTTP GET handler (also @PostMapping, @PutMapping, @DeleteMapping)
@@ -1622,7 +1887,110 @@ List<Post> findAll();
 @Scheduled(cron="0 0 * * * *") — schedule a method to run periodically
 @Value("${property.key}") — inject a value from application.properties/yml
 @ConditionalOnProperty   — conditionally enable a bean based on a property
+
+### Spring Application Structure
+
+A typical Spring Boot application is organized into layers, each with a clear responsibility.
+
+Why this structure?
+
+- Clear separation of concerns  
+- Easier testing  
+- Better scalability  
+- Cleaner, maintainable code  
+
+
+### Controller (API Layer)
+
+Responsible for handling HTTP requests and returning responses.
+
+- Defines endpoints (`GET`, `POST`, etc.)
+- No business logic
+- Acts as the entry point of the application
+
+```java
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable Long id) {
+        return userService.getUserById(id);
+    }
+}
 ```
+
+### Service (Business Logic Layer)
+
+Contains the core business logic.
+
+- Implements business rules
+- Handles validation and orchestration
+- Calls repositories when data is needed
+
+```java
+@Service
+public class UserService {
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+}
+```
+
+
+### Repository (Data Access Layer)
+
+Responsible for interacting with the database.
+
+- CRUD operations
+- Queries
+- Usually extends Spring Data JPA interfaces
+
+```java
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+}
+```
+
+### Model / Entity (Data Layer)
+
+Represents database tables as Java objects.
+
+```java
+@Entity
+public class User {
+
+    @Id
+    private Long id;
+
+    private String name;
+}
+```
+
+
+### Request Flow
+
+```text
+HTTP Request
+    ↓
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
+    ↓
+Repository
+    ↓
+Service
+    ↓
+Controller
+    ↓
+HTTP Response
+```
+
 
 
 ## 2.02 Node.js
@@ -1631,12 +1999,126 @@ List<Post> findAll();
 
 ### Overview
 
-Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows JavaScript
-to run on the server, outside the browser. Node is event-driven and non-blocking:
-a single thread handles thousands of concurrent connections by never waiting —
-whenever an I/O operation (database query, HTTP call, file read) starts, Node
-registers a callback and immediately moves on to the next task. When the I/O
-finishes, the callback runs.
+Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows JavaScript to run on the server, outside the browser. Node is event-driven and non-blocking: a single thread handles thousands of concurrent connections by never waiting — whenever an I/O operation (database query, HTTP call, file read) starts, Node registers a callback and immediately moves on to the next task. When the I/O finishes, the callback runs.
+
+
+### Node.js Architecture
+
+Node.js uses a single-threaded event loop to execute JavaScript code, but it is not limited to a single thread for all operations. Expensive I/O tasks such as file system operations, DNS lookups, compression, and some cryptographic operations are offloaded to a thread pool managed by libuv.
+
+This architecture allows Node.js to handle many concurrent connections efficiently without creating a dedicated thread for each request, making it particularly well suited for I/O-intensive applications such as APIs, real-time systems, and microservices.
+
+
+### CommonJS vs ES Modules
+
+Node.js supports two module systems:
+
+**CommonJS (traditional Node.js)**
+
+```javascript
+const express = require("express");
+
+module.exports = myFunction;
+```
+
+**ES Modules (modern JavaScript)**
+
+```javascript
+import express from "express";
+
+export default myFunction;
+```
+
+ES Modules are the standard JavaScript module system and are increasingly preferred in modern applications.
+
+
+### Asynchronous Programming
+
+Node.js relies heavily on asynchronous programming to avoid blocking the event loop.
+
+**Callback**
+
+```javascript
+fs.readFile("file.txt", (err, data) => {
+    console.log(data);
+});
+```
+
+**Promise**
+
+```javascript
+fetch("/api/users")
+    .then(response => response.json())
+    .then(data => console.log(data));
+```
+
+**Async/Await**
+
+```javascript
+async function getUsers() {
+    const response = await fetch("/api/users");
+    const users = await response.json();
+    return users;
+}
+```
+
+`async/await` is generally preferred because it provides cleaner and more readable asynchronous code.
+
+
+### Node.js Runtime APIs
+
+Unlike browsers, Node.js provides APIs for interacting directly with the operating system.
+
+Common built-in modules include:
+
+- `fs` → file system operations
+- `path` → file and directory path utilities
+- `http` → creating HTTP servers
+- `os` → operating system information
+- `crypto` → hashing, encryption, random values
+- `stream` → stream processing
+- `events` → event-driven programming
+
+Example:
+
+```javascript
+const fs = require("fs");
+
+const content = fs.readFileSync("file.txt", "utf8");
+```
+
+
+### EventEmitter
+
+Many Node.js APIs are built around events using the EventEmitter class.
+
+```javascript
+const EventEmitter = require("events");
+
+const emitter = new EventEmitter();
+
+emitter.on("userCreated", user => {
+    console.log(`User ${user.name} created`);
+});
+
+emitter.emit("userCreated", { name: "John" });
+```
+
+This pattern is widely used throughout Node.js for handling asynchronous events.
+
+
+### When Node.js Is a Good Choice
+
+Node.js excels at:
+
+- REST APIs
+- GraphQL APIs
+- Real-time applications (chat, notifications, WebSockets)
+- Microservices
+- Streaming applications
+- Server-side rendering
+
+Node.js is generally less suitable for CPU-intensive workloads such as video processing, machine learning training, or large numerical computations, since these tasks can block the event loop and impact application responsiveness.
 
 
 ### The Event Loop in Node.js
@@ -1650,6 +2132,7 @@ Node.js's event loop has six phases, executed in order
   4. poll           — retrieve new I/O events; execute I/O callbacks here
   5. check          — setImmediate() callbacks
   6. close          — close event callbacks (socket.on('close', ...))
+
 
 Between each phase, Node drains the microtask queue:
 
@@ -1668,9 +2151,20 @@ Promise.resolve().then(() => console.log("Promise"));
 ### Express Middleware
 
 
-Express middleware is a function with signature (req, res, next). Middleware
-functions run in order; each one either responds to the request or calls next()
-to pass control to the next middleware.
+Express middleware is a function with signature `(req, res, next)`.
+
+Middleware acts as a layer between the incoming request and the final route handler. When a request reaches the server, it passes through one or more middleware functions before reaching the route that generates the response.
+
+Middleware can:
+- Execute logic before a route handler runs.
+- Read or modify the `req` (request) and `res` (response) objects.
+- End the request-response cycle by sending a response.
+- Call `next()` to pass control to the next middleware or route handler.
+- Handle errors and centralize error management.
+
+A common Express application uses middleware for tasks such as authentication, authorization, request validation, logging, rate limiting, parsing request bodies, and error handling.
+
+Middleware functions are executed in the order they are registered, creating a processing pipeline for each request.
 
 
 ```javascript
@@ -1709,10 +2203,7 @@ app.use((err, req, res, next) => {
 ### Streams
 
 
-Streams process data in chunks rather than loading everything into memory at
-once. A 10GB CSV file can be processed line by line with a Stream using very
-little memory.
-
+Streams process data in chunks rather than loading everything into memory at once. A 10GB CSV file can be processed line by line with a Stream using very little memory.
 
 ```javascript
 // Without streams: reads entire file into memory
@@ -1738,17 +2229,13 @@ app.get("/download", (req, res) => {
 
 ### Overview
 
-REST (Representational State Transfer) is an architectural style for networked
-APIs. REST uses HTTP — meaning REST APIs leverage existing HTTP infrastructure
-(caching, load balancers, proxies) without extra protocol overhead.
+REST (Representational State Transfer) is an architectural style for networked APIs. REST uses HTTP — meaning REST APIs leverage existing HTTP infrastructure (caching, load balancers, proxies) without extra protocol overhead.
 
 
 ### HTTP Methods and Idempotency
 
 
-Idempotent means calling the method multiple times with the same input produces
-the same result (no additional side effects). Safe means the method does not
-modify server state.
+Idempotent means calling the method multiple times with the same input produces the same result (no additional side effects). Safe means the method does not modify server state.
 
 Method   | Safe | Idempotent | Use case
 ---------|------|------------|---------------------------
@@ -1759,26 +2246,26 @@ PATCH    | No   | No*        | Partial update
 DELETE   | No   | Yes        | Delete a resource
 HEAD     | Yes  | Yes        | Like GET but no body
 OPTIONS  | Yes  | Yes        | Discover allowed methods
-PUT vs PATCH: PUT replaces the entire resource (you must send all fields);
-PATCH updates only what you send.
 
-POST vs PUT for creation: use POST when the server generates the ID (POST /users
+**PUT vs PATCH**: PUT replaces the entire resource (you must send all fields); PATCH updates only what you send.
+
+**POST vs PUT for creation**: use POST when the server generates the ID (POST /users
 returns the new ID); use PUT when the client specifies the ID (PUT /users/123).
 
 
 ### HTTP Status Codes
 
 
-2xx — Success
+**2xx — Success**
 200 OK              — standard success
 201 Created         — resource created (include Location header with new URL)
 204 No Content      — success but no body to return (DELETE, some PUTs)
 
-3xx — Redirection
+**3xx — Redirection**
 301 Moved Permanently — URL changed; update bookmarks
 304 Not Modified      — client's cached version is still valid (ETags/Last-Modified)
 
-4xx — Client Error
+**4xx — Client Error**
 400 Bad Request     — malformed request, validation failure
 401 Unauthorized    — not authenticated (no or invalid credentials)
 403 Forbidden       — authenticated but not authorised (lacks permission)
@@ -1787,7 +2274,7 @@ returns the new ID); use PUT when the client specifies the ID (PUT /users/123).
 422 Unprocessable Entity — request understood but semantically invalid
 429 Too Many Requests — rate limit exceeded
 
-5xx — Server Error
+**5xx — Server Error**
 500 Internal Server Error — generic server failure (don't expose details!)
 502 Bad Gateway     — upstream service returned an invalid response
 503 Service Unavailable — server is down or overloaded
@@ -1800,23 +2287,21 @@ can't do this."
 
 #### Use nouns for resources, never verbs
 
-```text
 GET  /users          — list all users
 POST /users          — create a user
 GET  /users/123      — get user 123
 PUT  /users/123      — replace user 123
 DELETE /users/123    — delete user 123
 GET  /users/123/posts — list posts belonging to user 123
-```
 
-Use query parameters for filtering, sorting, pagination:
-GET /users?role=admin&sort=name&page=2&limit=20
+
+Use query parameters for filtering, sorting, pagination: GET /users?role=admin&sort=name&page=2&limit=20
+
 
 #### Version your API
 
-```text
 /api/v1/users   — explicit versioning in path
-```
+
 **Accept**: application/vnd.myapi.v1+json   — header versioning
 
 
@@ -1826,15 +2311,9 @@ GET /users?role=admin&sort=name&page=2&limit=20
 
 ### Overview
 
-Microservices architecture splits an application into small, independently
-deployable services. Each service is responsible for one business domain
-(users, orders, payments), has its own database, and communicates with others
-over the network (REST, gRPC, or message queues).
+Microservices architecture splits an application into small, independently deployable services. Each service is responsible for one business domain (users, orders, payments), has its own database, and communicates with others over the network (REST, gRPC, or message queues).
 
-Monolith first: most teams should start with a monolith and extract services
-when specific scaling or team organisation problems demand it. Microservices
-introduce significant complexity (distributed tracing, eventual consistency,
-network failures) that is not justified for small teams or early-stage products.
+**Monolith first**: most teams should start with a monolith and extract services when specific scaling or team organisation problems demand it. Microservices introduce significant complexity (distributed tracing, eventual consistency, network failures) that is not justified for small teams or early-stage products.
 
 
 ### Inter-service Communication
@@ -1842,37 +2321,79 @@ network failures) that is not justified for small teams or early-stage products.
 
 #### SYNCHRONOUS (direct call, caller waits)
 
+**REST over HTTP** — a widely used architectural style for building APIs over the HTTP protocol. It is based on standard HTTP methods (GET, POST, PUT, DELETE, PATCH) and uses stateless communication, meaning each request contains all the information needed to be processed.
 
-**REST over HTTP** — universal, easy to debug, but tight coupling 
+REST APIs are:
+- **Universal**: they work with any client that can make HTTP requests (browsers, mobile apps, servers, etc.)
+- **Easy to debug**: requests can be tested directly using tools like Postman, curl, or even a browser
+- **Simple and well-understood**: they follow standard conventions and are widely adopted across the industry
 
-**gRPC** — binary protocol (Protocol Buffers), faster and strongly typed, good for internal services where both sides are controlled
+However, REST also has some drawbacks:
+- **Tight coupling between client and server structure**: changes in API endpoints or response formats can require updates in multiple clients
+- **Over-fetching or under-fetching of data**: clients may receive more or less data than needed, leading to inefficiencies
+- **Multiple round trips**: complex data often requires several API calls
 
-**ASYNCHRONOUS (via message broker, caller does not wait):**
+Despite these limitations, REST remains the default choice for most web APIs due to its simplicity, scalability, and strong tooling support.
 
-**Message queues (RabbitMQ, Kafka, AWS SQS)** — producer sends a message and
-continues; consumer processes it later. Enables loose coupling, buffering
-during spikes, and retry logic. Use for: order placed → send email + update
-inventory + notify warehouse (all triggered by the same event).
+
+#### ASYNCHRONOUS (via message broker, caller does not wait)
+
+**Message queues (RabbitMQ, Kafka, AWS SQS)** — producer sends a message and continues; consumer processes it later. 
+Enables loose coupling, buffering during spikes, and retry logic. 
+Use for: order placed → send email + update inventory + notify warehouse (all triggered by the same event).
 
 
 
 ### Circuit Breaker
 
+A Circuit Breaker is a resilience pattern used in distributed systems to prevent cascading failures when a downstream service is slow or failing.
 
-When a downstream service is slow or failing, requests pile up, threads are
-exhausted, and the caller also fails. A circuit breaker prevents this:
+When one service depends on another (e.g. API → database or API → external service), repeated failures or slow responses can exhaust resources such as threads, connections, and memory. This can cause the failure to spread to the entire system.
 
-
-**Closed**   — requests pass through normally; failures are counted
-
-**Open**     — after a failure threshold, all requests are immediately rejected (fast fail) without calling the downstream service
-
-**HALF-OPEN** — after a timeout, a test request is sent; if it succeeds, the circuit closes; if it fails, it opens again
-
-Implemented with Resilience4j (Spring) or Hystrix (older).
+The circuit breaker solves this by **stopping requests early when a service is unhealthy**.
 
 
-### CAP Theorem** — KEY FOR INTERVIEWS
+#### States
+
+**Closed**
+- Normal operation
+- Requests are allowed through to the downstream service
+- Failures are monitored and counted
+- If failures exceed a threshold, the circuit "opens"
+
+
+**Open**
+- The downstream service is considered unhealthy
+- All requests are immediately rejected (fast failure)
+- No calls are made to the failing service
+- After a timeout period, the state moves to HALF-OPEN
+
+
+**Half-Open**
+- A limited number of test requests are allowed through
+- If they succeed → circuit closes again (system recovers)
+- If they fail → circuit reopens and remains in Open state
+
+
+#### Why it is useful
+
+- Prevents system overload during failures
+- Avoids wasting resources on failing services
+- Improves overall system stability and responsiveness
+- Enables graceful degradation instead of total failure
+
+
+#### Implementation
+
+In Spring-based systems, circuit breakers are commonly implemented using:
+
+- **Resilience4j** (modern standard)
+- **Hystrix** (legacy, no longer actively maintained)
+
+These libraries automatically manage state transitions, failure thresholds, and recovery logic.
+
+
+### CAP Theorem — KEY FOR INTERVIEWS
 
 In a distributed system, you can guarantee at most TWO of these three properties
 
@@ -1883,20 +2404,148 @@ In a distributed system, you can guarantee at most TWO of these three properties
 
 In practice, network partitions WILL happen. So you choose:
 
-```text
-CP (consistent + partition-tolerant): may reject requests to stay consistent
-   Examples: HBase, Zookeeper, etcd, most SQL databases in single-region
-AP (available + partition-tolerant): stays up but may return stale data
-   Examples: Cassandra, DynamoDB, CouchDB
-```
+**CP (consistent + partition-tolerant)**: may reject requests to stay consistent.
+  Examples: HBase, Zookeeper, etcd, most SQL databases in single-region
+
+**AP (available + partition-tolerant)**: stays up but may return stale data.
+  Examples: Cassandra, DynamoDB, CouchDB
 
 
-#### Saga Pattern
-for distributed transactions
-Traditional transactions (ACID) don't work across services. Sagas break a
-distributed transaction into a sequence of local transactions, each publishing
-an event that triggers the next step. On failure, compensating transactions
-undo the completed steps.
+**Saga Pattern**: for distributed transactions.
+Traditional transactions (ACID) don't work across services. Sagas break a distributed transaction into a sequence of local transactions, each publishing an event that triggers the next step. On failure, compensating transactions undo the completed steps.
+
+
+### Cache
+
+Cache is a high-speed storage layer used to temporarily store data that is expensive to compute or frequently requested. Instead of repeatedly querying a database or calling an external API, the application first checks the cache.
+
+A **cache hit** returns data instantly. A **cache miss** triggers a fetch from the database, and the result is stored in the cache for future requests.
+
+A common tool is **Redis**, an in-memory key-value store. It is extremely fast because it stores data in RAM instead of disk. Redis is often used for:
+- Session storage (user login sessions)
+- API response caching
+- Leaderboards or counters
+- Rate limiting counters
+
+Example:
+- Cache user profile data so repeated requests don’t hit the database
+- Store “top products” list updated every few minutes instead of recomputing on every request
+
+
+### Load Balancing
+
+Load balancing distributes incoming traffic across multiple servers to improve performance and reliability.
+
+Instead of one server handling all requests, a load balancer routes traffic across multiple instances.
+
+Example:
+- 3 backend servers
+- Requests distributed evenly across them
+
+Strategies:
+- **Round Robin**: rotate requests
+- **Least Connections**: send to least busy server
+- **Weighted routing**: stronger servers get more traffic
+
+Tools:
+- Nginx
+- HAProxy
+- AWS Elastic Load Balancer
+
+
+### Data Storage Strategies
+
+#### Sharding
+
+Sharding splits a database into multiple smaller databases (shards), each holding a subset of data.
+
+Example:
+- Users A–M → Shard 1
+- Users N–Z → Shard 2
+
+Used when a single database becomes too large to scale vertically.
+
+Pros:
+- Horizontal scalability
+- Faster queries on smaller datasets
+
+Cons:
+- Complex cross-shard queries
+
+
+#### Replication
+
+Replication copies data across multiple database instances.
+
+Common model:
+- Primary node handles writes
+- Replica nodes handle reads
+
+Example:
+- Write user data → primary database
+- Read user profile → replica database
+
+Benefits:
+- High availability
+- Fault tolerance
+- Read scalability
+
+
+### Notifications
+
+Notification systems in large-scale applications are usually built using an **event-driven architecture**. Instead of services calling each other directly (e.g. “order service calls email service”), the system is designed so that services **emit events when something happens**, and other services react to those events independently.
+
+This approach makes the system more scalable and decoupled:
+- Services do not need to know who will consume their events
+- New consumers can be added without changing existing services
+- Failures in one part of the system do not directly break others
+
+Typical flow:
+- A business action happens (e.g. user places an order)
+- The system emits an event like `order_created`
+- One or more services listen to this event and react (send email, push notification, update analytics, etc.)
+
+This creates a flexible, asynchronous system where work is distributed across multiple services.
+
+
+
+A common tool to implement this pattern at scale is **Kafka**.
+
+#### Kafka
+
+Kafka is a distributed event streaming platform designed to handle large volumes of real-time data reliably and efficiently.
+
+It works as a **message broker** between services:
+
+How it works:
+- Producers publish events to Kafka (e.g. “order_created”)
+- Kafka stores these events in **topics**
+- Consumers subscribe to topics and process events independently
+
+Key concepts:
+- **Producer** → sends events
+- **Topic** → category where events are stored
+- **Consumer** → reads and processes events
+- **Broker** → Kafka server that stores and distributes events
+
+Example:
+- Order Service → produces `order_created`
+- Kafka stores the event in the `orders` topic
+- Notification Service → consumes event and sends email/SMS
+- Analytics Service → consumes event and updates dashboards
+
+Why Kafka is used:
+- High throughput (handles millions of events per second)
+- Durability (events are persisted on disk and replicated)
+- Scalability (multiple consumers can read independently)
+- Decoupling (services do not directly depend on each other)
+
+Common use cases:
+- Notifications (email, push, SMS)
+- Event-driven microservices
+- Real-time analytics
+- Data pipelines
+
 
 
 ## 2.05 Authentication & Authorization
@@ -1910,43 +2559,86 @@ undo the completed steps.
 
 #### JWT — JSON Web Tokens
 
-A JWT is a compact, self-contained token with three base64url-encoded parts
-separated by dots: HEADER.PAYLOAD.SIGNATURE
+A JWT is a compact, self-contained token with three base64url-encoded parts separated by dots: HEADER.PAYLOAD.SIGNATURE
 
 
-```text
+```json
 Header:  { "alg": "HS256", "typ": "JWT" }
 Payload: { "sub": "123", "name": "Beatriz", "role": "admin", "exp": 1735689600 }
 Signature: HMACSHA256(base64(header) + "." + base64(payload), secret)
 ```
 
-The server generates the token at login and gives it to the client. The client
-sends it on every subsequent request. The server VERIFIES the signature to
-confirm it was not tampered with — it does NOT need to look up a session in a
-database.
+The server generates the token at login and gives it to the client. The client sends it on every subsequent request. The server VERIFIES the signature to confirm it was not tampered with — it does NOT need to look up a session in a database.
 
 Key points:
-  - The payload is base64-encoded, NOT encrypted — anyone can decode it. Never
+- The payload is base64-encoded, NOT encrypted — anyone can decode it. Never put sensitive data (passwords, PII) in the payload.
+- The signature guarantees integrity — changing the payload invalidates the signature.
+- JWTs are stateless — the server stores no session state. This enables horizontal scaling but makes token revocation hard (you must wait for expiry or maintain a revocation list).
+- Where to store: httpOnly cookie (prevents XSS but needs CSRF protection) is generally safer than localStorage (vulnerable to XSS).
 
-```text
-  put sensitive data (passwords, PII) in the payload.
-• The signature guarantees integrity — changing the payload invalidates the
-  signature.
-• JWTs are stateless — the server stores no session state. This enables
-  horizontal scaling but makes token revocation hard (you must wait for expiry
-  or maintain a revocation list).
-• Where to store: httpOnly cookie (prevents XSS but needs CSRF protection) is
-  generally safer than localStorage (vulnerable to XSS).
-```
+
+#### Cookie-Based Authentication (Browser Sessions)
+
+Cookie-based authentication is a traditional approach where the server creates a **session** after login and stores it on the server side. The client only keeps a small piece of data: a **session cookie** containing a session ID.
+
+How it works:
+- User logs in with credentials
+- Server creates a session (e.g. `sessionId=abc123`) and stores it in memory or a database
+- Server sends a cookie to the browser: `Set-Cookie: sessionId=abc123`
+- Browser automatically attaches this cookie to every request
+- Server uses the session ID to look up the user session and authenticate the request
+
+Example flow:
+- Login → server creates session
+- Request → browser sends cookie automatically
+- Server → validates session in database/cache (e.g. Redis)
+
+Key points:
+- Session data is stored **on the server**
+- Cookie only stores a **reference (session ID)**, not user data
+- Cookies are automatically handled by the browser (no manual attachment needed)
+- Usually stored as **HttpOnly cookies** to prevent JavaScript access (reduces XSS risk)
+- Requires CSRF protection because cookies are automatically sent with requests
+
+
+#### JWT vs Cookie Sessions (Comparison)
+
+##### JWT (Token-Based Authentication)
+- Stateless (server does not store session)
+- Scales easily across distributed systems
+- User info is embedded in the token
+- Harder to revoke immediately (unless extra mechanisms are added)
+- More risk if stored incorrectly (e.g. localStorage → XSS risk)
+
+##### Cookie-Based Sessions
+- Stateful (server stores session data)
+- Easier to revoke instantly (delete session on server)
+- More secure by default when using HttpOnly cookies
+- Requires session storage (e.g. Redis, database)
+- Slightly harder to scale in very large distributed systems (needs shared session store)
+
+
+##### Which is better?
+
+**Cookie-based sessions are generally better for traditional web applications** because:
+- They are more secure by default (HttpOnly + SameSite cookies)
+- Sessions can be invalidated immediately
+- Sensitive data stays on the server
+
+**JWT is better for distributed systems and APIs** because:
+- It is stateless and scales easily
+- Useful for microservices and mobile apps
+- Reduces server-side session storage overhead
+
+
+- Use **cookie-based sessions** → when building secure web apps (especially browser-based apps)
+- Use **JWT** → when building APIs, mobile apps, or distributed microservices systems
 
 
 ### Oauth2 and Openid Connect
 
 
-OAuth2 is an authorisation framework — it grants limited access to a user's
-resources at a third-party service WITHOUT sharing credentials. "Sign in with
-Google" is OAuth2. OpenID Connect (OIDC) is a thin identity layer on top of
-OAuth2 that also provides authentication.
+OAuth2 is an authorisation framework — it grants limited access to a user's resources at a third-party service WITHOUT sharing credentials. "Sign in with Google" is OAuth2. OpenID Connect (OIDC) is a thin identity layer on top of OAuth2 that also provides authentication.
 
 Authorization Code Flow (the most secure, for server-side apps):
   1. User clicks "Login with Google"
@@ -1956,26 +2648,24 @@ Authorization Code Flow (the most secure, for server-side apps):
   5. Your server exchanges the code for access_token + id_token (server-to-server)
   6. Access token is used to call Google APIs; id_token contains user identity
 
-**PKCE** (Proof Key for Code Exchange) — extends Authorization Code Flow for
-mobile/SPA apps where a client secret cannot be safely stored.
+**PKCE (Proof Key for Code Exchange)** — extends Authorization Code Flow for mobile/SPA apps where a client secret cannot be safely stored.
+
 
 ### RBAC vs ABAC
 
-**RBAC** (Role-Based Access Control) : permissions are assigned to roles; users are
-assigned roles. Simple and well-understood.
-admin → can do everything
-editor → can create/edit posts but not manage users
-viewer → read-only
-**ABAC** (Attribute-Based Access Control) : permissions are granted based on
-attributes of the user, resource, and environment. More flexible, more complex.
-"User can edit a document if user.department == document.department AND
-document.status == 'draft' AND time is within business hours"
+**RBAC (Role-Based Access Control)** : permissions are assigned to roles; users are assigned roles. Simple and well-understood.
+- admin → can do everything
+- editor → can create/edit posts but not manage users
+- viewer → read-only
+
+**ABAC (Attribute-Based Access Control)** : permissions are granted based on attributes of the user, resource, and environment. More flexible, more complex.
+"User can edit a document if user.department == document.department AND document.status == 'draft' AND time is within business hours"
+
 
 ### Password Security
 
 
-Never store plain-text passwords. Use a slow, salted hash algorithm designed
-specifically for passwords:
+Never store plain-text passwords. Use a slow, salted hash algorithm designed specifically for passwords:
 
 
 ```java
@@ -1989,8 +2679,7 @@ String hashed = encoder.encode(rawPassword);        // produces unique hash each
 boolean matches = encoder.matches(rawPassword, hashed);  // verify
 ```
 
-NEVER use MD5 or SHA-1 for passwords — they are fast, which is good for data
-integrity but terrible for passwords (allows billions of guesses per second).
+NEVER use MD5 or SHA-1 for passwords — they are fast, which is good for data integrity but terrible for passwords (allows billions of guesses per second).
 
 
 ## 2.06 API Integration
@@ -1999,13 +2688,10 @@ integrity but terrible for passwords (allows billions of guesses per second).
 
 ### Overview
 
-API integration means connecting your application to external services: payment
-processors, email services, mapping APIs, social platforms. Getting it right
-involves handling auth, errors, rate limits, retries, and schema evolution.
+API integration means connecting your application to external services: payment processors, email services, mapping APIs, social platforms. Getting it right involves handling auth, errors, rate limits, retries, and schema evolution.
 
 
 ### Integration Patterns
-
 
 
 **Polling**: your service calls the external API on a schedule to check for updates.
@@ -2028,19 +2714,31 @@ try {
 }
 ```
 
-SDK vs raw HTTP: use the official SDK when available — it handles auth, retry,
-serialisation, and keeps up with API changes. Roll your own HTTP calls only when
-there is no SDK or when you need fine control.
+SDK vs raw HTTP: use the official SDK when available — it handles auth, retry, serialisation, and keeps up with API changes. Roll your own HTTP calls only when there is no SDK or when you need fine control.
+
+### Rate Limiting
+
+Rate limiting controls how many requests a user or service can make in a given time window. It protects systems from overload and abuse.
+
+For example:
+- 100 requests per minute per user
+- 10 login attempts per minute to prevent brute-force attacks
+
+Rate limiting is often implemented using Redis to store counters with expiration times.
+
+Common algorithms:
+- **Fixed window**: reset counter every X seconds
+- **Sliding window**: smoother tracking over time
+- **Token bucket**: users consume tokens; tokens refill over time
+
+Tools: Redis, API gateways (Kong, Nginx, AWS API Gateway)
 
 
-### Rate Limiting and Retry
 
+Most external APIs enforce rate limits (e.g. 100 requests per minute). When exceeded, you receive a 429 Too Many Requests response. 
+Proper handling:
 
-Most external APIs enforce rate limits (e.g. 100 requests per minute). When
-exceeded, you receive a 429 Too Many Requests response. Proper handling:
-
-
-```c
+```java
 EXPONENTIAL BACKOFF WITH JITTER:
 retry attempt 1: wait 1s
 retry attempt 2: wait 2s
@@ -2055,9 +2753,8 @@ RetryConfig config = RetryConfig.custom()
     .build();
 ```
 
-Only retry on transient errors (network timeouts, 500, 502, 503, 429).
-Never retry on 400 (bad request) or 401/403 (auth errors) — those won't
-succeed on retry.
+Only retry on transient errors (network timeouts, 500, 502, 503, 429). Never retry on 400 (bad request) or 401/403 (auth errors) — those won't succeed on retry.
+
 
 
 ## 2.07 WebSockets
@@ -2066,11 +2763,7 @@ succeed on retry.
 
 ### Overview
 
-HTTP is request-response: the client asks, the server answers, then the
-connection closes. WebSockets are persistent, full-duplex connections — both
-client and server can send messages at any time. They are ideal for: chat
-applications, live notifications, collaborative editing, real-time dashboards,
-multiplayer games.
+HTTP is request-response: the client asks, the server answers, then the connection closes. WebSockets are persistent, full-duplex connections — both client and server can send messages at any time. They are ideal for: chat applications, live notifications, collaborative editing, real-time dashboards, multiplayer games.
 
 
 ### The Upgrade Handshake
@@ -2078,37 +2771,36 @@ multiplayer games.
 
 A WebSocket connection starts as a standard HTTP request with an upgrade:
 
+```text
 GET /chat HTTP/1.1
-**Host**: server.example.com
-**Upgrade**: websocket
-**Connection**: Upgrade
+Host: server.example.com
+Upgrade: websocket
+Connection: Upgrade
 Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
 Sec-WebSocket-Version: 13
 
 Response:
 HTTP/1.1 101 Switching Protocols
-**Upgrade**: websocket
-**Connection**: Upgrade
-**Sec-WebSocket-Accept**: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-After the handshake, the TCP connection remains open and the protocol switches
-to the WebSocket framing protocol. Neither side needs to re-establish the
-connection for subsequent messages.
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+```
+
+After the handshake, the TCP connection remains open and the protocol switches to the WebSocket framing protocol. Neither side needs to re-establish the connection for subsequent messages.
+
+
 
 ### SSE vs WEBSOCKETS
 
 
-**SSE (Server-Sent Events)** — one-way (server → client only), works over standard
-HTTP, automatically reconnects, simple. Good for: notifications, live feed,
-progress updates.
+**SSE (Server-Sent Events)** — one-way (server → client only), works over standard HTTP, automatically reconnects, simple. 
+Good for: notifications, live feed, progress updates.
 
-**WebSockets** — full-duplex (both directions), separate protocol, requires
-explicit reconnection logic. Good for: chat, collaborative tools, gaming.
+**WebSockets** — full-duplex (both directions), separate protocol, requires explicit reconnection logic. Good for: chat, collaborative tools, gaming.
 
 
-**Scaling Websockets**: a WebSocket connection is stateful — it stays connected to
-one server. If you have multiple server instances, a client on server A cannot
-receive a message sent to server B. Solution: use a pub/sub broker (Redis
-pub/sub, Kafka) so any server can broadcast to all connected clients.
+**Scaling Websockets**: a WebSocket connection is stateful — it stays connected to one server. If you have multiple server instances, a client on server A cannot receive a message sent to server B. 
+Solution: use a pub/sub broker (Redis pub/sub, Kafka) so any server can broadcast to all connected clients.
 
 
 ## 2.08 SOAP
@@ -2117,23 +2809,16 @@ pub/sub, Kafka) so any server can broadcast to all connected clients.
 
 ### Overview
 
-SOAP (Simple Object Access Protocol) is an XML-based messaging protocol used
-primarily in enterprise systems and legacy integrations. Unlike REST, which is
-an architectural style, SOAP is a formal protocol with strict specifications.
+SOAP (Simple Object Access Protocol) is an XML-based messaging protocol used primarily in enterprise systems and legacy integrations. Unlike REST, which is an architectural style, SOAP is a formal protocol with strict specifications.
 
 
 ### Key Concepts
 
 
-**WSDL** (Web Services Description Language) : an XML document that describes the
-SOAP service — what operations it offers, what parameters each takes, what data
-types are used, and where the service endpoint is. Equivalent to an OpenAPI
-spec for REST. You generate client code from the WSDL.
+**WSDL (Web Services Description Language)** : an XML document that describes the SOAP service — what operations it offers, what parameters each takes, what data types are used, and where the service endpoint is. Equivalent to an OpenAPI spec for REST. You generate client code from the WSDL.
 
 
-**SOAP Envelope**: every SOAP message wraps its content in an Envelope containing
-an optional Header (for auth tokens, routing info) and a mandatory Body (the
-actual request/response payload).
+**SOAP Envelope**: every SOAP message wraps its content in an Envelope containing an optional Header (for auth tokens, routing info) and a mandatory Body (the actual request/response payload).
 
 
 ```xml
@@ -2174,72 +2859,232 @@ public class SoapClientService {
 }
 ```
 
-When you encounter SOAP in the wild: it is common in banking, insurance,
-government, and healthcare systems where contracts are strict, auditable, and
-change slowly.
+When you encounter SOAP in the wild: it is common in banking, insurance, government, and healthcare systems where contracts are strict, auditable, and change slowly.
 
 
-## 2.09 JSON / XML
+## 2.09 JSON
+
+JSON (JavaScript Object Notation) is a lightweight data format used to represent structured data. It is the standard format for most modern APIs because it is simple, human-readable, and easy to convert into objects in almost any programming language.
+
+At its core, JSON represents data as key-value pairs (objects) and ordered lists (arrays). It is very close to how JavaScript objects work, which is why it is so widely used in web development.
+
+Typical use cases:
+- REST APIs (request and response bodies)
+- Configuration files
+- Data exchange between frontend and backend
+
+Because of its simplicity, JSON is fast to parse and generate, and it integrates naturally with JavaScript-based systems and modern backend frameworks like Spring Boot, Node.js, and Python APIs.
+
+It supports six value types:
+- string
+- number
+- boolean
+- null
+- array (`[]`)
+- object (`{}`)
+
+JSON focuses on simplicity and speed:
+- Lightweight
+- Easy for machines and humans
+- Direct mapping to objects in code
 
 
-JSON (JavaScript Object Notation) is the dominant data format for REST APIs.
-It has six value types: string, number, boolean, null, array ([]), object ({}).
+### JSON in Java (Spring Boot + Jackson)
 
+In Spring Boot, JSON serialization and deserialization is handled automatically by **Jackson**.
 
 ```java
-// Java with Jackson (the Spring Boot default JSON library)
 @RestController
 public class UserController {
-    // Jackson automatically serialises User to JSON on @ResponseBody
+
+    // Java object → JSON (serialization)
     @GetMapping("/users/{id}")
     public User getUser(@PathVariable Long id) {
         return userService.findById(id);
     }
 
-    // Jackson automatically deserialises JSON body to User on @RequestBody
+    // JSON → Java object (deserialization)
     @PostMapping("/users")
     public User createUser(@RequestBody @Valid CreateUserRequest request) {
         return userService.create(request);
     }
 }
+```
 
-// Customise serialisation with Jackson annotations
+
+### Jackson Customization
+
+Jackson allows you to control how Java objects are converted to JSON.
+
+```java
 public class User {
-    @JsonProperty("user_id")        // change the JSON field name
+
+    @JsonProperty("user_id")   // rename field in JSON output
     private Long id;
 
-    @JsonIgnore                      // exclude from serialisation entirely
+    @JsonIgnore                 // exclude field from JSON
     private String password;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")  // custom date format
+    @JsonFormat(pattern = "yyyy-MM-dd")  // format dates
     private LocalDate birthDate;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)  // omit null fields
+    @JsonInclude(JsonInclude.Include.NON_NULL) // omit null values
     private String middleName;
 }
 ```
 
-#### XML PARSING IN JAVA
+
+## 2.10 XML
+
+XML (eXtensible Markup Language) is a more structured and verbose data format designed to store and transport data in a highly flexible way. Unlike JSON, XML uses tags to define both structure and data, similar to HTML.
+
+XML is more expressive than JSON because it supports:
+- Attributes (extra metadata inside tags)
+- Namespaces (to avoid naming conflicts)
+- Mixed content (text + nested elements)
+- Comments inside the document
+
+Because of this flexibility, XML is often used in enterprise and legacy systems where strict structure and extensibility are important.
+
+Typical use cases:
+- SOAP APIs
+- Banking and enterprise systems
+- Legacy integrations
+- Document-heavy data formats
+
+However, XML is more verbose, harder to read, and slower to parse compared to JSON, which is why it is less common in modern web APIs.
+
+
+### XML Parsing in Java
+
+There are multiple ways to parse XML in Java:
+
+#### DOM (Document Object Model)
+- Loads the entire XML into memory as a tree
+- Easy to navigate
+- Slow for large files
+
+#### SAX (Simple API for XML)
+- Event-driven parsing (reads node by node)
+- Very fast and memory efficient
+- Harder to implement
+
+#### JAXB (Java Architecture for XML Binding)
+- Converts Java objects ↔ XML using annotations
+- Common in enterprise applications and SOAP services
+
+
+### JAXB Example
 
 ```java
-DOM — loads entire document into memory as a tree; easy to navigate but slow
-      for large files
-SAX — event-driven streaming; very fast, low memory, but harder to use
-JAXB — Java to XML and back with annotations; Spring WS uses this for SOAP
-
-// JAXB annotations
 @XmlRootElement(name = "user")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class User {
+
     @XmlElement(name = "user-id")
     private Long id;
+
     private String name;
 }
 ```
 
-**JSON vs XML**: JSON is smaller, faster to parse, and natively understood by
-JavaScript. XML is more expressive (namespaces, attributes, comments, mixed
-content) and required for SOAP and many legacy integrations.
+XML focuses on structure and flexibility:
+- More verbose but more expressive
+- Better for complex document structures
+- Strong schema validation (XSD)
+
+
+## 2.11 Network Protocols
+
+Network protocols are standardized rules that define how data is exchanged between devices over a network. They enable different systems (browsers, servers, mobile apps, databases, etc.) to communicate reliably by agreeing on how data is structured, transmitted, and interpreted.
+
+In practice, the internet is built as a layered system of protocols, where each layer has a specific responsibility in the communication process.
+
+
+**Application-layer protocol**: defines how applications communicate and how data is structured and interpreted at the application level—for example, HTTP defines how requests, responses, resources, and headers are formatted and understood in web communication.
+
+**Transport-layer protocol**: focuses on how data is transmitted between two machines over a network, without caring about its meaning. It is responsible for breaking data into packets, ensuring delivery, ordering, and reliability (as in TCP), or enabling fast, low-latency transmission without guarantees (as in UDP).
+
+
+
+### HTTP (HyperText Transfer Protocol)
+
+HTTP is an **application-layer protocol** used for communication between clients (like browsers or mobile apps) and servers.
+
+It defines how requests and responses are structured:
+- **Request methods** (GET, POST, PUT, DELETE, PATCH)
+- **Headers** (metadata like authentication tokens, content type)
+- **Body** (actual data being sent)
+
+
+Key idea: HTTP is **stateless**, meaning every request is independent and does not automatically remember previous requests. Any "state" (like login sessions) must be handled separately (cookies, tokens, etc.).
+
+
+HTTP runs on top of TCP, which ensures reliable delivery.
+
+
+Typical use cases:
+- REST APIs
+- Web applications
+- Fetching or sending data between frontend and backend
+
+
+### TCP (Transmission Control Protocol)
+
+TCP is a **transport-layer protocol** responsible for reliable communication between two machines.
+
+It ensures that data is delivered:
+- In the correct order
+- Without loss
+- Without corruption
+
+
+How it works:
+- Establishes a connection using a **three-way handshake**
+- Splits data into packets
+- Tracks delivery and retransmits missing packets
+
+
+Key idea: TCP is **reliable but slower**, because it guarantees correctness and ordering.
+
+
+Typical use cases:
+- HTTP/HTTPS traffic
+- Databases (PostgreSQL, MySQL connections)
+- File transfers
+- Email systems
+
+
+### UDP (User Datagram Protocol)
+
+UDP is also a **transport-layer protocol**, but it focuses on speed instead of reliability.
+
+It sends packets without establishing a connection and without guaranteeing delivery.
+
+
+Key characteristics:
+- No handshake (connectionless)
+- No guarantee that packets arrive
+- No ordering of packets
+- Very low latency and overhead
+
+
+Key idea: UDP is **fast but unreliable**, making it ideal for real-time systems where speed matters more than perfect accuracy.
+
+
+Typical use cases:
+- Video calls (Zoom, Google Meet, WebRTC)
+- Online gaming
+- Live streaming
+- DNS queries
+
+
+### Key Takeaway
+
+- **HTTP** defines *how applications communicate*
+- **TCP** ensures *reliable delivery of data*
+- **UDP** prioritizes *speed for real-time communication*
+
 
 
 ---
@@ -2548,7 +3393,225 @@ window.addEventListener("resize", () => {
   - Use BufferGeometry (not Geometry) — already the default in Three.js r125+
 
 
-## 3.04 React Native
+## 3.04 Next.js
+
+
+
+### Overview
+
+Next.js is the most popular React framework, developed by Vercel. It solves
+React's biggest limitations: React alone is a client-side library, meaning the
+browser downloads JavaScript, executes it, and then renders the page. This gives
+poor SEO (search engines may not wait for JavaScript) and slow initial load.
+Next.js adds server-side rendering, static generation, file-based routing,
+API routes, image optimisation, and more — on top of React.
+
+
+### The Four Rendering Modes
+
+
+**CSR (Client-Side Rendering)** : browser downloads JavaScript and renders entirely
+in the browser. Standard React. Fast interactions after load but slow first paint
+and poor SEO.
+
+**SSR (Server-Side Rendering)** : HTML is generated on the server per request, sent
+to the browser, then hydrated (React takes over). Fresh data on every request,
+good SEO, but slower than static (server work on every request).
+
+**SSG (Static Site Generation)** : HTML is generated at BUILD time and cached as a
+static file. Served instantly from CDN, perfect SEO, zero server computation per
+request. But data can be stale until the next build.
+
+**ISR (Incremental Static Regeneration)** : like SSG, but pages are regenerated in
+the background after a specified time. You get static performance with
+reasonably fresh data. The best of SSG and SSR for most cases.
+
+### APP ROUTER FILE CONVENTIONS (NEXT.JS 13+)
+
+Next.js 13 introduced the App Router — a significant change. The file structure
+IS the routing structure. Inside the `app/` directory:
+
+```text
+app/
+  layout.tsx       — root layout (wraps all pages; never unmounts)
+  page.tsx         — the "/" route
+  loading.tsx      — automatic Suspense boundary while page loads
+  error.tsx        — automatic error boundary
+  not-found.tsx    — rendered when notFound() is called
+
+  dashboard/
+    layout.tsx     — layout for all routes under /dashboard
+    page.tsx       — "/dashboard" route
+    users/
+      page.tsx     — "/dashboard/users" route
+      [id]/
+        page.tsx   — "/dashboard/users/42" — [id] is a dynamic parameter
+```
+
+### SERVER COMPONENTS vs CLIENT COMPONENTS
+
+This is the central innovation of the App Router. By default, ALL components in
+the app/ directory are React Server Components — they run ONLY on the server
+and send HTML to the browser. No JavaScript for them is shipped to the client.
+
+
+```sql
+// app/users/page.tsx — Server Component (no "use client" needed)
+// This can query the database directly — the code never runs in the browser
+export default async function UsersPage() {
+    const users = await db.query("SELECT * FROM users LIMIT 20");
+    // async/await works directly in the component!
+    return (
+        <ul>
+            {users.map(user => (
+                <li key={user.id}>{user.name}</li>
+            ))}
+        </ul>
+    );
+}
+```
+
+Client Components are needed when you require browser APIs or interactivity:
+
+
+```html
+"use client";   // ← REQUIRED directive — makes this a Client Component
+import { useState, useEffect } from "react";
+
+export function SearchBar({ onSearch }: { onSearch: (q: string) => void }) {
+    const [query, setQuery] = useState("");   // hooks only work in Client Components
+    return (
+        <input
+            value={query}
+            onChange={e => { setQuery(e.target.value); onSearch(e.target.value); }}
+            placeholder="Search..."
+        />
+    );
+}
+```
+
+When to use each:
+
+```text
+Server Component (default) — data fetching, accessing backends/databases, 
+                              large dependencies (keep them off the client bundle)
+Client Component — onClick/onChange, useState, useEffect, browser-only APIs,
+                   real-time updates, complex animations
+```
+
+
+### Route Handlers (api Routes)
+
+
+In Next.js 13+ (App Router), API endpoints are route.ts files:
+
+
+```tsx
+// app/api/users/route.ts — handles /api/users
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const role = searchParams.get("role");
+    const users = await db.findUsers({ role });
+    return NextResponse.json(users);
+}
+
+export async function POST(request: NextRequest) {
+    const body = await request.json();
+    const user = await db.createUser(body);
+    return NextResponse.json(user, { status: 201 });
+}
+
+// app/api/users/[id]/route.ts — dynamic route
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+    const user = await db.findUserById(params.id);
+    if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(user);
+}
+```
+
+
+### Data Fetching and Caching
+
+
+Next.js extends the native fetch() with caching options:
+
+
+```javascript
+// SSG — cached indefinitely, rebuilt only on next deployment
+const data = await fetch("https://api.example.com/posts", {
+    cache: "force-cache"   // default behaviour
+});
+
+// SSR — never cached, always fresh
+const data = await fetch("https://api.example.com/posts", {
+    cache: "no-store"
+});
+
+// ISR — revalidate every 60 seconds
+const data = await fetch("https://api.example.com/posts", {
+    next: { revalidate: 60 }
+});
+
+// On-demand revalidation — trigger from a webhook or API route
+import { revalidatePath } from "next/cache";
+revalidatePath("/posts");   // invalidates the cache for this path
+```
+
+
+### Next/Image and Next/Font
+
+
+
+```python
+import Image from "next/image";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
+// Google Font is downloaded at build time, self-hosted — no runtime network request
+
+// next/image: automatic WebP conversion, lazy loading, prevents layout shift (CLS)
+<Image
+    src="/hero.jpg"
+    alt="Hero image"
+    width={1200}
+    height={600}
+    priority   // preload above-the-fold images
+/>
+
+// External images need the domain whitelisted in next.config.js:
+// images: { domains: ["images.unsplash.com"] }
+```
+
+
+### Metadata and Seo
+
+
+
+```tsx
+// app/layout.tsx — static metadata
+export const metadata: Metadata = {
+    title: { default: "MyApp", template: "%s | MyApp" },
+    description: "My application",
+};
+
+// app/users/[id]/page.tsx — dynamic metadata per page
+export async function generateMetadata({ params }): Promise<Metadata> {
+    const user = await db.findUserById(params.id);
+    return {
+        title: user.name,
+        description: user.bio,
+        openGraph: {
+            title: user.name,
+            images: [user.avatar],
+        },
+    };
+}
+```
+
+
+## 3.05 React Native
 
 
 
@@ -2608,7 +3671,7 @@ functions synchronously, holding references to native objects directly. No
 serialisation. Enables React Native's Fabric renderer and Turbo Modules.
 
 
-## 3.05 Flutter
+## 3.06 Flutter
 
 
 
@@ -2693,7 +3756,7 @@ Widget build(BuildContext context) {
 
 
 
-## 3.06 Kotlin
+## 3.07 Kotlin
 
 
 
@@ -2772,7 +3835,7 @@ Dispatchers.Default — CPU-intensive work (bounded pool, one per CPU core)
 ```
 
 
-## 3.07 Swift
+## 3.08 Swift
 
 
 
@@ -2876,7 +3939,7 @@ func fetchUser(id: Int) async throws -> User {
 
 
 
-## 3.08 Vite
+## 3.09 Vite
 
 
 
@@ -2927,7 +3990,7 @@ export default defineConfig({
 
 
 
-## 3.09 Tailwind CSS
+## 3.10 Tailwind CSS
 
 
 
@@ -2979,7 +4042,421 @@ The @layer and @apply directives let you extract repeated patterns into reusable
 classes without losing the utility-first approach.
 ```
 
-## 3.10 SPA (Single-Page Applications)
+## 3.11 SCSS
+
+
+
+### Overview
+
+SCSS (Sassy CSS) is a CSS preprocessor — it adds programming features (variables,
+functions, nesting, loops) on top of CSS and compiles down to regular CSS that the
+browser understands. SCSS is the most widely used syntax of Sass (Syntactically
+Awesome Style Sheets). Every valid CSS file is also valid SCSS, making migration
+easy. SCSS is not a new language: it compiles to CSS and adds zero runtime overhead.
+
+Why use SCSS over plain CSS:
+  - Variables with logic and type safety (before CSS custom properties existed)
+  - Nesting eliminates repetitive selectors
+  - Mixins are reusable chunks of CSS with parameters (like functions)
+  - Partials let you split your styles into multiple files and import them
+  - Built-in functions: darken(), lighten(), mix(), rgba()
+  - Loops (@for, @each, @while) generate repetitive utility classes automatically
+
+
+### Variables — SCSS vs CSS CUSTOM PROPERTIES
+
+Both SCSS and modern CSS have variables, but they work very differently:
+
+SCSS variables ($name):
+- Resolved at compile time — the final CSS has the value baked in, not a variable
+- Cannot be changed at runtime (no JavaScript access, no media query override)
+- Can be used in calculations and logic during compilation
+- Scoped to the block they're declared in
+
+CSS custom properties (--name):
+- Resolved at runtime — the browser evaluates them on the fly
+- Can be changed with JavaScript: document.body.style.setProperty('--color', 'red')
+- Can be overridden inside media queries (great for dark mode)
+- Inherited through the DOM: a child element inherits the parent's --variable
+
+
+```scss
+// SCSS variable — compiled away, only the value remains in the output
+$primary: #E84393;
+$spacing-unit: 8px;
+
+.button {
+  background: $primary;
+  padding: $spacing-unit * 2;   // arithmetic: 16px in output
+}
+```
+
+```css
+/* CSS custom property — lives in the browser, dynamic */
+:root {
+  --primary: #E84393;
+  --spacing-unit: 8px;
+}
+
+.button {
+  background: var(--primary);
+  padding: calc(var(--spacing-unit) * 2);
+}
+
+/* Can be overridden at runtime or in media queries */
+@media (prefers-color-scheme: dark) {
+  :root { --primary: #FF79C6; }
+}
+```
+
+Rule of thumb: use CSS custom properties for theme tokens and values that need
+to change at runtime; use SCSS variables for build-time constants like breakpoints
+or to feed into SCSS functions and loops.
+
+
+### Nesting
+
+
+SCSS lets you nest selectors inside each other, mirroring the HTML structure.
+This eliminates repetition and keeps related styles together. The & symbol
+refers to the parent selector and is used for pseudo-classes, modifiers, and
+BEM naming.
+
+
+```scss
+// SCSS — written once, clear hierarchy
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+
+  &:hover {              // compiles to .card:hover
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+
+  &--featured {          // BEM modifier: compiles to .card--featured
+    border: 2px solid $primary;
+  }
+
+  .card__title {         // BEM element: compiles to .card .card__title
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .card__body {
+    color: #555;
+    line-height: 1.6;
+  }
+}
+```
+
+```css
+/* CSS equivalent — repetitive selectors */
+.card { background: white; border-radius: 12px; padding: 24px; }
+.card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.card--featured { border: 2px solid #E84393; }
+.card .card__title { font-size: 1.5rem; font-weight: 700; }
+.card .card__body { color: #555; line-height: 1.6; }
+```
+
+Avoid nesting more than 3 levels deep — it generates overly specific selectors
+that are hard to override and slow for the browser to match.
+
+
+### Mixins** — REUSABLE STYLE BLOCKS WITH PARAMETERS
+
+A mixin is a named block of CSS declarations that can be included anywhere with
+@include. Mixins can accept parameters, making them far more powerful than
+copy-pasting CSS. They are the SCSS equivalent of a function that outputs CSS.
+
+
+```scss
+// Define a mixin — like declaring a function
+@mixin flex-center($direction: row) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: $direction;
+}
+
+@mixin responsive($breakpoint) {
+  @if $breakpoint == mobile {
+    @media (max-width: 768px) { @content; }
+  } @else if $breakpoint == tablet {
+    @media (max-width: 1024px) { @content; }
+  }
+}
+
+// Use the mixin with @include
+.hero {
+  @include flex-center(column);
+  height: 100vh;
+
+  @include responsive(mobile) {
+    height: auto;
+    padding: 40px 16px;
+  }
+}
+
+.modal {
+  @include flex-center;          // uses default: row
+}
+```
+
+```css
+/* Compiled CSS output */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100vh;
+}
+@media (max-width: 768px) {
+  .hero { height: auto; padding: 40px 16px; }
+}
+.modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+}
+```
+
+
+### Extend and Inheritance
+
+
+@extend lets one selector inherit all the styles of another. Useful for shared
+base styles (e.g. all buttons share a base, then each variant extends it).
+Use %placeholder selectors (silent classes) to avoid generating unused CSS.
+
+
+```scss
+// %placeholder — never compiled to CSS on its own, only when extended
+%button-base {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  @extend %button-base;
+  background: $primary;
+  color: white;
+}
+
+.btn-secondary {
+  @extend %button-base;
+  background: transparent;
+  border: 2px solid $primary;
+  color: $primary;
+}
+```
+
+```css
+/* Compiled CSS — grouped selector (efficient) */
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-primary { background: #E84393; color: white; }
+.btn-secondary { background: transparent; border: 2px solid #E84393; color: #E84393; }
+```
+
+**Mixin vs Extend:**
+  - Use @mixin when you need parameters or when the same styles appear in many unrelated components — mixins copy the CSS into each selector.
+  - se @extend when styles are shared between closely related selectors — extend groups selectors together, which is more efficient but less flexible.
+
+### Partials and @use
+
+
+Partials are SCSS files prefixed with _ (e.g. _variables.scss). They are not
+compiled to CSS on their own — they must be imported into another file. This
+lets you split your styles into logical modules.
+
+
+```scss
+// _variables.scss
+$primary: #E84393;
+$font-stack: 'Inter', sans-serif;
+$breakpoint-md: 768px;
+
+// _mixins.scss
+@use 'variables' as v;
+@mixin respond($bp) { ... }
+
+// main.scss — compiled to main.css
+@use 'variables' as v;
+@use 'mixins' as m;
+@use 'components/card';
+@use 'components/button';
+
+body {
+  font-family: v.$font-stack;
+  color: v.$primary;
+}
+```
+
+#### @use (modern) vs @import (legacy)
+
+```text
+@import — global scope, everything pollutes the same namespace, deprecated
+@use    — namespaced (v.$primary), no global leaks, loads each file only once
+```
+
+### Built-in Functions and Loops
+
+
+SCSS ships with colour functions and control flow that let you generate CSS
+programmatically — impossible in plain CSS.
+
+
+```scss
+$base: #E84393;
+
+// Colour functions
+.dark  { background: darken($base, 15%); }    // #b3006a
+.light { background: lighten($base, 20%); }   // #f589bf
+.fade  { background: rgba($base, 0.2); }
+
+// @each loop — generate utility classes automatically
+$sizes: (sm: 4px, md: 8px, lg: 16px, xl: 32px);
+
+@each $name, $value in $sizes {
+  .p-#{$name} { padding: $value; }
+  .m-#{$name} { margin: $value; }
+}
+
+// Compiles to:
+// .p-sm { padding: 4px; }   .m-sm { margin: 4px; }
+// .p-md { padding: 8px; }   .m-md { margin: 8px; }
+// .p-lg { padding: 16px; }  .m-lg { margin: 16px; }
+// .p-xl { padding: 32px; }  .m-xl { margin: 32px; }
+
+// @for loop
+@for $i from 1 through 12 {
+  .col-#{$i} { width: percentage($i / 12); }
+}
+```
+
+### SCSS vs CSS — WHEN TO USE EACH
+
+Use SCSS when:
+  - Working on a large codebase with many components (mixins and partials pay off)
+  - Building a design system or component library
+  - You need to generate many similar utility classes programmatically
+  - The project already uses a build step (Webpack, Vite, Angular CLI)
+  - Team members are already familiar with SCSS
+
+Use plain CSS when:
+  - Building small projects or prototypes where a build step adds overhead
+  - Using a CSS framework like Tailwind (which already generates utility classes)
+  - You need runtime theming — CSS custom properties change dynamically, SCSS
+variables cannot
+• Working in a CSS-in-JS context (Styled Components, Emotion) where JavaScript
+already provides variables and logic
+Key interview facts:
+  - SCSS compiles to CSS — browsers never see SCSS, zero runtime overhead
+  - & is the parent selector reference: .card { &:hover {} } → .card:hover {}
+  - %placeholder selectors are invisible until extended — they prevent dead CSS
+  - @use replaced @import (deprecated in Dart Sass 1.23) — it's namespaced
+  - darken() and lighten() are deprecated in new Sass; use color.adjust() instead
+  - SCSS is a strict superset of CSS — any valid CSS file can be renamed .scss
+
+
+#### Appendix — Quick Interview Reference
+
+**Languages**
+
+```text
+Java:       OOP (4 pillars), HashMap internals, Optional, Streams API, @Transactional
+TypeScript: interface vs type, generics, utility types (Partial/Pick/Omit), narrowing
+JavaScript: event loop, microtasks vs macrotasks, closures, this, async/await
+Dart:       null safety, final vs const, Future vs Stream, isolates
+C:          pointers, malloc/free, stack vs heap, buffer overflow
+```
+
+**Web & APIs**
+
+```text
+HTML:         semantic elements, DOM, defer vs async, aria accessibility
+CSS:          box model, specificity, flexbox vs grid, custom properties
+Spring Boot:  IoC/DI, bean scopes, @Transactional, N+1 problem, Spring Data JPA
+Node.js:      event loop phases, process.nextTick, streams, middleware pattern
+REST APIs:    HTTP methods + idempotency, status codes (401 vs 403), naming
+Microservices: circuit breaker (3 states), saga pattern, CAP theorem
+AuthN/AuthZ:  JWT structure, OAuth2 flows, RBAC vs ABAC, bcrypt, httpOnly cookies
+WebSockets:   upgrade handshake, SSE vs WS, scaling with Redis pub/sub
+```
+
+**Frameworks & Mobile**
+
+```text
+React:        virtual DOM, hooks (all), keys, reconciliation, memo/callback
+Angular:      RxJS operators (switchMap vs mergeMap!), OnPush CD, async pipe
+React Native: FlatList vs ScrollView, bridge vs JSI, StyleSheet.create
+Flutter:      StatefulWidget + setState, BuildContext, ListView.builder
+Kotlin:       null safety, coroutines, Dispatchers, data classes
+Swift:        optionals (if let, guard let), @State/@StateObject, async/await
+```
+
+**Cloud & DevOps**
+
+```text
+Azure:       IaaS vs PaaS vs FaaS, App Service slots, Functions triggers, Key Vault, Managed Identity
+GCP:         Cloud Run, BigQuery (analytics, not OLTP), Pub/Sub at-least-once delivery
+Firebase:    Firestore data model, security rules, onSnapshot cleanup
+Docker:      image vs container, layer caching, multi-stage build, CMD vs ENTRYPOINT
+Kubernetes:  Pod/Deployment/Service/Ingress, requests vs limits, liveness vs readiness
+CI/CD:       pipeline stages, blue-green vs canary, feature flags
+Maven:       POM, GAV coordinates, dependency scopes, build lifecycle, BOM
+```
+
+**Databases**
+
+```text
+MySQL:      ACID, InnoDB, B-tree index, composite index order, EXPLAIN, utf8mb4
+MongoDB:    embed vs reference, aggregation pipeline, $lookup, TTL index
+SQL:        JOINs, window functions (RANK/LAG/ROW_NUMBER), CTEs, offset vs keyset
+Data Model: normalization (3NF), soft delete, audit columns, price snapshot
+```
+
+**Quality & Process**
+
+```text
+JUnit 5:     AAA pattern, @Nested, @ParameterizedTest, @WebMvcTest, @DataJpaTest
+Mockito:     mock vs spy, when/thenReturn, verify, ArgumentCaptor
+SonarQube:   bug vs vulnerability vs hotspot vs smell, quality gate, coverage
+Testing:     testing pyramid, unit vs integration, Testcontainers
+Debugging:   read full stack trace, breakpoints (conditional), structured logging
+Code Review: blocking vs nit, feedback on code not on the person
+Agile/Scrum: PO + SM + Team, backlog + sprint backlog + increment, velocity ≠ productivity
+```
+
+**Architecture & Production**
+
+```text
+SDLC:         7 phases, functional vs non-functional requirements
+Architecture: SOLID (all 5), design patterns, CAP theorem, system design framework
+Security:     OWASP Top 10, SQL injection fix, JWT storage, CSP header
+Performance:  measure first, cache strategies, Core Web Vitals (LCP/INP/CLS)
+Production:   3 pillars of observability, SLI/SLO/SLA/error budget, blameless post-mortem
+```
+
+
+## 3.12 SPA (Single-Page Applications)
 
 
 
@@ -3031,7 +4508,7 @@ component. Without this config, a refresh on any non-root URL gives a 404.
 ```
 
 
-## 3.11 Responsive UI
+## 3.13 Responsive UI
 
 
 
@@ -3090,7 +4567,7 @@ CLS (Cumulative Layout Shift) — how much content unexpectedly shifts around
 
 
 
-## 3.12 Cross-Platform Development
+## 3.14 Cross-Platform Development
 
 
 
@@ -3709,6 +5186,699 @@ Bitbucket-specific features:
   - Smart Mirroring — sync repositories across multiple regions for global teams
 
 
+## 4.10 Maven
+
+
+Maven is a build automation and project management tool for Java projects,
+maintained by the Apache Software Foundation. It answers the question: how do
+you compile, test, package, and deploy a Java application in a repeatable,
+standardised way? Before build tools like Maven existed, developers had to
+manually manage where JAR files lived, remember the exact javac commands,
+and share zip archives of dependencies. Maven replaced all of that with a
+declarative model: you describe WHAT your project is and WHAT it depends on,
+and Maven figures out HOW to build it.
+
+### THE POM FILE — Project Object Model
+
+Every Maven project is defined by a pom.xml file at its root. POM stands for
+Project Object Model. It is an XML file that acts as the single source of
+truth for your project's identity, dependencies, plugins, and build behaviour.
+
+A minimal pom.xml looks like this:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <!-- Every POM must declare this; 4.0.0 is the only supported version -->
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- GAV coordinates — the unique identity of THIS project -->
+  <groupId>com.beatriz</groupId>       <!-- reverse-domain, like a package -->
+  <artifactId>my-app</artifactId>       <!-- the project name -->
+  <version>1.0.0-SNAPSHOT</version>     <!-- SNAPSHOT = in-development -->
+  <packaging>jar</packaging>            <!-- jar, war, pom (default: jar) -->
+
+  <properties>
+    <!-- Define variables reusable throughout the POM -->
+    <java.version>17</java.version>
+    <spring.boot.version>3.2.0</spring.boot.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <!-- Each dependency is identified by its own GAV coordinates -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <version>${spring.boot.version}</version>
+      <!-- scope not set → defaults to "compile" (available everywhere) -->
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.0</version>
+      <scope>test</scope>  <!-- only on the test classpath, not in final JAR -->
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.30</version>
+      <scope>provided</scope>  <!-- needed at compile time, not at runtime -->
+    </dependency>
+  </dependencies>
+
+</project>
+```
+
+The three coordinates — groupId, artifactId, version — are called GAV
+coordinates (or simply "coordinates"). They uniquely identify any artifact
+in the Maven ecosystem. When you declare a dependency, Maven uses these to
+look up the artifact in a repository.
+
+### DEPENDENCY SCOPES
+
+Scope controls when a dependency is available on the classpath:
+
+• compile  — (default) available in main code, tests, and bundled in the
+             final artifact. Use for everything your app needs at runtime.
+
+• test     — only available when compiling and running tests. JUnit, Mockito,
+             AssertJ all belong here. They are NOT included in the JAR/WAR
+             you ship to production.
+
+• provided — available at compile time but NOT bundled, because the runtime
+             environment provides it. Lombok (annotation processor), Servlet
+             API (provided by Tomcat), and Jakarta EE APIs are common examples.
+
+• runtime  — NOT needed at compile time, but needed at runtime. JDBC drivers
+             are the classic example: you compile against java.sql.* (standard
+             interfaces), but at runtime you need the specific driver JAR.
+
+• import   — only valid in <dependencyManagement>; used to import a BOM
+             (Bill of Materials) to align dependency versions without
+             declaring a parent POM.
+
+### HOW MAVEN RESOLVES DEPENDENCIES — THE LOCAL REPOSITORY
+
+When you run a Maven build for the first time, Maven checks your local
+repository (by default ~/.m2/repository/) for each dependency. If the JAR is
+not there, Maven downloads it from a remote repository (by default Maven
+Central at search.maven.org) and caches it locally. Every subsequent build
+uses the local cache, so you only download once.
+
+The directory structure in the local repo mirrors the GAV coordinates:
+  ~/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.2.0/
+    spring-boot-starter-web-3.2.0.jar
+    spring-boot-starter-web-3.2.0.pom   ← Maven reads this to get transitive deps
+
+This is how transitive dependencies work: Maven reads the POM of every
+dependency, finds THEIR dependencies, and downloads those too. If spring-
+boot-starter-web depends on jackson-databind, you don't need to declare
+jackson-databind yourself — Maven resolves the whole tree.
+
+### THE BUILD LIFECYCLE
+
+Maven's default build lifecycle is a fixed, ordered sequence of phases. When
+you invoke a phase, all preceding phases run first:
+
+  validate      → verify the POM is valid and all info is available
+  compile       → compile src/main/java into target/classes/
+  test-compile  → compile src/test/java into target/test-classes/
+  test          → run unit tests (Surefire plugin)
+  package       → create the JAR/WAR in target/
+  verify        → run integration tests (Failsafe plugin)
+  install       → copy the artifact into ~/.m2/repository/
+  deploy        → push the artifact to a remote repository (Nexus, Artifactory)
+
+Common commands:
+
+```bash
+mvn compile          # compile main sources only
+mvn test             # compile + run all unit tests
+mvn package          # compile + test + package into JAR/WAR
+mvn package -DskipTests   # package WITHOUT running tests (useful in CI when
+                           # tests run as a separate step)
+mvn install          # package + put in local .m2 cache (useful when
+                      # project-A depends on project-B locally)
+mvn clean package    # delete target/ first, then build fresh
+                      # always use "clean" in CI to avoid stale artifacts
+mvn dependency:tree  # print the full dependency tree, great for diagnosing
+                      # version conflicts
+mvn dependency:resolve  # force Maven to download all deps without building
+```
+
+### PARENT POM AND INHERITANCE
+
+A child POM can inherit from a parent POM. The most common parent is the
+Spring Boot parent, which pre-configures dozens of plugin versions, default
+properties, and dependency versions so you don't have to manage them yourself.
+
+```xml
+<parent>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-parent</artifactId>
+  <version>3.2.0</version>
+  <relativePath/> <!-- tells Maven to fetch from repo, not local filesystem -->
+</parent>
+
+<!-- Because of the parent, you no longer need to specify versions for
+     Spring Boot starters — they are managed by the parent's BOM -->
+<dependencies>
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+    <!-- version omitted — inherited from parent -->
+  </dependency>
+</dependencies>
+```
+
+### DEPENDENCY MANAGEMENT AND BOMS
+
+A Bill of Materials (BOM) is a special POM that declares the versions of a
+set of related dependencies, without actually pulling them in. You import a
+BOM to get consistent, tested version combinations.
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <!-- Import the Spring Cloud BOM to get aligned versions for all
+         Spring Cloud modules without specifying versions individually -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-dependencies</artifactId>
+      <version>2023.0.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<dependencies>
+  <!-- Version is managed by the BOM above -->
+  <dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+  </dependency>
+</dependencies>
+```
+
+### MULTI-MODULE PROJECTS
+
+Large projects split into modules: separate Maven projects each with their
+own pom.xml, coordinated by a root "aggregator" POM. This is the standard
+layout for microservice mono-repos or layered architectures.
+
+```
+my-system/
+  pom.xml              ← aggregator (packaging=pom)
+  domain/
+    pom.xml
+    src/main/java/...
+  api/
+    pom.xml
+    src/main/java/...
+  service/
+    pom.xml
+    src/main/java/...
+```
+
+Root aggregator pom.xml:
+
+```xml
+<groupId>com.beatriz</groupId>
+<artifactId>my-system</artifactId>
+<version>1.0.0-SNAPSHOT</version>
+<packaging>pom</packaging>   <!-- THIS is what makes it an aggregator -->
+
+<modules>
+  <module>domain</module>    <!-- refers to the subdirectory name -->
+  <module>api</module>
+  <module>service</module>
+</modules>
+```
+
+Running `mvn install` from the root builds all modules in the correct order.
+One module can depend on another:
+
+```xml
+<!-- In service/pom.xml -->
+<dependency>
+  <groupId>com.beatriz</groupId>
+  <artifactId>domain</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+</dependency>
+```
+
+### PLUGINS
+
+Maven itself does very little — almost all build work is done by plugins.
+The Spring Boot Maven plugin is the most common one in the Spring ecosystem:
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-maven-plugin</artifactId>
+      <!-- Creates an executable "fat JAR" that bundles all dependencies -->
+      <!-- Run with: java -jar target/my-app-1.0.0.jar -->
+      <executions>
+        <execution>
+          <goals>
+            <goal>repackage</goal>  <!-- runs during the package phase -->
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+
+    <plugin>
+      <!-- Controls how unit tests are discovered and run -->
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-surefire-plugin</artifactId>
+      <version>3.1.2</version>
+      <configuration>
+        <!-- Include JUnit 5 tests (required for older Surefire versions) -->
+        <includes>
+          <include>**/*Test.java</include>
+          <include>**/*Tests.java</include>
+        </includes>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
+### MAVEN vs GRADLE
+
+Maven uses XML (pom.xml) and a strict, opinionated lifecycle. Gradle uses
+Groovy or Kotlin DSL (build.gradle / build.gradle.kts) and is more flexible
+and faster (incremental builds, build cache). Spring Boot projects work with
+both. In interviews, knowing Maven is expected for Java/Spring roles; Gradle
+is more common in Android (where it is mandatory) and newer Spring projects.
+
+Key Maven conventions to memorise:
+
+```text
+• src/main/java/   → production source code
+• src/main/resources/ → properties, YAML, static files
+• src/test/java/   → test source code
+• target/          → all build output (always in .gitignore)
+• ~/.m2/repository/ → local dependency cache
+```
+
+
+## 4.11 YAML
+
+
+YAML (YAML Ain't Markup Language — a recursive acronym) is a human-readable
+data serialisation format. It is not a programming language and has no
+executable logic. Its only job is to represent structured data (strings,
+numbers, booleans, lists, maps) in a format that humans can read and write
+comfortably. YAML is the dominant configuration format in modern software:
+Kubernetes manifests, Docker Compose files, CI/CD pipelines (GitHub Actions,
+GitLab CI), Spring Boot's application.yml, and Ansible playbooks are all YAML.
+
+### YAML vs JSON vs XML
+
+All three formats represent the same kinds of data. The differences are:
+
+JSON — machine-friendly, no comments, strict quoting rules, verbose brackets.
+       Best for APIs and data exchange between programs.
+
+XML  — very verbose, supports attributes and namespaces, required for SOAP and
+       many enterprise standards.
+
+YAML — human-friendly, uses indentation instead of brackets, supports comments
+       (#), optional quotes. Best for configuration files that humans edit.
+
+The same data in all three:
+
+JSON:
+```json
+{
+  "server": {
+    "port": 8080,
+    "host": "localhost"
+  },
+  "features": ["auth", "logging"],
+  "debug": true
+}
+```
+
+YAML:
+```yaml
+server:
+  port: 8080
+  host: localhost
+features:
+  - auth
+  - logging
+debug: true
+# This comment is valid YAML; JSON has no comment syntax
+```
+
+XML:
+```xml
+<config>
+  <server>
+    <port>8080</port>
+    <host>localhost</host>
+  </server>
+  <features>
+    <feature>auth</feature>
+    <feature>logging</feature>
+  </features>
+  <debug>true</debug>
+</config>
+```
+
+YAML is clearly the most readable for humans. This is why it won in the
+configuration space.
+
+### CORE SYNTAX RULES
+
+1. INDENTATION IS STRUCTURE. YAML uses spaces (NEVER tabs) to define nesting.
+   Two-space indentation is the universal convention.
+
+2. KEY-VALUE PAIRS (mappings):
+   key: value
+   Colons must be followed by a space. "key:value" is NOT valid.
+
+3. LISTS (sequences):
+   items:
+     - first
+     - second
+     - third
+
+4. SCALARS (values):
+   - Strings: can be unquoted if they don't contain special chars
+   - Numbers: 42, 3.14 (no quotes)
+   - Booleans: true / false (also yes/no, on/off — avoid these ambiguous forms)
+   - Null: null or ~
+   - Dates: 2024-01-15 (ISO 8601)
+
+5. COMMENTS: # everything after this is ignored
+
+6. MULTILINE STRINGS:
+   Two operators:
+   • | (literal block) — preserves newlines exactly
+   • > (folded block)  — folds newlines into spaces (good for long sentences)
+
+```yaml
+# Literal block: newlines preserved
+script: |
+  #!/bin/bash
+  echo "Hello"
+  echo "World"
+
+# Folded block: newlines become spaces
+description: >
+  This is a long description
+  that wraps across multiple lines
+  but will be read as one paragraph.
+```
+
+### SPRING BOOT — application.yml
+
+Spring Boot supports both application.properties and application.yml. YAML
+is preferred when there is nesting, because it avoids repetitive prefixes.
+
+Properties format (repetitive):
+```
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=root
+spring.datasource.password=secret
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+YAML format (hierarchical, cleaner):
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mydb
+    username: root
+    password: ${DB_PASSWORD}      # reference an environment variable
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+logging:
+  level:
+    root: INFO
+    com.beatriz: DEBUG             # set DEBUG only for your own packages
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000        # 24 hours in milliseconds
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - https://myapp.com
+```
+
+Spring profiles in YAML — all profiles in one file, separated by ---:
+```yaml
+spring:
+  profiles:
+    active: dev   # default profile
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:testdb   # H2 in-memory for local dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://prod-db:3306/mydb
+```
+
+### DOCKER COMPOSE
+
+Docker Compose uses YAML to define multi-container applications:
+
+```yaml
+# docker-compose.yml
+version: "3.9"
+
+services:
+  app:
+    build: .                          # build from Dockerfile in current dir
+    ports:
+      - "8080:8080"                   # host:container port mapping
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://db:3306/mydb
+    depends_on:
+      db:
+        condition: service_healthy    # wait until db passes health check
+    networks:
+      - backend
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mydb
+    volumes:
+      - db-data:/var/lib/mysql        # named volume for persistence
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  db-data:                            # declare the named volume
+
+networks:
+  backend:
+    driver: bridge
+```
+
+### KUBERNETES MANIFESTS
+
+Kubernetes uses YAML for every resource: Deployments, Services, ConfigMaps,
+Secrets, Ingresses. Each manifest has four required top-level fields:
+
+```yaml
+# Deployment — manages a set of identical Pod replicas
+apiVersion: apps/v1          # which Kubernetes API group handles this
+kind: Deployment             # the type of resource
+metadata:
+  name: my-app
+  labels:
+    app: my-app
+
+spec:
+
+  replicas: 3                # run 3 identical copies
+  selector:
+    matchLabels:
+      app: my-app            # this Deployment manages Pods with this label
+  template:                  # template for each Pod
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: my-app:1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:          # read from a Kubernetes Secret
+                  name: db-secret
+                  key: password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"             # 250 millicores = 0.25 CPU
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+# Service — stable network endpoint for the Deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app                        # routes traffic to these Pods
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP                      # internal only (use LoadBalancer for external)
+
+---
+# ConfigMap — non-sensitive configuration as key-value pairs
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-app-config
+data:
+
+  LOG_LEVEL: "INFO"
+  APP_ENV: "production"
+```
+
+### GITHUB ACTIONS WORKFLOW
+
+GitHub Actions CI/CD pipelines are defined in .github/workflows/*.yml:
+
+```yaml
+name: CI Pipeline
+
+on:                          # triggers
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+
+      - name: Build and test
+        run: mvn clean verify
+
+      - name: Upload test results
+        if: always()         # run even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/surefire-reports/
+```
+
+### COMMON PITFALLS
+
+1. TABS vs SPACES: YAML strictly forbids tab characters for indentation.
+   Editors set to use tabs will produce a ParseException. Always configure
+   your editor to use spaces for .yml/.yaml files.
+
+2. INCONSISTENT INDENTATION: Every level must be indented by the same number
+   of spaces (2 is standard). Mixing 2-space and 4-space breaks parsing.
+
+3. UNQUOTED SPECIAL VALUES:
+   • "yes", "no", "true", "false", "null", "~" are reserved. If a value
+     looks like one of these but should be a string, quote it: "yes"
+   • Colons in values must be quoted: message: "Error: file not found"
+   • Values starting with { or [ look like JSON and may confuse parsers.
+     Quote them: tag: "[feature]"
+
+4. THE NORWAY PROBLEM: Country codes "NO" and "SE" were historically parsed
+   as booleans (no=false, se is fine). Modern YAML 1.2 fixed this, but some
+   parsers still use YAML 1.1 rules. Quote country codes as strings: "NO"
+
+5. ANCHORS AND ALIASES (advanced but useful):
+   YAML allows you to define a block once and reuse it:
+   ```yaml
+   defaults: &defaults       # & defines the anchor named "defaults"
+     retries: 3
+     timeout: 30s
+
+   development:
+     <<: *defaults           # << merges the anchor; * references it
+     host: localhost
+
+   production:
+     <<: *defaults
+     host: prod.example.com
+   retries: 5              # override the merged value
+   ```
+   This avoids repeating configuration across environments.
+
+Key YAML facts for interviews:
+• YAML is a superset of JSON — all valid JSON is valid YAML
+• Indentation = structure (spaces only, never tabs)
+• --- separates multiple documents in one file (used in Kubernetes and
+  Spring profiles to combine configs)
+• Environment variable substitution ($VAR or ${VAR}) is NOT part of YAML
+  itself — it is handled by the consuming tool (Spring Boot, Docker, etc.)
+
+
 ---
 
 # Part 5 — Databases
@@ -4159,6 +6329,523 @@ CREATE TABLE student_courses (
     PRIMARY KEY (student_id, course_id)
 );
 ```
+
+
+## 5.05 PostgreSQL
+
+
+
+### Overview
+
+PostgreSQL is the most advanced open-source relational database management system.
+Frequently described as "the most feature-rich open-source database", it supports
+advanced data types (arrays, JSONB, hstore, geometric types), full-text search,
+window functions, CTEs, foreign data wrappers, and a powerful extension ecosystem
+(PostGIS for geospatial, pgvector for AI embeddings, pg_trgm for fuzzy search).
+
+### JSONB vs JSON
+
+PostgreSQL has two JSON types — almost always prefer JSONB:
+
+
+```sql
+json:  stores JSON as text, preserving exact whitespace and key order.
+       Re-parses on every access. Not indexable. Rarely useful.
+
+jsonb: stores JSON in optimised binary format — indexable, much faster to
+       query and filter. Key order is not preserved (deduplicates keys).
+       Always use this.
+
+CREATE TABLE events (
+    id      BIGSERIAL PRIMARY KEY,
+    type    TEXT NOT NULL,
+    payload JSONB NOT NULL,    -- use jsonb, not json
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert a JSON document
+INSERT INTO events (type, payload) VALUES (
+    'user_signup',
+    '{"userId": 42, "email": "b@example.com", "source": "organic"}'
+);
+
+-- Query JSON fields
+SELECT payload->>'email' AS email FROM events;     -- ->> returns TEXT
+SELECT payload->'userId' AS user_id FROM events;   -- -> returns JSONB
+
+-- Filter by nested JSON value
+SELECT * FROM events WHERE payload->>'source' = 'organic';
+SELECT * FROM events WHERE payload @> '{"source": "organic"}';
+-- @> means "contains" — checks if left JSONB contains the right JSONB
+
+-- Check if a key exists
+SELECT * FROM events WHERE payload ? 'email';
+
+-- Full-text search within JSONB
+SELECT * FROM events WHERE payload @@ '$.userId > 10'::jsonpath;
+
+-- GIN index for efficient JSONB queries
+CREATE INDEX idx_events_payload ON events USING GIN (payload);
+-- GIN index makes @>, ?, and @@ operators very fast
+```
+
+
+### Native Arrays
+
+
+PostgreSQL supports native arrays — useful when data is simple and does not
+need its own table (tags, roles, phone numbers):
+
+
+```sql
+CREATE TABLE articles (
+    id     BIGSERIAL PRIMARY KEY,
+    title  TEXT NOT NULL,
+    tags   TEXT[] NOT NULL DEFAULT '{}',   -- array of text
+    scores INTEGER[]
+);
+
+INSERT INTO articles (title, tags) VALUES
+    ('PostgreSQL Guide', ARRAY['database', 'sql', 'postgres']);
+
+-- Search articles that HAVE a specific tag
+SELECT * FROM articles WHERE 'database' = ANY(tags);
+
+-- Search articles with ANY of these tags
+SELECT * FROM articles WHERE tags && ARRAY['sql', 'nosql'];
+
+-- GIN index on array column
+CREATE INDEX idx_articles_tags ON articles USING GIN (tags);
+
+-- Unnest — expand array to rows (useful in queries and aggregations)
+SELECT title, unnest(tags) AS tag FROM articles;
+```
+
+
+### Upsert with on Conflict
+
+
+
+```sql
+-- Update if email already exists, insert if it doesn't
+INSERT INTO users (email, name, login_count)
+VALUES ('b@example.com', 'Beatriz', 1)
+ON CONFLICT (email) DO UPDATE
+    SET name = EXCLUDED.name,
+        login_count = users.login_count + 1,
+        updated_at = NOW();
+-- EXCLUDED refers to the row that was attempted to be inserted
+
+-- Page view counter — increment if exists, create if not
+INSERT INTO page_views (page_slug, views) VALUES ('home', 1)
+ON CONFLICT (page_slug) DO UPDATE SET views = page_views.views + 1;
+
+-- ON CONFLICT DO NOTHING — ignore if already exists (idempotent insert)
+INSERT INTO user_roles (user_id, role) VALUES (42, 'admin')
+ON CONFLICT DO NOTHING;
+```
+
+
+#### Returning Clause
+get the inserted/updated row back without a second query
+
+
+```sql
+-- Get the generated ID after INSERT
+INSERT INTO users (name, email) VALUES ('Beatriz', 'b@example.com')
+RETURNING id, created_at;
+
+-- Get updated values after UPDATE
+UPDATE users SET last_login = NOW() WHERE id = 42
+RETURNING id, last_login;
+```
+
+
+### Advanced Index Types
+
+
+PostgreSQL offers more index types than most databases:
+
+B-TREE (default): balanced tree. Good for equality and range queries on
+comparable types (numbers, dates, text).
+**GIN** (Generalised Inverted Index) : for composite values — arrays, JSONB,
+full-text search. Stores each element of the collection separately, so
+"does this array contain 'x'?" is fast. Slow to build, fast to query.
+**GiST** (Generalised Search Tree) : extensible index for geometric types, ranges,
+full-text search, and other non-scalar data. Used by PostGIS for spatial queries.
+**BRIN** (Block Range INdex) : only stores min/max per block of pages — tiny index.
+
+```text
+Extremely fast to build and very small. Best for large, naturally ordered tables
+(time-series data where rows are inserted in time order). Not good for random access.
+
+-- Partial index — only index rows matching a condition
+CREATE INDEX idx_active_users ON users(email) WHERE active = true;
+-- Smaller index, queries for active users use it, inactive users are ignored
+
+-- Functional index — index on an expression
+CREATE INDEX idx_email_lower ON users(lower(email));
+-- Enables case-insensitive searches: WHERE lower(email) = lower($1)
+```
+
+
+### Full-text Search
+
+
+
+```sql
+-- tsvector: optimised representation for full-text search
+-- to_tsvector normalises text: removes stop words, stems words
+ALTER TABLE articles ADD COLUMN search_vector tsvector
+    GENERATED ALWAYS AS (to_tsvector('english', title || ' ' || content)) STORED;
+
+CREATE INDEX idx_articles_fts ON articles USING GIN (search_vector);
+
+-- Search using @@
+SELECT title FROM articles
+WHERE search_vector @@ to_tsquery('english', 'database & optimisation')
+ORDER BY ts_rank(search_vector, to_tsquery('english', 'database')) DESC;
+
+-- ts_rank: relevance score — higher is better match
+```
+
+
+#### Explain Analyze — QUERY DIAGNOSIS
+
+EXPLAIN ANALYZE shows you exactly how PostgreSQL executes a query, with actual
+timings. Use it to diagnose slow queries.
+
+
+**Explain Analyze**
+
+
+```sql
+SELECT u.name, COUNT(o.id) AS orders
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.active = true
+GROUP BY u.id, u.name
+HAVING COUNT(o.id) > 5;
+
+-- Output (read from inside out, or bottom to top):
+-- HashAggregate (cost=... actual time=...)
+--   -> Hash Left Join (...)
+--        -> Bitmap Heap Scan on users    <- uses index
+--             -> Bitmap Index Scan on idx_active_users
+--        -> Hash
+--             -> Seq Scan on orders      <- full table scan — might need index
+```
+
+#### Key terms to understand
+
+```text
+Seq Scan       — full table scan. May be fine on small tables, problematic on large ones.
+Index Scan     — uses B-tree index for point lookups
+Bitmap Heap Scan — uses index to get row IDs, then reads pages in bulk (for many rows)
+Hash Join      — builds a hash table from one side, probes with the other
+
+actual time    — REAL milliseconds (vs estimated cost); this is what matters
+rows=N         — actual vs estimated row count (large discrepancy = stale statistics)
+
+-- Update statistics if estimates are very wrong
+ANALYZE users;          -- update statistics for one table
+VACUUM ANALYZE users;   -- reclaim dead rows AND update statistics
+```
+
+### Extensions
+
+
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+SELECT uuid_generate_v4();   -- generate UUID
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- Trigram similarity — fuzzy text matching (typo-tolerant search)
+CREATE INDEX idx_users_name_trgm ON users USING GIN (name gin_trgm_ops);
+SELECT * FROM users WHERE name % 'Beatrz';   -- finds "Beatriz" despite typo
+SELECT * FROM users ORDER BY similarity(name, 'Beatrz') DESC LIMIT 10;
+
+CREATE EXTENSION IF NOT EXISTS vector;
+-- pgvector — store and query AI embeddings (RAG, semantic search)
+ALTER TABLE documents ADD COLUMN embedding vector(1536);
+-- Find the 5 most semantically similar documents to a query embedding
+SELECT title FROM documents
+ORDER BY embedding <-> '[0.1, 0.2, ...]'::vector   -- L2 distance
+LIMIT 5;
+
+-- PostGIS — geospatial data (coordinates, polygons, distances)
+-- Used by PostGIS for geospatial queries. Essential for apps with maps.
+CREATE EXTENSION IF NOT EXISTS postgis;
+SELECT name FROM restaurants
+WHERE ST_DWithin(location, ST_MakePoint(-9.14, 38.71)::geography, 5000);
+-- Find restaurants within 5km of Lisbon city centre
+```
+
+
+### Lateral Join
+
+
+LATERAL lets a subquery reference columns from the left-hand side — like a
+correlated subquery but usable as a table:
+
+
+```sql
+-- For each user, get their 3 most recent orders (without LATERAL, this is complex)
+SELECT u.name, recent.order_date, recent.amount
+FROM users u
+JOIN LATERAL (
+    SELECT order_date, amount
+    FROM orders
+    WHERE user_id = u.id        -- references u from the outer query
+    ORDER BY order_date DESC
+    LIMIT 3
+) recent ON true;
+```
+
+## 5.06 GraphQL
+
+
+
+### Overview
+
+GraphQL is a query language for APIs developed by Facebook in 2012, open-sourced
+in 2015. It is not a database query language — it is an API communication
+protocol. Where REST has many endpoints (one URL per resource), GraphQL has a
+single endpoint. Clients specify exactly what data they need, and the server
+returns precisely that — no more, no less.
+
+
+### The Problems Graphql Solves
+
+
+
+**Over-fetching (rest)**: GET /api/users/42 returns 20 fields — the mobile client
+only needs name and avatar. You download 20x more data than necessary.
+
+
+**Under-fetching (rest)**: A single endpoint doesn't have enough data, and the
+client must make multiple requests to assemble a view:
+GET /api/users/42
+GET /api/users/42/posts
+GET /api/users/42/followers
+— three round trips, each with latency.
+GraphQL solution — one request for exactly what you need:
+
+```text
+query {
+    user(id: "42") {
+        name
+        avatar
+        posts(limit: 5) { title }
+        followers { count }
+    }
+}
+```
+
+
+### The Schema — CONTRACT BETWEEN CLIENT AND SERVER
+
+Every GraphQL API is defined by a schema written in SDL (Schema Definition
+Language). The schema declares all available types, queries, mutations, and
+subscriptions — it is the contract between client and server.
+
+
+```typescript
+scalar DateTime
+scalar URL
+
+type User {
+    id:        ID!           # ID — unique identifier (serialised as String, but semantic ID)
+    name:      String!       # ! means non-null — guaranteed to be present
+    email:     String!
+    bio:       String        # nullable — may be absent
+    createdAt: DateTime!
+    posts:     [Post!]!      # non-null list of non-null Posts
+    avatar:    URL
+}
+
+type Post {
+    id:        ID!
+    title:     String!
+    content:   String!
+    published: Boolean!
+    author:    User!         # relation to User
+    tags:      [String!]!
+}
+
+enum Role { ADMIN EDITOR VIEWER }
+
+input CreateUserInput {
+    name:     String!
+    email:    String!
+    password: String!
+    role:     Role = VIEWER   # default value
+}
+
+interface Node { id: ID! }   # interface — all implementors must have id
+
+union SearchResult = User | Post   # a field can be one of several types
+```
+
+The schema has three special root types that define available operations:
+
+
+```text
+type Query {                  # read operations (equivalent to GET in REST)
+    user(id: ID!): User
+    users(limit: Int = 20, offset: Int = 0, role: Role): [User!]!
+    search(query: String!): [SearchResult!]!
+}
+
+type Mutation {               # write operations (equivalent to POST/PUT/DELETE)
+    createUser(input: CreateUserInput!): User!
+    updateUser(id: ID!, input: UpdateUserInput!): User!
+    deleteUser(id: ID!): Boolean!
+}
+
+type Subscription {           # real-time (WebSocket-based)
+    newPost(authorId: ID): Post!
+    userStatusChanged: User!
+}
+```
+
+
+### Writing Queries, Mutations, and Subscriptions
+
+
+
+```python
+# Basic query — request exactly the fields you need
+query {
+    user(id: "42") {
+        name
+        email
+        posts(limit: 3) {
+            title
+            published
+        }
+    }
+}
+
+# Named query with variables — best practice for logging/debugging
+query GetUserWithPosts($userId: ID!, $postLimit: Int = 5) {
+    user(id: $userId) {
+        name
+        posts(limit: $postLimit) { title }
+    }
+}
+# Variables passed separately as JSON:
+{ "userId": "42", "postLimit": 3 }
+
+# Fragments — reusable field selections
+fragment UserBasicInfo on User {
+    id
+    name
+    email
+}
+
+query {
+    user(id: "1") { ...UserBasicInfo }
+}
+
+# Inline fragments for union types
+query {
+    search(query: "beatriz") {
+        ... on User { name email }      # fields specific to User
+        ... on Post { title content }   # fields specific to Post
+    }
+}
+
+# Mutation
+mutation CreateNewUser($input: CreateUserInput!) {
+    createUser(input: $input) {
+        id
+        name
+        createdAt
+    }
+}
+# Variables:
+{ "input": { "name": "Beatriz", "email": "b@example.com", "password": "secure" } }
+
+# Multiple mutations in one request — execute in SEQUENCE (not in parallel)
+mutation {
+    createPost(input: { title: "Hello" }) { id }
+    publishPost(id: "123") { published }
+}
+```
+
+
+### Resolvers** — HOW GRAPHQL ACTUALLY FETCHES DATA
+
+For each field in the schema, there is a RESOLVER — a function that knows how
+to fetch that field's value. Resolvers receive four arguments:
+
+```javascript
+parent  — the resolved value of the parent type
+args    — the arguments passed to this field in the query
+context — shared object (database connection, auth info, services)
+info    — information about the query (fields requested, etc.)
+
+const resolvers = {
+    Query: {
+        user: async (parent, { id }, context) => {
+            return context.db.users.findById(id);
+        },
+    },
+
+    User: {
+        posts: async (parent, { limit }, context) => {
+            // parent is the User object resolved above
+            return context.db.posts.findByAuthorId(parent.id, limit);
+        },
+    },
+};
+```
+
+### THE N+1 PROBLEM AND DATALOADER
+
+The most critical GraphQL performance issue. When loading 100 posts, each with
+an author, the User.author resolver is called 100 times — 100 database queries!
+
+DataLoader solves this with batching:
+  1. Collects all IDs requested within a single event loop tick
+  2. Makes ONE batch query: SELECT * FROM users WHERE id IN (1, 2, 3, ...)
+  3. Caches results — if the same user appears in multiple posts, only queried once
+
+
+```javascript
+const userLoader = new DataLoader(async (userIds) => {
+    const users = await db.users.findByIds(userIds);
+    // CRITICAL: return in the same order as the input IDs!
+    return userIds.map(id => users.find(u => u.id === id));
+});
+
+// In resolver — uses loader instead of direct DB call
+User: {
+    author: (parent, args, context) =>
+        context.loaders.user.load(parent.authorId),  // batched automatically
+}
+// 100 posts → 1 query for users + 1 query for posts. Not 101!
+```
+
+### REST vs GRAPHQL — WHEN TO USE WHICH
+
+
+```python
+Use GraphQL when:
+- Multiple clients (web, mobile, third-party) need different data shapes
+- You have deeply nested, relational data
+- You want to avoid over-fetching / under-fetching
+- Rapid product iteration where data requirements change often
+
+Use REST when:
+- Public API for third parties (more familiar, better HTTP caching)
+- Simple CRUD with predictable, uniform data
+- File uploads (GraphQL handles these awkwardly)
+- Strong HTTP caching requirements (GET + URL = cacheable; GraphQL POST is not)
+```
+
 
 
 ---
@@ -5221,2252 +7908,7 @@ individuals. People make mistakes — the system should be designed to prevent
 those mistakes from causing incidents, or to detect and recover from them quickly.
 
 
-## 1.08 Python
 
-
-
-### Overview
-
-Python is an interpreted, dynamically typed language with very clean syntax. It
-is the most versatile language in the market: used in web backends (Flask, Django,
-FastAPI), data science (pandas, numpy), machine learning (TensorFlow, PyTorch),
-scripting, automation, and testing. Python values readability — there is always
-"one obvious way to do things" (the Zen of Python). Python does not need
-compilation — the interpreter executes the .py file directly, line by line.
-This makes development fast, but type errors appear at runtime (not at compile
-time like in Java).
-
-### MUTABLE vs IMMUTABLE TYPES
-
-Python types are either mutable (can be changed after creation) or immutable
-(cannot be changed — "changing" a string creates a new string).
-
-
-```python
-IMMUTABLE:
-  int:    42, -7, 0
-  float:  3.14, -0.5
-  str:    "hello"  — individual characters cannot be changed
-  bool:   True, False  (note: capitalised! They are a subclass of int: True == 1)
-  bytes:  b"raw bytes"
-  tuple:  (1, 2, 3)  — like a list but immutable
-
-MUTABLE:
-  list:   [1, 2, 3]       — ordered sequence, heterogeneous, allows duplicates
-  dict:   {"key": "value"} — key-value pairs; since Python 3.7 preserves insertion order
-  set:    {1, 2, 3}       — no duplicates, no order, supports set operations
-
-# IMPORTANT: the type of a variable is determined at runtime
-x = 42         # x is int
-x = "hello"    # now x is str — Python doesn't complain!
-x = [1, 2, 3]  # now x is list
-```
-
-Why mutability matters: passing a mutable object to a function lets the function
-modify the original (pass by reference semantics). Immutable objects cannot be
-modified — the function would have to return a new value.
-
-
-```python
-def add_item(lst, item):
-    lst.append(item)   # modifies the original list!
-
-my_list = [1, 2]
-add_item(my_list, 3)
-print(my_list)   # [1, 2, 3] — original was changed
-```
-
-
-**Lists** — THE WORKHORSE COLLECTION
-
-
-```text
-fruits = ["apple", "banana", "cherry"]
-
-# Access by index (0-based; negative counts from end)
-fruits[0]    # "apple"
-fruits[-1]   # "cherry"
-fruits[1:3]  # ["banana", "cherry"] — slice: [start:end] (end is exclusive)
-fruits[:2]   # ["apple", "banana"]
-fruits[::-1] # ["cherry", "banana", "apple"] — reversed
-
-# Common operations
-fruits.append("date")          # add to end
-fruits.insert(1, "avocado")    # insert at index 1
-fruits.remove("banana")        # remove first occurrence
-popped = fruits.pop()          # remove and return last item
-fruits.sort()                  # sort in-place
-sorted_copy = sorted(fruits)   # return a new sorted list, don't modify original
-len(fruits)                    # number of items
-```
-
-
-### Dictionaries
-
-
-
-```python
-user = {"name": "Beatriz", "age": 25, "role": "admin"}
-
-user["name"]                    # "Beatriz" — KeyError if missing
-user.get("email")               # None — no error if missing
-user.get("email", "no email")   # "no email" — default value
-user["email"] = "b@example.com" # add or update a key
-del user["role"]                # delete a key
-"name" in user                  # True — membership test
-
-# Iterate
-for key, value in user.items():
-    print(f"{key}: {value}")
-
-# Dictionary comprehension
-squares = {n: n**2 for n in range(1, 6)}  # {1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
-```
-
-
-### List Comprehensions and Generators
-
-
-List comprehensions are a concise, Pythonic way to create lists — more readable
-than equivalent for loops, and often faster.
-
-
-```python
-numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-# Without comprehension
-evens = []
-for n in numbers:
-    if n % 2 == 0:
-        evens.append(n)
-
-# With comprehension — [expression for item in iterable if condition]
-evens = [n for n in numbers if n % 2 == 0]       # [2, 4, 6, 8, 10]
-squares = [n**2 for n in numbers]                 # [1, 4, 9, 16, ...]
-upper = [s.upper() for s in ["hello", "world"]]   # ["HELLO", "WORLD"]
-
-# Dict comprehension
-word_lengths = {word: len(word) for word in ["apple", "banana", "cherry"]}
-```
-
-
-#### Generators
-like comprehensions but lazy (do not load everything into memory)
-
-
-```python
-# List comprehension: creates the full list in memory immediately
-squares_list = [n**2 for n in range(10_000_000)]   # uses ~80MB
-
-# Generator expression: produces values one at a time, on demand
-squares_gen = (n**2 for n in range(10_000_000))    # uses ~100 bytes
-
-# Generator function — yields values one at a time
-def fibonacci():
-    a, b = 0, 1
-    while True:
-        yield a           # pause here, return a, resume on next()
-        a, b = b, a + b
-
-fib = fibonacci()
-print(next(fib))   # 0
-print(next(fib))   # 1
-print(next(fib))   # 1
-# Infinite sequence — uses no memory for future values
-```
-
-
-**Functions** — *args, **kwargs, AND MORE
-
-
-```python
-def greet(name, greeting="Hello"):   # default parameter
-    return f"{greeting}, {name}!"
-
-greet("Beatriz")            # "Hello, Beatriz!"
-greet("Beatriz", "Hi")      # "Hi, Beatriz!"
-greet(greeting="Hey", name="Beatriz")  # keyword arguments (order doesn't matter)
-
-# *args — captures extra positional arguments as a tuple
-def add(*numbers):
-    return sum(numbers)
-add(1, 2, 3, 4)   # 10
-
-# **kwargs — captures extra keyword arguments as a dictionary
-def log_event(event_type, **details):
-    print(f"Event: {event_type}, Details: {details}")
-log_event("login", userId=123, ip="1.2.3.4")
-```
-
-
-### Decorators
-
-
-A decorator is a function that wraps another function to add behaviour before,
-after, or around its execution — without modifying the original function's code.
-
-
-```python
-import functools, time
-
-def timing(func):
-    @functools.wraps(func)   # preserves the original function's name/docstring
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        print(f"{func.__name__} took {time.time()-start:.3f}s")
-        return result
-    return wrapper
-
-@timing                      # equivalent to: process_data = timing(process_data)
-def process_data(items):
-    return [item * 2 for item in items]
-
-process_data([1, 2, 3])     # "process_data took 0.000s"
-```
-
-Decorators are the foundation of Flask routes (@app.route), FastAPI endpoints
-(@router.get), and Python's @property, @staticmethod, @classmethod.
-
-
-### Classes and OOP in Python
-
-
-
-```c
-class BankAccount:
-    # Class variable — shared by ALL instances
-    interest_rate = 0.05
-
-    def __init__(self, owner: str, initial_balance: float = 0):
-        # Instance variables — unique to each instance
-        self.owner = owner
-        self._balance = initial_balance   # _ prefix = convention for "protected"
-
-    def deposit(self, amount: float) -> None:
-        if amount <= 0:
-            raise ValueError("Deposit must be positive")
-        self._balance += amount
-
-    def withdraw(self, amount: float) -> bool:
-        if amount > self._balance:
-            return False
-        self._balance -= amount
-        return True
-
-    # Property — access as attribute but with logic
-    @property
-    def balance(self) -> float:
-        return self._balance
-
-    @classmethod
-    def with_bonus(cls, owner: str, bonus: float) -> "BankAccount":
-        """Factory method — creates account with initial bonus balance"""
-        return cls(owner, bonus)
-
-    def __repr__(self) -> str:
-        return f"BankAccount(owner={self.owner!r}, balance={self._balance})"
-
-# Inheritance
-class SavingsAccount(BankAccount):
-    def __init__(self, owner: str, initial: float = 0):
-        super().__init__(owner, initial)   # call parent __init__
-
-    def apply_interest(self) -> None:
-        self._balance *= (1 + self.interest_rate)
-```
-
-#### Key dunder (double underscore) methods — Python's "magic methods"
-
-```text
-__init__    — constructor
-__repr__    — unambiguous string representation (for developers)
-__str__     — human-readable string (for users)
-__eq__      — defines == comparison
-__len__     — defines len(obj)
-__iter__    — makes the object iterable
-```
-
-### Context Managers
-
-
-Context managers guarantee that resources are properly initialised and cleaned up,
-even if an exception occurs. The with statement calls __enter__ and __exit__.
-
-
-```python
-# Built-in context manager for files
-with open("data.txt", "r") as file:
-    content = file.read()
-# file.close() called automatically here, even if an exception occurred
-
-# Custom context manager using contextlib
-from contextlib import contextmanager
-
-@contextmanager
-def timer(name: str):
-    start = time.time()
-    try:
-        yield             # body of the with block runs here
-    finally:
-        print(f"{name}: {time.time() - start:.3f}s")
-
-with timer("processing"):
-    process_data()
-```
-
-
-### Type Hints
-
-
-Type hints add optional static typing to Python. They don't enforce types at
-runtime — Python remains dynamically typed — but they enable IDE autocomplete,
-catch bugs with mypy (static type checker), and serve as documentation.
-
-
-```c
-from typing import Optional, List, Dict, Tuple, Union
-from collections.abc import Callable
-
-def get_user(user_id: int) -> Optional[dict]:
-    ...
-
-def process_users(users: List[str], limit: int = 10) -> Dict[str, int]:
-    ...
-
-# Python 3.10+ union shorthand
-def parse(value: str | int | None) -> str:
-    ...
-```
-
-
-### Async/Await and Fastapi
-
-
-Python has async/await for non-blocking I/O, similar to JavaScript. The
-asyncio event loop runs coroutines concurrently on a single thread — perfect
-for I/O-bound workloads (HTTP calls, database queries).
-
-
-```c
-import asyncio, aiohttp
-
-async def fetch_user(session: aiohttp.ClientSession, user_id: int) -> dict:
-    async with session.get(f"https://api.example.com/users/{user_id}") as resp:
-        return await resp.json()
-
-async def main():
-    async with aiohttp.ClientSession() as session:
-        # Run 100 requests concurrently — not sequentially!
-        tasks = [fetch_user(session, i) for i in range(100)]
-        users = await asyncio.gather(*tasks)
-```
-
-FastAPI is the most modern Python framework for APIs — async by default, uses
-Pydantic for validation, auto-generates OpenAPI docs.
-
-
-```python
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr
-
-app = FastAPI()
-
-class UserCreate(BaseModel):
-    name: str
-    email: EmailStr   # Pydantic validates email format automatically
-    age: int
-
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: str
-    # password is NOT here — never returned in the response!
-
-@app.post("/users", response_model=UserResponse, status_code=201)
-async def create_user(user: UserCreate):
-    # FastAPI automatically:
-    #   - parses JSON body into UserCreate
-    #   - validates all fields (required, format, type)
-    #   - returns 422 if validation fails
-    #   - serialises the response as UserResponse (excluding password)
-    db_user = await user_service.create(user)
-    return db_user
-
-@app.get("/users/{user_id}", response_model=UserResponse)
-async def get_user(user_id: int):
-    user = await user_service.find_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-```
-
-### VIRTUAL ENVIRONMENTS AND pip
-
-Python uses virtual environments to isolate dependencies per project. Without
-a venv, all packages install globally and different projects can conflict.
-
-
-```text
-# Create a virtual environment
-python3 -m venv venv
-
-# Activate (macOS/Linux)
-source venv/bin/activate
-
-# Activate (Windows)
-venv\Scripts\activate
-
-pip install fastapi uvicorn    # installs into venv, not globally
-pip freeze > requirements.txt  # save dependencies
-
-pip install -r requirements.txt  # restore from requirements file
-```
-
-Modern projects use pyproject.toml (PEP 517/518) with tools like Poetry or
-uv instead of requirements.txt — they provide dependency locking and resolution.
-
-
-## 2.10 GraphQL
-
-
-
-### Overview
-
-GraphQL is a query language for APIs developed by Facebook in 2012, open-sourced
-in 2015. It is not a database query language — it is an API communication
-protocol. Where REST has many endpoints (one URL per resource), GraphQL has a
-single endpoint. Clients specify exactly what data they need, and the server
-returns precisely that — no more, no less.
-
-
-### The Problems Graphql Solves
-
-
-
-**Over-fetching (rest)**: GET /api/users/42 returns 20 fields — the mobile client
-only needs name and avatar. You download 20x more data than necessary.
-
-
-**Under-fetching (rest)**: A single endpoint doesn't have enough data, and the
-client must make multiple requests to assemble a view:
-GET /api/users/42
-GET /api/users/42/posts
-GET /api/users/42/followers
-— three round trips, each with latency.
-GraphQL solution — one request for exactly what you need:
-
-```text
-query {
-    user(id: "42") {
-        name
-        avatar
-        posts(limit: 5) { title }
-        followers { count }
-    }
-}
-```
-
-
-### The Schema — CONTRACT BETWEEN CLIENT AND SERVER
-
-Every GraphQL API is defined by a schema written in SDL (Schema Definition
-Language). The schema declares all available types, queries, mutations, and
-subscriptions — it is the contract between client and server.
-
-
-```typescript
-scalar DateTime
-scalar URL
-
-type User {
-    id:        ID!           # ID — unique identifier (serialised as String, but semantic ID)
-    name:      String!       # ! means non-null — guaranteed to be present
-    email:     String!
-    bio:       String        # nullable — may be absent
-    createdAt: DateTime!
-    posts:     [Post!]!      # non-null list of non-null Posts
-    avatar:    URL
-}
-
-type Post {
-    id:        ID!
-    title:     String!
-    content:   String!
-    published: Boolean!
-    author:    User!         # relation to User
-    tags:      [String!]!
-}
-
-enum Role { ADMIN EDITOR VIEWER }
-
-input CreateUserInput {
-    name:     String!
-    email:    String!
-    password: String!
-    role:     Role = VIEWER   # default value
-}
-
-interface Node { id: ID! }   # interface — all implementors must have id
-
-union SearchResult = User | Post   # a field can be one of several types
-```
-
-The schema has three special root types that define available operations:
-
-
-```text
-type Query {                  # read operations (equivalent to GET in REST)
-    user(id: ID!): User
-    users(limit: Int = 20, offset: Int = 0, role: Role): [User!]!
-    search(query: String!): [SearchResult!]!
-}
-
-type Mutation {               # write operations (equivalent to POST/PUT/DELETE)
-    createUser(input: CreateUserInput!): User!
-    updateUser(id: ID!, input: UpdateUserInput!): User!
-    deleteUser(id: ID!): Boolean!
-}
-
-type Subscription {           # real-time (WebSocket-based)
-    newPost(authorId: ID): Post!
-    userStatusChanged: User!
-}
-```
-
-
-### Writing Queries, Mutations, and Subscriptions
-
-
-
-```python
-# Basic query — request exactly the fields you need
-query {
-    user(id: "42") {
-        name
-        email
-        posts(limit: 3) {
-            title
-            published
-        }
-    }
-}
-
-# Named query with variables — best practice for logging/debugging
-query GetUserWithPosts($userId: ID!, $postLimit: Int = 5) {
-    user(id: $userId) {
-        name
-        posts(limit: $postLimit) { title }
-    }
-}
-# Variables passed separately as JSON:
-{ "userId": "42", "postLimit": 3 }
-
-# Fragments — reusable field selections
-fragment UserBasicInfo on User {
-    id
-    name
-    email
-}
-
-query {
-    user(id: "1") { ...UserBasicInfo }
-}
-
-# Inline fragments for union types
-query {
-    search(query: "beatriz") {
-        ... on User { name email }      # fields specific to User
-        ... on Post { title content }   # fields specific to Post
-    }
-}
-
-# Mutation
-mutation CreateNewUser($input: CreateUserInput!) {
-    createUser(input: $input) {
-        id
-        name
-        createdAt
-    }
-}
-# Variables:
-{ "input": { "name": "Beatriz", "email": "b@example.com", "password": "secure" } }
-
-# Multiple mutations in one request — execute in SEQUENCE (not in parallel)
-mutation {
-    createPost(input: { title: "Hello" }) { id }
-    publishPost(id: "123") { published }
-}
-```
-
-
-### Resolvers** — HOW GRAPHQL ACTUALLY FETCHES DATA
-
-For each field in the schema, there is a RESOLVER — a function that knows how
-to fetch that field's value. Resolvers receive four arguments:
-
-```javascript
-parent  — the resolved value of the parent type
-args    — the arguments passed to this field in the query
-context — shared object (database connection, auth info, services)
-info    — information about the query (fields requested, etc.)
-
-const resolvers = {
-    Query: {
-        user: async (parent, { id }, context) => {
-            return context.db.users.findById(id);
-        },
-    },
-
-    User: {
-        posts: async (parent, { limit }, context) => {
-            // parent is the User object resolved above
-            return context.db.posts.findByAuthorId(parent.id, limit);
-        },
-    },
-};
-```
-
-### THE N+1 PROBLEM AND DATALOADER
-
-The most critical GraphQL performance issue. When loading 100 posts, each with
-an author, the User.author resolver is called 100 times — 100 database queries!
-
-DataLoader solves this with batching:
-  1. Collects all IDs requested within a single event loop tick
-  2. Makes ONE batch query: SELECT * FROM users WHERE id IN (1, 2, 3, ...)
-  3. Caches results — if the same user appears in multiple posts, only queried once
-
-
-```javascript
-const userLoader = new DataLoader(async (userIds) => {
-    const users = await db.users.findByIds(userIds);
-    // CRITICAL: return in the same order as the input IDs!
-    return userIds.map(id => users.find(u => u.id === id));
-});
-
-// In resolver — uses loader instead of direct DB call
-User: {
-    author: (parent, args, context) =>
-        context.loaders.user.load(parent.authorId),  // batched automatically
-}
-// 100 posts → 1 query for users + 1 query for posts. Not 101!
-```
-
-### REST vs GRAPHQL — WHEN TO USE WHICH
-
-
-```python
-Use GraphQL when:
-- Multiple clients (web, mobile, third-party) need different data shapes
-- You have deeply nested, relational data
-- You want to avoid over-fetching / under-fetching
-- Rapid product iteration where data requirements change often
-
-Use REST when:
-- Public API for third parties (more familiar, better HTTP caching)
-- Simple CRUD with predictable, uniform data
-- File uploads (GraphQL handles these awkwardly)
-- Strong HTTP caching requirements (GET + URL = cacheable; GraphQL POST is not)
-```
-
-
-## 3.13 Next.js
-
-
-
-### Overview
-
-Next.js is the most popular React framework, developed by Vercel. It solves
-React's biggest limitations: React alone is a client-side library, meaning the
-browser downloads JavaScript, executes it, and then renders the page. This gives
-poor SEO (search engines may not wait for JavaScript) and slow initial load.
-Next.js adds server-side rendering, static generation, file-based routing,
-API routes, image optimisation, and more — on top of React.
-
-
-### The Four Rendering Modes
-
-
-**CSR (Client-Side Rendering)** : browser downloads JavaScript and renders entirely
-in the browser. Standard React. Fast interactions after load but slow first paint
-and poor SEO.
-
-**SSR (Server-Side Rendering)** : HTML is generated on the server per request, sent
-to the browser, then hydrated (React takes over). Fresh data on every request,
-good SEO, but slower than static (server work on every request).
-
-**SSG (Static Site Generation)** : HTML is generated at BUILD time and cached as a
-static file. Served instantly from CDN, perfect SEO, zero server computation per
-request. But data can be stale until the next build.
-
-**ISR (Incremental Static Regeneration)** : like SSG, but pages are regenerated in
-the background after a specified time. You get static performance with
-reasonably fresh data. The best of SSG and SSR for most cases.
-
-### APP ROUTER FILE CONVENTIONS (NEXT.JS 13+)
-
-Next.js 13 introduced the App Router — a significant change. The file structure
-IS the routing structure. Inside the `app/` directory:
-
-```text
-app/
-  layout.tsx       — root layout (wraps all pages; never unmounts)
-  page.tsx         — the "/" route
-  loading.tsx      — automatic Suspense boundary while page loads
-  error.tsx        — automatic error boundary
-  not-found.tsx    — rendered when notFound() is called
-
-  dashboard/
-    layout.tsx     — layout for all routes under /dashboard
-    page.tsx       — "/dashboard" route
-    users/
-      page.tsx     — "/dashboard/users" route
-      [id]/
-        page.tsx   — "/dashboard/users/42" — [id] is a dynamic parameter
-```
-
-### SERVER COMPONENTS vs CLIENT COMPONENTS
-
-This is the central innovation of the App Router. By default, ALL components in
-the app/ directory are React Server Components — they run ONLY on the server
-and send HTML to the browser. No JavaScript for them is shipped to the client.
-
-
-```sql
-// app/users/page.tsx — Server Component (no "use client" needed)
-// This can query the database directly — the code never runs in the browser
-export default async function UsersPage() {
-    const users = await db.query("SELECT * FROM users LIMIT 20");
-    // async/await works directly in the component!
-    return (
-        <ul>
-            {users.map(user => (
-                <li key={user.id}>{user.name}</li>
-            ))}
-        </ul>
-    );
-}
-```
-
-Client Components are needed when you require browser APIs or interactivity:
-
-
-```html
-"use client";   // ← REQUIRED directive — makes this a Client Component
-import { useState, useEffect } from "react";
-
-export function SearchBar({ onSearch }: { onSearch: (q: string) => void }) {
-    const [query, setQuery] = useState("");   // hooks only work in Client Components
-    return (
-        <input
-            value={query}
-            onChange={e => { setQuery(e.target.value); onSearch(e.target.value); }}
-            placeholder="Search..."
-        />
-    );
-}
-```
-
-When to use each:
-
-```text
-Server Component (default) — data fetching, accessing backends/databases, 
-                              large dependencies (keep them off the client bundle)
-Client Component — onClick/onChange, useState, useEffect, browser-only APIs,
-                   real-time updates, complex animations
-```
-
-
-### Route Handlers (api Routes)
-
-
-In Next.js 13+ (App Router), API endpoints are route.ts files:
-
-
-```tsx
-// app/api/users/route.ts — handles /api/users
-import { NextRequest, NextResponse } from "next/server";
-
-export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url);
-    const role = searchParams.get("role");
-    const users = await db.findUsers({ role });
-    return NextResponse.json(users);
-}
-
-export async function POST(request: NextRequest) {
-    const body = await request.json();
-    const user = await db.createUser(body);
-    return NextResponse.json(user, { status: 201 });
-}
-
-// app/api/users/[id]/route.ts — dynamic route
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-    const user = await db.findUserById(params.id);
-    if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(user);
-}
-```
-
-
-### Data Fetching and Caching
-
-
-Next.js extends the native fetch() with caching options:
-
-
-```javascript
-// SSG — cached indefinitely, rebuilt only on next deployment
-const data = await fetch("https://api.example.com/posts", {
-    cache: "force-cache"   // default behaviour
-});
-
-// SSR — never cached, always fresh
-const data = await fetch("https://api.example.com/posts", {
-    cache: "no-store"
-});
-
-// ISR — revalidate every 60 seconds
-const data = await fetch("https://api.example.com/posts", {
-    next: { revalidate: 60 }
-});
-
-// On-demand revalidation — trigger from a webhook or API route
-import { revalidatePath } from "next/cache";
-revalidatePath("/posts");   // invalidates the cache for this path
-```
-
-
-### Next/Image and Next/Font
-
-
-
-```python
-import Image from "next/image";
-import { Inter } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
-// Google Font is downloaded at build time, self-hosted — no runtime network request
-
-// next/image: automatic WebP conversion, lazy loading, prevents layout shift (CLS)
-<Image
-    src="/hero.jpg"
-    alt="Hero image"
-    width={1200}
-    height={600}
-    priority   // preload above-the-fold images
-/>
-
-// External images need the domain whitelisted in next.config.js:
-// images: { domains: ["images.unsplash.com"] }
-```
-
-
-### Metadata and Seo
-
-
-
-```tsx
-// app/layout.tsx — static metadata
-export const metadata: Metadata = {
-    title: { default: "MyApp", template: "%s | MyApp" },
-    description: "My application",
-};
-
-// app/users/[id]/page.tsx — dynamic metadata per page
-export async function generateMetadata({ params }): Promise<Metadata> {
-    const user = await db.findUserById(params.id);
-    return {
-        title: user.name,
-        description: user.bio,
-        openGraph: {
-            title: user.name,
-            images: [user.avatar],
-        },
-    };
-}
-```
-
-
-## 5.05 PostgreSQL
-
-
-
-### Overview
-
-PostgreSQL is the most advanced open-source relational database management system.
-Frequently described as "the most feature-rich open-source database", it supports
-advanced data types (arrays, JSONB, hstore, geometric types), full-text search,
-window functions, CTEs, foreign data wrappers, and a powerful extension ecosystem
-(PostGIS for geospatial, pgvector for AI embeddings, pg_trgm for fuzzy search).
-
-### JSONB vs JSON
-
-PostgreSQL has two JSON types — almost always prefer JSONB:
-
-
-```sql
-json:  stores JSON as text, preserving exact whitespace and key order.
-       Re-parses on every access. Not indexable. Rarely useful.
-
-jsonb: stores JSON in optimised binary format — indexable, much faster to
-       query and filter. Key order is not preserved (deduplicates keys).
-       Always use this.
-
-CREATE TABLE events (
-    id      BIGSERIAL PRIMARY KEY,
-    type    TEXT NOT NULL,
-    payload JSONB NOT NULL,    -- use jsonb, not json
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Insert a JSON document
-INSERT INTO events (type, payload) VALUES (
-    'user_signup',
-    '{"userId": 42, "email": "b@example.com", "source": "organic"}'
-);
-
--- Query JSON fields
-SELECT payload->>'email' AS email FROM events;     -- ->> returns TEXT
-SELECT payload->'userId' AS user_id FROM events;   -- -> returns JSONB
-
--- Filter by nested JSON value
-SELECT * FROM events WHERE payload->>'source' = 'organic';
-SELECT * FROM events WHERE payload @> '{"source": "organic"}';
--- @> means "contains" — checks if left JSONB contains the right JSONB
-
--- Check if a key exists
-SELECT * FROM events WHERE payload ? 'email';
-
--- Full-text search within JSONB
-SELECT * FROM events WHERE payload @@ '$.userId > 10'::jsonpath;
-
--- GIN index for efficient JSONB queries
-CREATE INDEX idx_events_payload ON events USING GIN (payload);
--- GIN index makes @>, ?, and @@ operators very fast
-```
-
-
-### Native Arrays
-
-
-PostgreSQL supports native arrays — useful when data is simple and does not
-need its own table (tags, roles, phone numbers):
-
-
-```sql
-CREATE TABLE articles (
-    id     BIGSERIAL PRIMARY KEY,
-    title  TEXT NOT NULL,
-    tags   TEXT[] NOT NULL DEFAULT '{}',   -- array of text
-    scores INTEGER[]
-);
-
-INSERT INTO articles (title, tags) VALUES
-    ('PostgreSQL Guide', ARRAY['database', 'sql', 'postgres']);
-
--- Search articles that HAVE a specific tag
-SELECT * FROM articles WHERE 'database' = ANY(tags);
-
--- Search articles with ANY of these tags
-SELECT * FROM articles WHERE tags && ARRAY['sql', 'nosql'];
-
--- GIN index on array column
-CREATE INDEX idx_articles_tags ON articles USING GIN (tags);
-
--- Unnest — expand array to rows (useful in queries and aggregations)
-SELECT title, unnest(tags) AS tag FROM articles;
-```
-
-
-### Upsert with on Conflict
-
-
-
-```sql
--- Update if email already exists, insert if it doesn't
-INSERT INTO users (email, name, login_count)
-VALUES ('b@example.com', 'Beatriz', 1)
-ON CONFLICT (email) DO UPDATE
-    SET name = EXCLUDED.name,
-        login_count = users.login_count + 1,
-        updated_at = NOW();
--- EXCLUDED refers to the row that was attempted to be inserted
-
--- Page view counter — increment if exists, create if not
-INSERT INTO page_views (page_slug, views) VALUES ('home', 1)
-ON CONFLICT (page_slug) DO UPDATE SET views = page_views.views + 1;
-
--- ON CONFLICT DO NOTHING — ignore if already exists (idempotent insert)
-INSERT INTO user_roles (user_id, role) VALUES (42, 'admin')
-ON CONFLICT DO NOTHING;
-```
-
-
-#### Returning Clause
-get the inserted/updated row back without a second query
-
-
-```sql
--- Get the generated ID after INSERT
-INSERT INTO users (name, email) VALUES ('Beatriz', 'b@example.com')
-RETURNING id, created_at;
-
--- Get updated values after UPDATE
-UPDATE users SET last_login = NOW() WHERE id = 42
-RETURNING id, last_login;
-```
-
-
-### Advanced Index Types
-
-
-PostgreSQL offers more index types than most databases:
-
-B-TREE (default): balanced tree. Good for equality and range queries on
-comparable types (numbers, dates, text).
-**GIN** (Generalised Inverted Index) : for composite values — arrays, JSONB,
-full-text search. Stores each element of the collection separately, so
-"does this array contain 'x'?" is fast. Slow to build, fast to query.
-**GiST** (Generalised Search Tree) : extensible index for geometric types, ranges,
-full-text search, and other non-scalar data. Used by PostGIS for spatial queries.
-**BRIN** (Block Range INdex) : only stores min/max per block of pages — tiny index.
-
-```text
-Extremely fast to build and very small. Best for large, naturally ordered tables
-(time-series data where rows are inserted in time order). Not good for random access.
-
--- Partial index — only index rows matching a condition
-CREATE INDEX idx_active_users ON users(email) WHERE active = true;
--- Smaller index, queries for active users use it, inactive users are ignored
-
--- Functional index — index on an expression
-CREATE INDEX idx_email_lower ON users(lower(email));
--- Enables case-insensitive searches: WHERE lower(email) = lower($1)
-```
-
-
-### Full-text Search
-
-
-
-```sql
--- tsvector: optimised representation for full-text search
--- to_tsvector normalises text: removes stop words, stems words
-ALTER TABLE articles ADD COLUMN search_vector tsvector
-    GENERATED ALWAYS AS (to_tsvector('english', title || ' ' || content)) STORED;
-
-CREATE INDEX idx_articles_fts ON articles USING GIN (search_vector);
-
--- Search using @@
-SELECT title FROM articles
-WHERE search_vector @@ to_tsquery('english', 'database & optimisation')
-ORDER BY ts_rank(search_vector, to_tsquery('english', 'database')) DESC;
-
--- ts_rank: relevance score — higher is better match
-```
-
-
-#### Explain Analyze — QUERY DIAGNOSIS
-
-EXPLAIN ANALYZE shows you exactly how PostgreSQL executes a query, with actual
-timings. Use it to diagnose slow queries.
-
-
-**Explain Analyze**
-
-
-```sql
-SELECT u.name, COUNT(o.id) AS orders
-FROM users u
-LEFT JOIN orders o ON u.id = o.user_id
-WHERE u.active = true
-GROUP BY u.id, u.name
-HAVING COUNT(o.id) > 5;
-
--- Output (read from inside out, or bottom to top):
--- HashAggregate (cost=... actual time=...)
---   -> Hash Left Join (...)
---        -> Bitmap Heap Scan on users    <- uses index
---             -> Bitmap Index Scan on idx_active_users
---        -> Hash
---             -> Seq Scan on orders      <- full table scan — might need index
-```
-
-#### Key terms to understand
-
-```text
-Seq Scan       — full table scan. May be fine on small tables, problematic on large ones.
-Index Scan     — uses B-tree index for point lookups
-Bitmap Heap Scan — uses index to get row IDs, then reads pages in bulk (for many rows)
-Hash Join      — builds a hash table from one side, probes with the other
-
-actual time    — REAL milliseconds (vs estimated cost); this is what matters
-rows=N         — actual vs estimated row count (large discrepancy = stale statistics)
-
--- Update statistics if estimates are very wrong
-ANALYZE users;          -- update statistics for one table
-VACUUM ANALYZE users;   -- reclaim dead rows AND update statistics
-```
-
-### Extensions
-
-
-
-```sql
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-SELECT uuid_generate_v4();   -- generate UUID
-
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
--- Trigram similarity — fuzzy text matching (typo-tolerant search)
-CREATE INDEX idx_users_name_trgm ON users USING GIN (name gin_trgm_ops);
-SELECT * FROM users WHERE name % 'Beatrz';   -- finds "Beatriz" despite typo
-SELECT * FROM users ORDER BY similarity(name, 'Beatrz') DESC LIMIT 10;
-
-CREATE EXTENSION IF NOT EXISTS vector;
--- pgvector — store and query AI embeddings (RAG, semantic search)
-ALTER TABLE documents ADD COLUMN embedding vector(1536);
--- Find the 5 most semantically similar documents to a query embedding
-SELECT title FROM documents
-ORDER BY embedding <-> '[0.1, 0.2, ...]'::vector   -- L2 distance
-LIMIT 5;
-
--- PostGIS — geospatial data (coordinates, polygons, distances)
--- Used by PostGIS for geospatial queries. Essential for apps with maps.
-CREATE EXTENSION IF NOT EXISTS postgis;
-SELECT name FROM restaurants
-WHERE ST_DWithin(location, ST_MakePoint(-9.14, 38.71)::geography, 5000);
--- Find restaurants within 5km of Lisbon city centre
-```
-
-
-### Lateral Join
-
-
-LATERAL lets a subquery reference columns from the left-hand side — like a
-correlated subquery but usable as a table:
-
-
-```sql
--- For each user, get their 3 most recent orders (without LATERAL, this is complex)
-SELECT u.name, recent.order_date, recent.amount
-FROM users u
-JOIN LATERAL (
-    SELECT order_date, amount
-    FROM orders
-    WHERE user_id = u.id        -- references u from the outer query
-    ORDER BY order_date DESC
-    LIMIT 3
-) recent ON true;
-```
-
-
-## 4.10 Maven
-
-
-Maven is a build automation and project management tool for Java projects,
-maintained by the Apache Software Foundation. It answers the question: how do
-you compile, test, package, and deploy a Java application in a repeatable,
-standardised way? Before build tools like Maven existed, developers had to
-manually manage where JAR files lived, remember the exact javac commands,
-and share zip archives of dependencies. Maven replaced all of that with a
-declarative model: you describe WHAT your project is and WHAT it depends on,
-and Maven figures out HOW to build it.
-
-### THE POM FILE — Project Object Model
-
-Every Maven project is defined by a pom.xml file at its root. POM stands for
-Project Object Model. It is an XML file that acts as the single source of
-truth for your project's identity, dependencies, plugins, and build behaviour.
-
-A minimal pom.xml looks like this:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-             http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-  <!-- Every POM must declare this; 4.0.0 is the only supported version -->
-  <modelVersion>4.0.0</modelVersion>
-
-  <!-- GAV coordinates — the unique identity of THIS project -->
-  <groupId>com.beatriz</groupId>       <!-- reverse-domain, like a package -->
-  <artifactId>my-app</artifactId>       <!-- the project name -->
-  <version>1.0.0-SNAPSHOT</version>     <!-- SNAPSHOT = in-development -->
-  <packaging>jar</packaging>            <!-- jar, war, pom (default: jar) -->
-
-  <properties>
-    <!-- Define variables reusable throughout the POM -->
-    <java.version>17</java.version>
-    <spring.boot.version>3.2.0</spring.boot.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
-  <dependencies>
-    <!-- Each dependency is identified by its own GAV coordinates -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <version>${spring.boot.version}</version>
-      <!-- scope not set → defaults to "compile" (available everywhere) -->
-    </dependency>
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>5.10.0</version>
-      <scope>test</scope>  <!-- only on the test classpath, not in final JAR -->
-    </dependency>
-
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>1.18.30</version>
-      <scope>provided</scope>  <!-- needed at compile time, not at runtime -->
-    </dependency>
-  </dependencies>
-
-</project>
-```
-
-The three coordinates — groupId, artifactId, version — are called GAV
-coordinates (or simply "coordinates"). They uniquely identify any artifact
-in the Maven ecosystem. When you declare a dependency, Maven uses these to
-look up the artifact in a repository.
-
-### DEPENDENCY SCOPES
-
-Scope controls when a dependency is available on the classpath:
-
-• compile  — (default) available in main code, tests, and bundled in the
-             final artifact. Use for everything your app needs at runtime.
-
-• test     — only available when compiling and running tests. JUnit, Mockito,
-             AssertJ all belong here. They are NOT included in the JAR/WAR
-             you ship to production.
-
-• provided — available at compile time but NOT bundled, because the runtime
-             environment provides it. Lombok (annotation processor), Servlet
-             API (provided by Tomcat), and Jakarta EE APIs are common examples.
-
-• runtime  — NOT needed at compile time, but needed at runtime. JDBC drivers
-             are the classic example: you compile against java.sql.* (standard
-             interfaces), but at runtime you need the specific driver JAR.
-
-• import   — only valid in <dependencyManagement>; used to import a BOM
-             (Bill of Materials) to align dependency versions without
-             declaring a parent POM.
-
-### HOW MAVEN RESOLVES DEPENDENCIES — THE LOCAL REPOSITORY
-
-When you run a Maven build for the first time, Maven checks your local
-repository (by default ~/.m2/repository/) for each dependency. If the JAR is
-not there, Maven downloads it from a remote repository (by default Maven
-Central at search.maven.org) and caches it locally. Every subsequent build
-uses the local cache, so you only download once.
-
-The directory structure in the local repo mirrors the GAV coordinates:
-  ~/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.2.0/
-    spring-boot-starter-web-3.2.0.jar
-    spring-boot-starter-web-3.2.0.pom   ← Maven reads this to get transitive deps
-
-This is how transitive dependencies work: Maven reads the POM of every
-dependency, finds THEIR dependencies, and downloads those too. If spring-
-boot-starter-web depends on jackson-databind, you don't need to declare
-jackson-databind yourself — Maven resolves the whole tree.
-
-### THE BUILD LIFECYCLE
-
-Maven's default build lifecycle is a fixed, ordered sequence of phases. When
-you invoke a phase, all preceding phases run first:
-
-  validate      → verify the POM is valid and all info is available
-  compile       → compile src/main/java into target/classes/
-  test-compile  → compile src/test/java into target/test-classes/
-  test          → run unit tests (Surefire plugin)
-  package       → create the JAR/WAR in target/
-  verify        → run integration tests (Failsafe plugin)
-  install       → copy the artifact into ~/.m2/repository/
-  deploy        → push the artifact to a remote repository (Nexus, Artifactory)
-
-Common commands:
-
-```bash
-mvn compile          # compile main sources only
-mvn test             # compile + run all unit tests
-mvn package          # compile + test + package into JAR/WAR
-mvn package -DskipTests   # package WITHOUT running tests (useful in CI when
-                           # tests run as a separate step)
-mvn install          # package + put in local .m2 cache (useful when
-                      # project-A depends on project-B locally)
-mvn clean package    # delete target/ first, then build fresh
-                      # always use "clean" in CI to avoid stale artifacts
-mvn dependency:tree  # print the full dependency tree, great for diagnosing
-                      # version conflicts
-mvn dependency:resolve  # force Maven to download all deps without building
-```
-
-### PARENT POM AND INHERITANCE
-
-A child POM can inherit from a parent POM. The most common parent is the
-Spring Boot parent, which pre-configures dozens of plugin versions, default
-properties, and dependency versions so you don't have to manage them yourself.
-
-```xml
-<parent>
-  <groupId>org.springframework.boot</groupId>
-  <artifactId>spring-boot-starter-parent</artifactId>
-  <version>3.2.0</version>
-  <relativePath/> <!-- tells Maven to fetch from repo, not local filesystem -->
-</parent>
-
-<!-- Because of the parent, you no longer need to specify versions for
-     Spring Boot starters — they are managed by the parent's BOM -->
-<dependencies>
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-    <!-- version omitted — inherited from parent -->
-  </dependency>
-</dependencies>
-```
-
-### DEPENDENCY MANAGEMENT AND BOMS
-
-A Bill of Materials (BOM) is a special POM that declares the versions of a
-set of related dependencies, without actually pulling them in. You import a
-BOM to get consistent, tested version combinations.
-
-```xml
-<dependencyManagement>
-  <dependencies>
-    <!-- Import the Spring Cloud BOM to get aligned versions for all
-         Spring Cloud modules without specifying versions individually -->
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-dependencies</artifactId>
-      <version>2023.0.0</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-
-<dependencies>
-  <!-- Version is managed by the BOM above -->
-  <dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-openfeign</artifactId>
-  </dependency>
-</dependencies>
-```
-
-### MULTI-MODULE PROJECTS
-
-Large projects split into modules: separate Maven projects each with their
-own pom.xml, coordinated by a root "aggregator" POM. This is the standard
-layout for microservice mono-repos or layered architectures.
-
-```
-my-system/
-  pom.xml              ← aggregator (packaging=pom)
-  domain/
-    pom.xml
-    src/main/java/...
-  api/
-    pom.xml
-    src/main/java/...
-  service/
-    pom.xml
-    src/main/java/...
-```
-
-Root aggregator pom.xml:
-
-```xml
-<groupId>com.beatriz</groupId>
-<artifactId>my-system</artifactId>
-<version>1.0.0-SNAPSHOT</version>
-<packaging>pom</packaging>   <!-- THIS is what makes it an aggregator -->
-
-<modules>
-  <module>domain</module>    <!-- refers to the subdirectory name -->
-  <module>api</module>
-  <module>service</module>
-</modules>
-```
-
-Running `mvn install` from the root builds all modules in the correct order.
-One module can depend on another:
-
-```xml
-<!-- In service/pom.xml -->
-<dependency>
-  <groupId>com.beatriz</groupId>
-  <artifactId>domain</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
-</dependency>
-```
-
-### PLUGINS
-
-Maven itself does very little — almost all build work is done by plugins.
-The Spring Boot Maven plugin is the most common one in the Spring ecosystem:
-
-```xml
-<build>
-  <plugins>
-    <plugin>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-maven-plugin</artifactId>
-      <!-- Creates an executable "fat JAR" that bundles all dependencies -->
-      <!-- Run with: java -jar target/my-app-1.0.0.jar -->
-      <executions>
-        <execution>
-          <goals>
-            <goal>repackage</goal>  <!-- runs during the package phase -->
-          </goals>
-        </execution>
-      </executions>
-    </plugin>
-
-    <plugin>
-      <!-- Controls how unit tests are discovered and run -->
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-surefire-plugin</artifactId>
-      <version>3.1.2</version>
-      <configuration>
-        <!-- Include JUnit 5 tests (required for older Surefire versions) -->
-        <includes>
-          <include>**/*Test.java</include>
-          <include>**/*Tests.java</include>
-        </includes>
-      </configuration>
-    </plugin>
-  </plugins>
-</build>
-```
-
-### MAVEN vs GRADLE
-
-Maven uses XML (pom.xml) and a strict, opinionated lifecycle. Gradle uses
-Groovy or Kotlin DSL (build.gradle / build.gradle.kts) and is more flexible
-and faster (incremental builds, build cache). Spring Boot projects work with
-both. In interviews, knowing Maven is expected for Java/Spring roles; Gradle
-is more common in Android (where it is mandatory) and newer Spring projects.
-
-Key Maven conventions to memorise:
-
-```text
-• src/main/java/   → production source code
-• src/main/resources/ → properties, YAML, static files
-• src/test/java/   → test source code
-• target/          → all build output (always in .gitignore)
-• ~/.m2/repository/ → local dependency cache
-```
-
-
-## 4.11 YAML
-
-
-YAML (YAML Ain't Markup Language — a recursive acronym) is a human-readable
-data serialisation format. It is not a programming language and has no
-executable logic. Its only job is to represent structured data (strings,
-numbers, booleans, lists, maps) in a format that humans can read and write
-comfortably. YAML is the dominant configuration format in modern software:
-Kubernetes manifests, Docker Compose files, CI/CD pipelines (GitHub Actions,
-GitLab CI), Spring Boot's application.yml, and Ansible playbooks are all YAML.
-
-### YAML vs JSON vs XML
-
-All three formats represent the same kinds of data. The differences are:
-
-JSON — machine-friendly, no comments, strict quoting rules, verbose brackets.
-       Best for APIs and data exchange between programs.
-
-XML  — very verbose, supports attributes and namespaces, required for SOAP and
-       many enterprise standards.
-
-YAML — human-friendly, uses indentation instead of brackets, supports comments
-       (#), optional quotes. Best for configuration files that humans edit.
-
-The same data in all three:
-
-JSON:
-```json
-{
-  "server": {
-    "port": 8080,
-    "host": "localhost"
-  },
-  "features": ["auth", "logging"],
-  "debug": true
-}
-```
-
-YAML:
-```yaml
-server:
-  port: 8080
-  host: localhost
-features:
-  - auth
-  - logging
-debug: true
-# This comment is valid YAML; JSON has no comment syntax
-```
-
-XML:
-```xml
-<config>
-  <server>
-    <port>8080</port>
-    <host>localhost</host>
-  </server>
-  <features>
-    <feature>auth</feature>
-    <feature>logging</feature>
-  </features>
-  <debug>true</debug>
-</config>
-```
-
-YAML is clearly the most readable for humans. This is why it won in the
-configuration space.
-
-### CORE SYNTAX RULES
-
-1. INDENTATION IS STRUCTURE. YAML uses spaces (NEVER tabs) to define nesting.
-   Two-space indentation is the universal convention.
-
-2. KEY-VALUE PAIRS (mappings):
-   key: value
-   Colons must be followed by a space. "key:value" is NOT valid.
-
-3. LISTS (sequences):
-   items:
-     - first
-     - second
-     - third
-
-4. SCALARS (values):
-   - Strings: can be unquoted if they don't contain special chars
-   - Numbers: 42, 3.14 (no quotes)
-   - Booleans: true / false (also yes/no, on/off — avoid these ambiguous forms)
-   - Null: null or ~
-   - Dates: 2024-01-15 (ISO 8601)
-
-5. COMMENTS: # everything after this is ignored
-
-6. MULTILINE STRINGS:
-   Two operators:
-   • | (literal block) — preserves newlines exactly
-   • > (folded block)  — folds newlines into spaces (good for long sentences)
-
-```yaml
-# Literal block: newlines preserved
-script: |
-  #!/bin/bash
-  echo "Hello"
-  echo "World"
-
-# Folded block: newlines become spaces
-description: >
-  This is a long description
-  that wraps across multiple lines
-  but will be read as one paragraph.
-```
-
-### SPRING BOOT — application.yml
-
-Spring Boot supports both application.properties and application.yml. YAML
-is preferred when there is nesting, because it avoids repetitive prefixes.
-
-Properties format (repetitive):
-```
-spring.datasource.url=jdbc:mysql://localhost:3306/mydb
-spring.datasource.username=root
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-```
-
-YAML format (hierarchical, cleaner):
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/mydb
-    username: root
-    password: ${DB_PASSWORD}      # reference an environment variable
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-
-server:
-  port: 8080
-  servlet:
-    context-path: /api
-
-logging:
-  level:
-    root: INFO
-    com.beatriz: DEBUG             # set DEBUG only for your own packages
-
-app:
-  jwt:
-    secret: ${JWT_SECRET}
-    expiration-ms: 86400000        # 24 hours in milliseconds
-  cors:
-    allowed-origins:
-      - http://localhost:3000
-      - https://myapp.com
-```
-
-Spring profiles in YAML — all profiles in one file, separated by ---:
-```yaml
-spring:
-  profiles:
-    active: dev   # default profile
-
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-  datasource:
-    url: jdbc:h2:mem:testdb   # H2 in-memory for local dev
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  datasource:
-    url: jdbc:mysql://prod-db:3306/mydb
-```
-
-### DOCKER COMPOSE
-
-Docker Compose uses YAML to define multi-container applications:
-
-```yaml
-# docker-compose.yml
-version: "3.9"
-
-services:
-  app:
-    build: .                          # build from Dockerfile in current dir
-    ports:
-      - "8080:8080"                   # host:container port mapping
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://db:3306/mydb
-    depends_on:
-      db:
-        condition: service_healthy    # wait until db passes health check
-    networks:
-      - backend
-
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: mydb
-    volumes:
-      - db-data:/var/lib/mysql        # named volume for persistence
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-
-volumes:
-  db-data:                            # declare the named volume
-
-networks:
-  backend:
-    driver: bridge
-```
-
-### KUBERNETES MANIFESTS
-
-Kubernetes uses YAML for every resource: Deployments, Services, ConfigMaps,
-Secrets, Ingresses. Each manifest has four required top-level fields:
-
-```yaml
-# Deployment — manages a set of identical Pod replicas
-apiVersion: apps/v1          # which Kubernetes API group handles this
-kind: Deployment             # the type of resource
-metadata:
-  name: my-app
-  labels:
-    app: my-app
-
-spec:
-
-  replicas: 3                # run 3 identical copies
-  selector:
-    matchLabels:
-      app: my-app            # this Deployment manages Pods with this label
-  template:                  # template for each Pod
-    metadata:
-      labels:
-        app: my-app
-    spec:
-      containers:
-        - name: my-app
-          image: my-app:1.0.0
-          ports:
-            - containerPort: 8080
-          env:
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:          # read from a Kubernetes Secret
-                  name: db-secret
-                  key: password
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"             # 250 millicores = 0.25 CPU
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-
----
-# Service — stable network endpoint for the Deployment
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-service
-spec:
-  selector:
-    app: my-app                        # routes traffic to these Pods
-  ports:
-    - port: 80
-      targetPort: 8080
-  type: ClusterIP                      # internal only (use LoadBalancer for external)
-
----
-# ConfigMap — non-sensitive configuration as key-value pairs
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: my-app-config
-data:
-
-  LOG_LEVEL: "INFO"
-  APP_ENV: "production"
-```
-
-### GITHUB ACTIONS WORKFLOW
-
-GitHub Actions CI/CD pipelines are defined in .github/workflows/*.yml:
-
-```yaml
-name: CI Pipeline
-
-on:                          # triggers
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-
-      - name: Build and test
-        run: mvn clean verify
-
-      - name: Upload test results
-        if: always()         # run even if tests fail
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: target/surefire-reports/
-```
-
-### COMMON PITFALLS
-
-1. TABS vs SPACES: YAML strictly forbids tab characters for indentation.
-   Editors set to use tabs will produce a ParseException. Always configure
-   your editor to use spaces for .yml/.yaml files.
-
-2. INCONSISTENT INDENTATION: Every level must be indented by the same number
-   of spaces (2 is standard). Mixing 2-space and 4-space breaks parsing.
-
-3. UNQUOTED SPECIAL VALUES:
-   • "yes", "no", "true", "false", "null", "~" are reserved. If a value
-     looks like one of these but should be a string, quote it: "yes"
-   • Colons in values must be quoted: message: "Error: file not found"
-   • Values starting with { or [ look like JSON and may confuse parsers.
-     Quote them: tag: "[feature]"
-
-4. THE NORWAY PROBLEM: Country codes "NO" and "SE" were historically parsed
-   as booleans (no=false, se is fine). Modern YAML 1.2 fixed this, but some
-   parsers still use YAML 1.1 rules. Quote country codes as strings: "NO"
-
-5. ANCHORS AND ALIASES (advanced but useful):
-   YAML allows you to define a block once and reuse it:
-   ```yaml
-   defaults: &defaults       # & defines the anchor named "defaults"
-     retries: 3
-     timeout: 30s
-
-   development:
-     <<: *defaults           # << merges the anchor; * references it
-     host: localhost
-
-   production:
-     <<: *defaults
-     host: prod.example.com
-   retries: 5              # override the merged value
-   ```
-   This avoids repeating configuration across environments.
-
-Key YAML facts for interviews:
-• YAML is a superset of JSON — all valid JSON is valid YAML
-• Indentation = structure (spaces only, never tabs)
-• --- separates multiple documents in one file (used in Kubernetes and
-  Spring profiles to combine configs)
-• Environment variable substitution ($VAR or ${VAR}) is NOT part of YAML
-  itself — it is handled by the consuming tool (Spring Boot, Docker, etc.)
-
-
-## 3.14 SCSS
-
-
-
-### Overview
-
-SCSS (Sassy CSS) is a CSS preprocessor — it adds programming features (variables,
-functions, nesting, loops) on top of CSS and compiles down to regular CSS that the
-browser understands. SCSS is the most widely used syntax of Sass (Syntactically
-Awesome Style Sheets). Every valid CSS file is also valid SCSS, making migration
-easy. SCSS is not a new language: it compiles to CSS and adds zero runtime overhead.
-
-Why use SCSS over plain CSS:
-  - Variables with logic and type safety (before CSS custom properties existed)
-  - Nesting eliminates repetitive selectors
-  - Mixins are reusable chunks of CSS with parameters (like functions)
-  - Partials let you split your styles into multiple files and import them
-  - Built-in functions: darken(), lighten(), mix(), rgba()
-  - Loops (@for, @each, @while) generate repetitive utility classes automatically
-
-
-### Variables — SCSS vs CSS CUSTOM PROPERTIES
-
-Both SCSS and modern CSS have variables, but they work very differently:
-
-SCSS variables ($name):
-- Resolved at compile time — the final CSS has the value baked in, not a variable
-- Cannot be changed at runtime (no JavaScript access, no media query override)
-- Can be used in calculations and logic during compilation
-- Scoped to the block they're declared in
-
-CSS custom properties (--name):
-- Resolved at runtime — the browser evaluates them on the fly
-- Can be changed with JavaScript: document.body.style.setProperty('--color', 'red')
-- Can be overridden inside media queries (great for dark mode)
-- Inherited through the DOM: a child element inherits the parent's --variable
-
-
-```scss
-// SCSS variable — compiled away, only the value remains in the output
-$primary: #E84393;
-$spacing-unit: 8px;
-
-.button {
-  background: $primary;
-  padding: $spacing-unit * 2;   // arithmetic: 16px in output
-}
-```
-
-```css
-/* CSS custom property — lives in the browser, dynamic */
-:root {
-  --primary: #E84393;
-  --spacing-unit: 8px;
-}
-
-.button {
-  background: var(--primary);
-  padding: calc(var(--spacing-unit) * 2);
-}
-
-/* Can be overridden at runtime or in media queries */
-@media (prefers-color-scheme: dark) {
-  :root { --primary: #FF79C6; }
-}
-```
-
-Rule of thumb: use CSS custom properties for theme tokens and values that need
-to change at runtime; use SCSS variables for build-time constants like breakpoints
-or to feed into SCSS functions and loops.
-
-
-### Nesting
-
-
-SCSS lets you nest selectors inside each other, mirroring the HTML structure.
-This eliminates repetition and keeps related styles together. The & symbol
-refers to the parent selector and is used for pseudo-classes, modifiers, and
-BEM naming.
-
-
-```scss
-// SCSS — written once, clear hierarchy
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-
-  &:hover {              // compiles to .card:hover
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-  }
-
-  &--featured {          // BEM modifier: compiles to .card--featured
-    border: 2px solid $primary;
-  }
-
-  .card__title {         // BEM element: compiles to .card .card__title
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-
-  .card__body {
-    color: #555;
-    line-height: 1.6;
-  }
-}
-```
-
-```css
-/* CSS equivalent — repetitive selectors */
-.card { background: white; border-radius: 12px; padding: 24px; }
-.card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-.card--featured { border: 2px solid #E84393; }
-.card .card__title { font-size: 1.5rem; font-weight: 700; }
-.card .card__body { color: #555; line-height: 1.6; }
-```
-
-Avoid nesting more than 3 levels deep — it generates overly specific selectors
-that are hard to override and slow for the browser to match.
-
-
-### Mixins** — REUSABLE STYLE BLOCKS WITH PARAMETERS
-
-A mixin is a named block of CSS declarations that can be included anywhere with
-@include. Mixins can accept parameters, making them far more powerful than
-copy-pasting CSS. They are the SCSS equivalent of a function that outputs CSS.
-
-
-```scss
-// Define a mixin — like declaring a function
-@mixin flex-center($direction: row) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: $direction;
-}
-
-@mixin responsive($breakpoint) {
-  @if $breakpoint == mobile {
-    @media (max-width: 768px) { @content; }
-  } @else if $breakpoint == tablet {
-    @media (max-width: 1024px) { @content; }
-  }
-}
-
-// Use the mixin with @include
-.hero {
-  @include flex-center(column);
-  height: 100vh;
-
-  @include responsive(mobile) {
-    height: auto;
-    padding: 40px 16px;
-  }
-}
-
-.modal {
-  @include flex-center;          // uses default: row
-}
-```
-
-```css
-/* Compiled CSS output */
-.hero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  height: 100vh;
-}
-@media (max-width: 768px) {
-  .hero { height: auto; padding: 40px 16px; }
-}
-.modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-}
-```
-
-
-### Extend and Inheritance
-
-
-@extend lets one selector inherit all the styles of another. Useful for shared
-base styles (e.g. all buttons share a base, then each variant extends it).
-Use %placeholder selectors (silent classes) to avoid generating unused CSS.
-
-
-```scss
-// %placeholder — never compiled to CSS on its own, only when extended
-%button-base {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  @extend %button-base;
-  background: $primary;
-  color: white;
-}
-
-.btn-secondary {
-  @extend %button-base;
-  background: transparent;
-  border: 2px solid $primary;
-  color: $primary;
-}
-```
-
-```css
-/* Compiled CSS — grouped selector (efficient) */
-.btn-primary, .btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-.btn-primary { background: #E84393; color: white; }
-.btn-secondary { background: transparent; border: 2px solid #E84393; color: #E84393; }
-```
-
-**Mixin vs Extend:**
-  - Use @mixin when you need parameters or when the same styles appear in many unrelated components — mixins copy the CSS into each selector.
-  - se @extend when styles are shared between closely related selectors — extend groups selectors together, which is more efficient but less flexible.
-
-### Partials and @use
-
-
-Partials are SCSS files prefixed with _ (e.g. _variables.scss). They are not
-compiled to CSS on their own — they must be imported into another file. This
-lets you split your styles into logical modules.
-
-
-```scss
-// _variables.scss
-$primary: #E84393;
-$font-stack: 'Inter', sans-serif;
-$breakpoint-md: 768px;
-
-// _mixins.scss
-@use 'variables' as v;
-@mixin respond($bp) { ... }
-
-// main.scss — compiled to main.css
-@use 'variables' as v;
-@use 'mixins' as m;
-@use 'components/card';
-@use 'components/button';
-
-body {
-  font-family: v.$font-stack;
-  color: v.$primary;
-}
-```
-
-#### @use (modern) vs @import (legacy)
-
-```text
-@import — global scope, everything pollutes the same namespace, deprecated
-@use    — namespaced (v.$primary), no global leaks, loads each file only once
-```
-
-### Built-in Functions and Loops
-
-
-SCSS ships with colour functions and control flow that let you generate CSS
-programmatically — impossible in plain CSS.
-
-
-```scss
-$base: #E84393;
-
-// Colour functions
-.dark  { background: darken($base, 15%); }    // #b3006a
-.light { background: lighten($base, 20%); }   // #f589bf
-.fade  { background: rgba($base, 0.2); }
-
-// @each loop — generate utility classes automatically
-$sizes: (sm: 4px, md: 8px, lg: 16px, xl: 32px);
-
-@each $name, $value in $sizes {
-  .p-#{$name} { padding: $value; }
-  .m-#{$name} { margin: $value; }
-}
-
-// Compiles to:
-// .p-sm { padding: 4px; }   .m-sm { margin: 4px; }
-// .p-md { padding: 8px; }   .m-md { margin: 8px; }
-// .p-lg { padding: 16px; }  .m-lg { margin: 16px; }
-// .p-xl { padding: 32px; }  .m-xl { margin: 32px; }
-
-// @for loop
-@for $i from 1 through 12 {
-  .col-#{$i} { width: percentage($i / 12); }
-}
-```
-
-### SCSS vs CSS — WHEN TO USE EACH
-
-Use SCSS when:
-  - Working on a large codebase with many components (mixins and partials pay off)
-  - Building a design system or component library
-  - You need to generate many similar utility classes programmatically
-  - The project already uses a build step (Webpack, Vite, Angular CLI)
-  - Team members are already familiar with SCSS
-
-Use plain CSS when:
-  - Building small projects or prototypes where a build step adds overhead
-  - Using a CSS framework like Tailwind (which already generates utility classes)
-  - You need runtime theming — CSS custom properties change dynamically, SCSS
-variables cannot
-• Working in a CSS-in-JS context (Styled Components, Emotion) where JavaScript
-already provides variables and logic
-Key interview facts:
-  - SCSS compiles to CSS — browsers never see SCSS, zero runtime overhead
-  - & is the parent selector reference: .card { &:hover {} } → .card:hover {}
-  - %placeholder selectors are invisible until extended — they prevent dead CSS
-  - @use replaced @import (deprecated in Dart Sass 1.23) — it's namespaced
-  - darken() and lighten() are deprecated in new Sass; use color.adjust() instead
-  - SCSS is a strict superset of CSS — any valid CSS file can be renamed .scss
-
-
-#### Appendix — Quick Interview Reference
-
-**Languages**
-
-```text
-Java:       OOP (4 pillars), HashMap internals, Optional, Streams API, @Transactional
-TypeScript: interface vs type, generics, utility types (Partial/Pick/Omit), narrowing
-JavaScript: event loop, microtasks vs macrotasks, closures, this, async/await
-Dart:       null safety, final vs const, Future vs Stream, isolates
-C:          pointers, malloc/free, stack vs heap, buffer overflow
-```
-
-**Web & APIs**
-
-```text
-HTML:         semantic elements, DOM, defer vs async, aria accessibility
-CSS:          box model, specificity, flexbox vs grid, custom properties
-Spring Boot:  IoC/DI, bean scopes, @Transactional, N+1 problem, Spring Data JPA
-Node.js:      event loop phases, process.nextTick, streams, middleware pattern
-REST APIs:    HTTP methods + idempotency, status codes (401 vs 403), naming
-Microservices: circuit breaker (3 states), saga pattern, CAP theorem
-AuthN/AuthZ:  JWT structure, OAuth2 flows, RBAC vs ABAC, bcrypt, httpOnly cookies
-WebSockets:   upgrade handshake, SSE vs WS, scaling with Redis pub/sub
-```
-
-**Frameworks & Mobile**
-
-```text
-React:        virtual DOM, hooks (all), keys, reconciliation, memo/callback
-Angular:      RxJS operators (switchMap vs mergeMap!), OnPush CD, async pipe
-React Native: FlatList vs ScrollView, bridge vs JSI, StyleSheet.create
-Flutter:      StatefulWidget + setState, BuildContext, ListView.builder
-Kotlin:       null safety, coroutines, Dispatchers, data classes
-Swift:        optionals (if let, guard let), @State/@StateObject, async/await
-```
-
-**Cloud & DevOps**
-
-```text
-Azure:       IaaS vs PaaS vs FaaS, App Service slots, Functions triggers, Key Vault, Managed Identity
-GCP:         Cloud Run, BigQuery (analytics, not OLTP), Pub/Sub at-least-once delivery
-Firebase:    Firestore data model, security rules, onSnapshot cleanup
-Docker:      image vs container, layer caching, multi-stage build, CMD vs ENTRYPOINT
-Kubernetes:  Pod/Deployment/Service/Ingress, requests vs limits, liveness vs readiness
-CI/CD:       pipeline stages, blue-green vs canary, feature flags
-Maven:       POM, GAV coordinates, dependency scopes, build lifecycle, BOM
-```
-
-**Databases**
-
-```text
-MySQL:      ACID, InnoDB, B-tree index, composite index order, EXPLAIN, utf8mb4
-MongoDB:    embed vs reference, aggregation pipeline, $lookup, TTL index
-SQL:        JOINs, window functions (RANK/LAG/ROW_NUMBER), CTEs, offset vs keyset
-Data Model: normalization (3NF), soft delete, audit columns, price snapshot
-```
-
-**Quality & Process**
-
-```text
-JUnit 5:     AAA pattern, @Nested, @ParameterizedTest, @WebMvcTest, @DataJpaTest
-Mockito:     mock vs spy, when/thenReturn, verify, ArgumentCaptor
-SonarQube:   bug vs vulnerability vs hotspot vs smell, quality gate, coverage
-Testing:     testing pyramid, unit vs integration, Testcontainers
-Debugging:   read full stack trace, breakpoints (conditional), structured logging
-Code Review: blocking vs nit, feedback on code not on the person
-Agile/Scrum: PO + SM + Team, backlog + sprint backlog + increment, velocity ≠ productivity
-```
-
-**Architecture & Production**
-
-```text
-SDLC:         7 phases, functional vs non-functional requirements
-Architecture: SOLID (all 5), design patterns, CAP theorem, system design framework
-Security:     OWASP Top 10, SQL injection fix, JWT storage, CSP header
-Performance:  measure first, cache strategies, Core Web Vitals (LCP/INP/CLS)
-Production:   3 pillars of observability, SLI/SLO/SLA/error budget, blameless post-mortem
-```
 
 
 ### End of Guide

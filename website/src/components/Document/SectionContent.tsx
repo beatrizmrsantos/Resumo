@@ -188,7 +188,7 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
 
     // ── Regular paragraph ─────────────────────────────────────────────────────
     return (
-      <p key={li} style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+      <p key={li} style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0 }}>
         {renderInline(trimmed)}
       </p>
     )
@@ -235,10 +235,12 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
       )}
 
       {/* Content blocks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {section.blocks.map((block, i) => {
+          const mt = i === 0 ? 0 : (block.spacingBefore ?? 1) * 12
+
           if (block.type === 'code') {
-            return <CodeBlock key={i} code={block.content} language={block.language} />
+            return <div key={i} style={{ marginTop: mt }}><CodeBlock code={block.content} language={block.language} /></div>
           }
 
           if (block.type === 'heading') {
@@ -246,16 +248,79 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
               <h4 key={i} style={{
                 fontSize: 13, fontWeight: 800, color: 'var(--text-primary)',
                 letterSpacing: '1px', textTransform: 'uppercase',
-                marginTop: 8, marginBottom: -4,
+                marginTop: Math.max(mt, 10), marginBottom: 4,
               }}>
                 {highlightText(block.content, searchQuery)}
               </h4>
             )
           }
 
+          if (block.type === 'table' && block.headers && block.rows) {
+            const YES_NO_RE = /^(Yes|No\*?|—)$/i
+            const cellVal = (v: string) => {
+              if (/^yes$/i.test(v)) return (
+                <span style={{
+                  display: 'inline-block', padding: '2px 8px', borderRadius: 4,
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.3px',
+                  background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0',
+                }}>Yes</span>
+              )
+              if (/^no\*?$/i.test(v)) return (
+                <span style={{
+                  display: 'inline-block', padding: '2px 8px', borderRadius: 4,
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.3px',
+                  background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca',
+                }}>{ v }</span>
+              )
+              return renderInline(v)
+            }
+            return (
+              <div key={i} style={{ marginTop: mt, overflowX: 'auto', borderRadius: 10, border: '1.5px solid var(--border)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: `${section.partColor}18` }}>
+                      {block.headers.map((h, hi) => (
+                        <th key={hi} style={{
+                          padding: '10px 14px', textAlign: 'left',
+                          fontWeight: 700, fontSize: 11, letterSpacing: '0.6px',
+                          textTransform: 'uppercase', color: section.partColor,
+                          borderBottom: `2px solid ${section.partColor}30`,
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {block.rows.map((row, ri) => (
+                      <tr key={ri} style={{
+                        background: ri % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.018)',
+                        borderBottom: '1px solid var(--border)',
+                      }}>
+                        {row.map((cell, ci) => (
+                          <td key={ci} style={{
+                            padding: '9px 14px',
+                            color: ci === 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            fontWeight: ci === 0 ? 600 : 400,
+                            fontFamily: ci === 0 ? 'var(--font-mono)' : 'inherit',
+                            fontSize: ci === 0 ? 12 : 13,
+                            whiteSpace: YES_NO_RE.test(cell) ? 'nowrap' : undefined,
+                          }}>
+                            {cellVal(cell)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          }
+
           const lines = block.content.split('\n')
           return (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div key={i} style={{ marginTop: mt, display: 'flex', flexDirection: 'column', gap: 5 }}>
               {lines.map((line, li) => renderLine(line.trim(), li))}
             </div>
           )
