@@ -123,14 +123,14 @@ export default function DocumentPage() {
   }, [allSections])
 
   const navigateTo = useCallback((id: string) => {
-    if (!selectedPartId && parsed) {
-      const part = parsed.parts.find(p => p.sections.some(s => s.id === id))
-      if (part) {
-        pendingScrollRef.current = id
-        setSelectedPartId(part.id)
-        window.scrollTo(0, 0)
-        return
-      }
+    if (!parsed) return
+    const part = parsed.parts.find(p => p.sections.some(s => s.id === id))
+    if (part && part.id !== selectedPartId) {
+      // Target is in a different (or unloaded) part — switch first, then scroll
+      pendingScrollRef.current = id
+      setSelectedPartId(part.id)
+      window.scrollTo(0, 0)
+      return
     }
     const el = document.getElementById(id)
     if (el) {
@@ -342,49 +342,87 @@ export default function DocumentPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50) }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10,
-              padding: isMobile ? '8px 10px' : '8px 16px', borderRadius: 10,
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {searchQuery ? (
+            /* Active search — show query + clear + navigation */
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 10px', borderRadius: 10,
               border: '1.5px solid var(--border)', background: 'var(--bg-card)',
-              color: 'var(--text-muted)', fontSize: 13,
-              fontFamily: 'var(--font-sans)', cursor: 'pointer',
-              ...(isMobile ? {} : { width: 240, justifyContent: 'space-between' }),
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Search size={15} />
-              {!isMobile && <span>Search…</span>}
-            </div>
-            {!isMobile && (
-              <kbd style={{
-                fontSize: 10, padding: '2px 6px', borderRadius: 5,
-                background: 'var(--bg-sidebar)', border: '1px solid var(--border)',
-                fontFamily: 'var(--font-mono)', color: 'var(--text-muted)',
-              }}>⌘K</kbd>
-            )}
-          </button>
-
-          {searchQuery && searchResults.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {matchIndex + 1}/{searchResults.length}
-              </span>
+              ...(isMobile ? {} : { minWidth: 200 }),
+            }}>
+              <Search size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
               <button
-                onClick={() => navigateToMatch('prev')}
-                style={{ padding: 4, borderRadius: 6, background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}
+                onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50) }}
+                style={{
+                  flex: 1, border: 'none', background: 'transparent', cursor: 'pointer',
+                  textAlign: 'left', padding: 0,
+                  fontSize: 13, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  maxWidth: isMobile ? 90 : 160,
+                }}
               >
-                <ChevronUp size={14} color="var(--text-secondary)" />
+                {searchQuery}
               </button>
+              {searchResults.length > 0 && (
+                <>
+                  <span style={{
+                    fontSize: 11, color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)', flexShrink: 0,
+                  }}>
+                    {matchIndex + 1}/{searchResults.length}
+                  </span>
+                  <button
+                    onClick={() => navigateToMatch('prev')}
+                    style={{ padding: 2, borderRadius: 4, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex' }}
+                  >
+                    <ChevronUp size={13} color="var(--text-secondary)" />
+                  </button>
+                  <button
+                    onClick={() => navigateToMatch('next')}
+                    style={{ padding: 2, borderRadius: 4, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex' }}
+                  >
+                    <ChevronDown size={13} color="var(--text-secondary)" />
+                  </button>
+                </>
+              )}
               <button
-                onClick={() => navigateToMatch('next')}
-                style={{ padding: 4, borderRadius: 6, background: 'var(--bg-sidebar)', border: '1px solid var(--border)' }}
+                onClick={() => { setSearchQuery(''); setMatchIndex(0) }}
+                style={{
+                  padding: 2, borderRadius: 4, border: 'none',
+                  background: 'var(--bg-sidebar)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', flexShrink: 0,
+                }}
+                title="Clear search"
               >
-                <ChevronDown size={14} color="var(--text-secondary)" />
+                <X size={13} color="var(--text-secondary)" />
               </button>
             </div>
+          ) : (
+            /* Idle — show normal search button */
+            <button
+              onClick={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10,
+                padding: isMobile ? '8px 10px' : '8px 16px', borderRadius: 10,
+                border: '1.5px solid var(--border)', background: 'var(--bg-card)',
+                color: 'var(--text-muted)', fontSize: 13,
+                fontFamily: 'var(--font-sans)', cursor: 'pointer',
+                ...(isMobile ? {} : { width: 240, justifyContent: 'space-between' }),
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Search size={15} />
+                {!isMobile && <span>Search…</span>}
+              </div>
+              {!isMobile && (
+                <kbd style={{
+                  fontSize: 10, padding: '2px 6px', borderRadius: 5,
+                  background: 'var(--bg-sidebar)', border: '1px solid var(--border)',
+                  fontFamily: 'var(--font-mono)', color: 'var(--text-muted)',
+                }}>⌘K</kbd>
+              )}
+            </button>
           )}
         </div>
       </div>
