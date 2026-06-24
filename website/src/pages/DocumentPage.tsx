@@ -200,7 +200,7 @@ export default function DocumentPage() {
                 autoFocus
                 style={{
                   flex: 1, border: 'none', outline: 'none',
-                  background: 'transparent', fontSize: 15,
+                  background: 'transparent', fontSize: 16,
                   color: 'var(--text-primary)', fontFamily: 'var(--font-sans)',
                 }}
               />
@@ -425,7 +425,7 @@ export default function DocumentPage() {
                   placeholder="Search chapters…"
                   style={{
                     flex: 1, border: 'none', outline: 'none',
-                    background: 'transparent', fontSize: 14,
+                    background: 'transparent', fontSize: 16,
                     color: 'var(--text-primary)', fontFamily: 'var(--font-sans)',
                   }}
                 />
