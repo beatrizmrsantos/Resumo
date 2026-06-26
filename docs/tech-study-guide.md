@@ -95,6 +95,69 @@ Code examples are part of the learning — read them as explanatory text.
 - 7.05 Performance Optimization
 - 7.06 Production Support
 
+**Part 8 — Quick Interview Questions**
+- 8.01 Java
+- 8.02 TypeScript
+- 8.03 JavaScript
+- 8.04 Dart
+- 8.05 HTML
+- 8.06 CSS
+- 8.07 Python
+- 8.08 C
+- 8.09 Spring Boot
+- 8.10 Node.js
+- 8.11 REST APIs
+- 8.12 Microservices
+- 8.13 Authentication & Authorization
+- 8.14 API Integration
+- 8.15 WebSockets
+- 8.16 SOAP
+- 8.17 JSON
+- 8.18 XML
+- 8.19 React
+- 8.20 Angular
+- 8.21 Three.js
+- 8.22 Next.js
+- 8.23 React Native
+- 8.24 Flutter
+- 8.25 Kotlin
+- 8.26 Swift
+- 8.27 Vite
+- 8.28 Tailwind CSS
+- 8.29 SCSS
+- 8.30 SPA
+- 8.31 Responsive UI
+- 8.32 Cross-Platform Development
+- 8.33 Microsoft Azure
+- 8.34 Google Cloud Platform
+- 8.35 Firebase
+- 8.36 Docker
+- 8.37 Kubernetes
+- 8.38 CI/CD Pipelines
+- 8.39 Git
+- 8.40 GitHub
+- 8.41 Bitbucket
+- 8.42 Maven
+- 8.43 YAML
+- 8.44 MySQL
+- 8.45 MongoDB
+- 8.46 SQL
+- 8.47 Data Modelling
+- 8.48 PostgreSQL
+- 8.49 GraphQL
+- 8.50 JUnit 5
+- 8.51 Mockito
+- 8.52 SonarQube
+- 8.53 Unit & Integration Testing
+- 8.54 Debugging
+- 8.55 Code Reviews
+- 8.56 Agile / Scrum
+- 8.57 SDLC
+- 8.58 Software Architecture
+- 8.59 Secure Development
+- 8.60 Performance Optimization
+- 8.61 Production Support
+
 
 ---
 
@@ -1173,6 +1236,7 @@ CSS (Cascading Style Sheets) controls the visual presentation of HTML. The "casc
 Every HTML element is a rectangular box composed of four layers, from inside out:
 CONTENT → PADDING → BORDER → MARGIN
 
+```text
 ┌─────────────────────────────────┐
 │           MARGIN                │
 │  ┌───────────────────────────┐  │
@@ -1185,6 +1249,7 @@ CONTENT → PADDING → BORDER → MARGIN
 │  │  └─────────────────────┘  │  │
 │  └───────────────────────────┘  │
 └─────────────────────────────────┘
+```
 
 #### Critical: box-sizing
 
@@ -1199,99 +1264,478 @@ Best practice: set * { box-sizing: border-box; } globally.
 ```
 
 
+### Selectors
+
+```css
+/* Type, class, ID */
+p { }                    /* all <p> elements */
+.card { }                /* elements with class="card" */
+#hero { }                /* element with id="hero" */
+
+/* Attribute */
+input[type="text"] { }   /* input with specific attribute */
+a[href^="https"] { }     /* href starts with https */
+a[href$=".pdf"] { }      /* href ends with .pdf */
+
+/* Combinators */
+div p { }                /* <p> anywhere inside <div> (descendant) */
+div > p { }              /* <p> direct child of <div> */
+h1 + p { }               /* <p> immediately after <h1> (adjacent sibling) */
+h1 ~ p { }               /* all <p> siblings after <h1> (general sibling) */
+
+/* Pseudo-classes — element state */
+a:hover { }              /* on mouse over */
+a:focus { }              /* keyboard focus */
+input:disabled { }
+li:first-child { }       /* first child of its parent */
+li:last-child { }
+li:nth-child(2n) { }     /* even items */
+li:nth-child(odd) { }
+p:not(.special) { }      /* elements that do NOT match */
+
+/* Pseudo-elements — virtual parts of an element */
+p::before { content: '→ '; }   /* insert content before */
+p::after  { content: ' ←'; }   /* insert content after */
+p::first-line { }               /* first rendered line */
+::placeholder { color: gray; }  /* input placeholder text */
+::selection { background: yellow; }  /* selected text */
+```
+
+
 ### Specificity
 
-
-When multiple CSS rules match the same element, specificity determines which one
-wins. Calculated as a score (A, B, C):
+When multiple rules match the same element, specificity determines which wins:
 
 ```text
-A — inline styles: style="..."          weight: 1000
-B — IDs: #header                         weight: 0100
-C — classes, attributes, pseudo-classes  weight: 0010
-D — elements, pseudo-elements            weight: 0001
+inline style="..."            →  1-0-0-0  (always wins)
+#id                           →  0-1-0-0
+.class  :pseudo-class  [attr] →  0-0-1-0
+element  ::pseudo-element     →  0-0-0-1
 ```
 
 ```css
-p { color: blue; }                /* 0,0,0,1 */
-.intro { color: green; }          /* 0,0,1,0 — wins over p */
-#hero { color: red; }             /* 0,1,0,0 — wins over .intro */
-style="color: orange"             /* 1,0,0,0 — wins over #hero */
-
-!important overrides everything — a last resort, signals a design problem.
-The cascade also considers source order: when specificity is equal, the later rule wins.
+p            { color: blue; }    /* 0-0-0-1 */
+.intro       { color: green; }   /* 0-0-1-0  wins */
+#hero        { color: red; }     /* 0-1-0-0  wins */
+style="..."                      /* 1-0-0-0  wins */
 ```
+
+Equal specificity → the **later rule in the file wins**. `!important` overrides everything — last resort only.
+
+
+### Display
+
+```css
+display: block;         /* takes full width, stacks vertically (div, p, h1…) */
+display: inline;        /* flows with text, no width/height (span, a, strong…) */
+display: inline-block;  /* flows with text but accepts width/height */
+display: none;          /* removed from layout entirely (vs visibility: hidden) */
+display: flex;          /* flex container */
+display: grid;          /* grid container */
+display: contents;      /* element itself disappears, children participate in parent layout */
+```
+
+
+### Position
+
+```css
+position: static;    /* default — follows normal document flow */
+position: relative;  /* offset from its normal position; creates stacking context */
+position: absolute;  /* removed from flow; positioned relative to nearest non-static ancestor */
+position: fixed;     /* relative to the viewport; stays while scrolling */
+position: sticky;    /* relative until scroll threshold, then fixed */
+```
+
+```css
+.modal-overlay {
+    position: fixed;
+    inset: 0;              /* shorthand for top:0 right:0 bottom:0 left:0 */
+    background: rgba(0,0,0,0.5);
+}
+
+.tooltip {
+    position: absolute;
+    top: 100%;             /* directly below parent */
+    left: 50%;
+    transform: translateX(-50%);  /* centre horizontally */
+}
+
+.sticky-header {
+    position: sticky;
+    top: 0;                /* sticks when scrolled to top of viewport */
+    z-index: 100;
+}
+```
+
+
+### Spacing — Margin & Padding
+
+```css
+/* Padding — inside the border (adds to clickable area) */
+padding: 16px;                  /* all sides */
+padding: 8px 16px;              /* vertical horizontal */
+padding: 8px 12px 6px 12px;    /* top right bottom left (clockwise) */
+padding-top: 8px;
+
+/* Margin — outside the border (pushes other elements away) */
+margin: 24px auto;   /* vertical=24px, horizontal=auto (centres block elements) */
+margin: 0;
+
+/* Margin collapsing: adjacent vertical margins merge into the larger one */
+/* (only for block elements in normal flow, not in flex/grid) */
+h1 { margin-bottom: 24px; }
+p  { margin-top: 16px; }
+/* actual gap between h1 and p = 24px, NOT 40px */
+```
+
+
+### Sizing
+
+```css
+width: 300px;            /* fixed */
+width: 50%;              /* relative to parent */
+width: 100vw;            /* 100% of viewport width */
+width: fit-content;      /* shrinks to content */
+width: min-content;      /* smallest without overflow */
+width: max-content;      /* widest without wrapping */
+
+min-width: 200px;        /* never smaller than this */
+max-width: 800px;        /* never larger — great for readable text columns */
+
+height: 100vh;           /* full viewport height */
+min-height: 100dvh;      /* dynamic viewport height (avoids mobile browser bar issues) */
+
+/* Useful pattern: full-page layout */
+body { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }        /* main fills remaining height */
+```
+
+
+### Overflow
+
+```css
+overflow: visible;  /* default — content can spill outside box */
+overflow: hidden;   /* clips content + creates new block formatting context */
+overflow: scroll;   /* always shows scrollbars */
+overflow: auto;     /* shows scrollbars only when needed */
+
+overflow-x: hidden; /* clip only horizontal */
+overflow-y: auto;   /* scroll only vertical */
+
+/* Clip long text */
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;   /* shows "…" */
+```
+
+
+### Typography
+
+```css
+font-family: 'Inter', sans-serif;   /* first = preferred, rest = fallbacks */
+font-size: 16px;                     /* base; use rem for scalability */
+font-size: 1rem;                     /* relative to root font-size (usually 16px) */
+font-size: 1.25em;                   /* relative to parent font-size */
+font-weight: 400;                    /* normal */
+font-weight: 700;                    /* bold */
+font-style: italic;
+
+line-height: 1.6;                    /* unitless — relative to font-size (best practice) */
+letter-spacing: 0.05em;             /* tracking */
+text-align: left | center | right | justify;
+text-transform: uppercase | lowercase | capitalize;
+text-decoration: underline | line-through | none;
+
+/* Clamp text to N lines */
+display: -webkit-box;
+-webkit-line-clamp: 3;
+-webkit-box-orient: vertical;
+overflow: hidden;
+```
+
+
+### Colors & Backgrounds
+
+```css
+/* Color formats */
+color: #3b82f6;              /* hex */
+color: rgb(59, 130, 246);    /* rgb */
+color: rgba(59, 130, 246, 0.5);  /* rgb with alpha (transparency) */
+color: hsl(217, 91%, 60%);   /* hue saturation lightness */
+
+background-color: #f8fafc;
+background-image: url('image.jpg');
+background-size: cover;      /* scale to fill, may crop */
+background-size: contain;    /* scale to fit, may leave gaps */
+background-position: center;
+background-repeat: no-repeat;
+
+/* Shorthand */
+background: url('hero.jpg') center/cover no-repeat;
+
+/* Gradients */
+background: linear-gradient(135deg, #667eea, #764ba2);
+background: radial-gradient(circle, #f093fb, #f5576c);
+
+opacity: 0.5;   /* affects element AND all children */
+```
+
+
+### Borders
+
+```css
+border: 2px solid #e2e8f0;          /* shorthand: width style color */
+border-top: 1px dashed #ccc;
+border-radius: 8px;                  /* all corners */
+border-radius: 4px 8px 4px 8px;     /* top-left top-right bottom-right bottom-left */
+border-radius: 50%;                  /* circle (on equal width/height element) */
+border-radius: 9999px;              /* pill shape */
+
+outline: 2px solid blue;            /* outside border, doesn't affect layout */
+outline-offset: 2px;                /* gap between element and outline */
+outline: none;                      /* removes default focus outline — always replace with custom */
+
+/* Box shadow */
+box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);  /* multiple */
+box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);  /* inset — inside the element */
+```
+
 
 ### Flexbox
 
-
-Flexbox is a one-dimensional layout model (one axis at a time: row or column).
-Perfect for aligning items within a container.
-
+Flexbox is one-dimensional — one axis at a time (row OR column).
 
 ```css
 .container {
     display: flex;
-    flex-direction: row;           /* main axis: left→right (default) */
-    justify-content: space-between; /* distribute along main axis */
-    align-items: center;           /* align along cross axis */
-    gap: 16px;                     /* space between items */
-    flex-wrap: wrap;               /* allow items to wrap to next line */
+    flex-direction: row;            /* main axis direction: row | column | row-reverse | column-reverse */
+    justify-content: space-between; /* main axis alignment */
+    align-items: center;            /* cross axis alignment */
+    align-content: flex-start;      /* when wrapping: how rows/columns distribute */
+    flex-wrap: wrap;                /* allow items to wrap */
+    gap: 16px;                      /* space between items (row-gap column-gap) */
 }
 
+/* justify-content values */
+flex-start | flex-end | center | space-between | space-around | space-evenly
+
+/* align-items values */
+flex-start | flex-end | center | stretch | baseline
+
 .item {
-    flex: 1;                       /* shorthand: flex-grow flex-shrink flex-basis */
-    /* flex: 1 means: grow to fill available space equally */
-    flex: 0 0 200px;               /* fixed 200px, don't grow or shrink */
+    flex-grow: 1;     /* proportion of free space to take (0 = don't grow) */
+    flex-shrink: 1;   /* proportion to shrink when space is tight (0 = don't shrink) */
+    flex-basis: 0;    /* initial size before growing/shrinking */
+    flex: 1;          /* shorthand: grow=1 shrink=1 basis=0 — fills space equally */
+    flex: 0 0 200px;  /* fixed 200px, never grow or shrink */
+
+    align-self: flex-end;   /* override align-items for this specific item */
+    order: 2;               /* controls display order (default: 0) */
 }
 ```
 
 
 ### CSS Grid
 
-
-Grid is two-dimensional — you define both rows AND columns simultaneously.
-Use Grid for page-level layouts; use Flexbox for component-level alignment.
-
+Grid is two-dimensional — defines rows AND columns simultaneously. Best for page-level layouts.
 
 ```css
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);   /* 3 equal columns */
-    grid-template-columns: 200px 1fr 1fr;    /* fixed + 2 flexible */
-    grid-template-rows: auto 1fr auto;       /* header, content, footer */
-    gap: 24px;
+    grid-template-columns: repeat(3, 1fr);    /* 3 equal columns */
+    grid-template-columns: 200px 1fr 2fr;     /* fixed + flexible */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));  /* responsive without media queries */
+    grid-template-rows: 60px 1fr auto;        /* fixed header, flexible main, auto footer */
+    gap: 24px;                                /* shorthand for row-gap + column-gap */
+    row-gap: 16px;
+    column-gap: 24px;
 }
 
-/* Place an item explicitly */
-.header { grid-column: 1 / -1; }      /* span all columns */
-.sidebar { grid-row: 2 / 4; }         /* span rows 2-3 */
+/* Placing items */
+.header  { grid-column: 1 / -1; }     /* span from first to last column line */
+.sidebar { grid-column: 1 / 2; grid-row: 2 / 4; }  /* explicit placement */
+.main    { grid-column: 2 / -1; }
+
+/* Named template areas — great for readable layouts */
+.layout {
+    display: grid;
+    grid-template-areas:
+        "header header"
+        "sidebar main"
+        "footer footer";
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 60px 1fr 40px;
+}
+.header  { grid-area: header; }
+.sidebar { grid-area: sidebar; }
+.main    { grid-area: main; }
+.footer  { grid-area: footer; }
 ```
 
 
-### CSS Custom Properties (css Variables)
+### Transitions & Animations
+
+```css
+/* Transition — smooth change between two states */
+.button {
+    background: blue;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+.button:hover {
+    background: darkblue;
+    transform: translateY(-2px);
+}
+
+/* transition shorthand: property duration timing-function delay */
+transition: all 0.3s ease;      /* avoid 'all' — prefer specific properties */
+
+/* Timing functions */
+ease | linear | ease-in | ease-out | ease-in-out
+cubic-bezier(0.4, 0, 0.2, 1)   /* custom curve */
+
+/* Keyframe animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal {
+    animation: fadeIn 0.25s ease forwards;
+    /* name duration timing fill-mode */
+}
+
+/* animation properties */
+animation-name: fadeIn;
+animation-duration: 0.3s;
+animation-delay: 0.1s;
+animation-iteration-count: infinite;   /* or a number */
+animation-direction: alternate;        /* reverse on odd iterations */
+animation-fill-mode: forwards;         /* keep final state after animation ends */
+animation-play-state: paused;          /* pause/resume */
+```
 
 
+### Transform
+
+```css
+transform: translateX(20px);         /* move horizontally */
+transform: translateY(-50%);         /* move vertically (% = % of element's own size) */
+transform: translate(-50%, -50%);    /* centre absolutely positioned element */
+transform: scale(1.05);              /* scale up 5% */
+transform: rotate(45deg);
+transform: skewX(10deg);
+
+/* Multiple transforms — combine in one declaration */
+transform: translateY(-4px) scale(1.02);
+
+/* Performance: transform and opacity are GPU-accelerated — prefer them over
+   animating width, height, margin, or top/left */
+```
+
+
+### Z-index & Stacking Context
+
+```css
+/* z-index only works on positioned elements (not static) */
+.modal   { position: fixed; z-index: 1000; }
+.overlay { position: fixed; z-index: 999; }
+.header  { position: sticky; z-index: 100; }
+
+/* A new stacking context is created by:
+   - position + z-index other than auto
+   - opacity < 1
+   - transform, filter, will-change
+   Elements inside a stacking context can't escape it — their z-index
+   is only compared to siblings inside the same context. */
+```
+
+
+### Media Queries
+
+```css
+/* Mobile-first: base styles for small, then override for larger */
+.grid { grid-template-columns: 1fr; }
+
+@media (min-width: 768px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Common breakpoints */
+/* 640px  — sm  (small tablets) */
+/* 768px  — md  (tablets) */
+/* 1024px — lg  (small laptops) */
+/* 1280px — xl  (desktops) */
+
+/* Other media features */
+@media (max-width: 767px) { }               /* only mobile */
+@media (prefers-color-scheme: dark) { }     /* dark mode */
+@media (prefers-reduced-motion: reduce) { } /* accessibility: disable animations */
+@media (hover: none) { }                    /* touch devices */
+
+/* Container queries (modern — style based on parent size, not viewport) */
+.card-container { container-type: inline-size; }
+@container (min-width: 400px) {
+    .card { flex-direction: row; }
+}
+```
+
+
+### CSS Custom Properties (Variables)
 
 ```css
 :root {
-    /* Global CSS variables available throughout the application */
     --color-primary: #3b82f6;
+    --color-primary-dark: #2563eb;
     --spacing-md: 16px;
-    --border-radius: 8px;
+    --radius: 8px;
+    --font-sans: 'Inter', sans-serif;
 }
 
 .button {
-    /* Uses the CSS variables defined in :root */
     background: var(--color-primary);
     padding: var(--spacing-md);
-    border-radius: var(--border-radius);
+    border-radius: var(--radius);
+    /* var() with fallback: */
+    color: var(--button-color, white);
 }
 
-/* Overrides variable values when an element has data-theme="dark" */
+/* Override in a scope */
 [data-theme="dark"] {
     --color-primary: #60a5fa;
 }
+
+.card {
+    /* Local variable only available inside .card */
+    --card-padding: 24px;
+    padding: var(--card-padding);
+}
+```
+
+
+### Cascade Layers (@layer)
+
+```css
+/* Control specificity order regardless of selector strength */
+@layer reset, base, components, utilities;
+
+@layer reset {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+}
+@layer base {
+    body { font-family: sans-serif; line-height: 1.6; }
+}
+@layer components {
+    .btn { padding: 8px 16px; border-radius: 6px; }
+}
+@layer utilities {
+    .hidden { display: none !important; }
+}
+/* Later layers win — utilities beat components beat base beat reset */
 ```
 
 
@@ -3099,26 +3543,17 @@ Typical use cases:
 
 ### Overview
 
-React is a JavaScript library for building user interfaces, created by
-Facebook/Meta. It is declarative — you describe how the UI SHOULD look based on
-state, and React ensures the DOM stays in sync. It uses a Virtual DOM to
-minimise actual DOM changes (which are slow). React is only the view layer —
-you complement it with React Router (routing), Zustand/Redux (state), and
-React Query/SWR (data fetching).
+React is a JavaScript library for building user interfaces, created by Facebook Meta. It is declarative — you describe how the UI SHOULD look based on state, and React ensures the DOM stays in sync. It uses a Virtual DOM to minimise actual DOM changes (which are slow). React is only the view layer — you complement it with React Router (routing), Zustand/Redux (state), and React Query/SWR (data fetching).
 
 
 ### Virtual DOM and Reconciliation
 
 
-The Virtual DOM is an in-memory representation of the real DOM. When state
-changes, React creates a new Virtual DOM tree, diffs it against the previous
-one (reconciliation), and applies only the minimal set of real DOM changes
-needed. This batching and diffing is what makes React fast.
+The Virtual DOM is an in-memory representation of the real DOM. When state changes, React creates a new Virtual DOM tree, diffs it against the previous one (reconciliation), and applies only the minimal set of real DOM changes needed. This batching and diffing is what makes React fast.
 
-React 18 introduced Concurrent Mode — React can now pause, interrupt, and
-resume rendering. Long renders don't block the UI. 
+React 18 introduced Concurrent Mode — React can now pause, interrupt, and resume rendering. Long renders don't block the UI. 
 
-**Key APIs:**
+### Key APIs
 
 **useTransition** — mark a state update as non-urgent (show stale UI while transitioning, update in background)
 
@@ -3131,7 +3566,7 @@ Hooks let you use React state and lifecycle features in function components.
 
 **useState** — local component state
 
-```tsx
+```javascript
 const [count, setCount] = useState(0);
 // Always use the setter: setCount(prev => prev + 1) for updates based on
 // previous value (safe with concurrent rendering)
@@ -3139,7 +3574,7 @@ const [count, setCount] = useState(0);
 
 **useEffect** — synchronise with an external system (API, DOM, timers)
 
-```tsx
+```javascript
 useEffect(() => {
     const subscription = dataSource.subscribe(setData);
     return () => subscription.unsubscribe();   // cleanup on unmount or re-run
@@ -3183,20 +3618,17 @@ const inputRef = useRef(null);
 inputRef.current.focus();
 ```
 
-Every time a component re-renders, all functions and calculations inside it
-are recreated. useMemo and useCallback avoid this for expensive or
-reference-sensitive values.
+Every time a component re-renders, all functions and calculations inside it are recreated. useMemo and useCallback avoid this for expensive or reference-sensitive values.
 
 
 ### Keys
 
 
 Keys help React identify which list items have changed, been added, or removed.
-They must be stable, unique among siblings, and not array indices (index keys
-cause subtle bugs when items are reordered or deleted).
+They must be stable, unique among siblings, and not array indices (index keys cause subtle bugs when items are reordered or deleted).
 
 
-```tsx
+```javascript
 // Bad — array index as key
 {items.map((item, i) => <Item key={i} {...item} />)}
 
@@ -3207,10 +3639,9 @@ cause subtle bugs when items are reordered or deleted).
 
 ### Performance Patterns
 
-
-
-```html
 React.memo  — prevents re-render if props have not changed (shallow comparison)
+
+```javascript
   const MyComponent = React.memo(({ name }) => <div>{name}</div>);
 
 Code splitting with React.lazy and Suspense:
@@ -3218,11 +3649,9 @@ Code splitting with React.lazy and Suspense:
   <Suspense fallback={<Spinner />}>
       <HeavyChart />
   </Suspense>
-
-State lifting: when two components need to share state, lift it to their
-nearest common ancestor and pass it down as props.
 ```
 
+State lifting: when two components need to share state, lift it to their nearest common ancestor and pass it down as props.
 
 
 ## 3.02 Angular
@@ -3231,17 +3660,22 @@ nearest common ancestor and pass it down as props.
 
 ### Overview
 
-Angular is a complete framework — not just a library. It includes routing,
-forms, HTTP client, testing utilities, and an opinionated architecture, all
-out of the box. Built with TypeScript by Google. Angular uses a component-based
-architecture and relies heavily on RxJS for reactive programming.
+Angular is a complete framework — not just a library. It includes routing, forms, HTTP client, testing utilities, and an opinionated architecture, all out of the box. Built with TypeScript by Google. Angular uses a component-based architecture and relies heavily on RxJS for reactive programming.
 
 
 ### Components, Templates, and Change Detection
 
 
+**Change Detection**: by default (Default strategy), Angular checks every component on every browser event. 
+OnPush strategy only checks when:
+  - A component's @Input reference changes
+  - An event originates from the component
+  - An async pipe emits a new value
+  - You manually call markForCheck()
 
-```html
+OnPush dramatically improves performance in large apps.
+
+```typescript
 @Component({
     selector: "app-user-card",
     template: `
@@ -3260,21 +3694,13 @@ export class UserCardComponent {
 }
 ```
 
-Change Detection: by default (Default strategy), Angular checks every component
-on every browser event. OnPush strategy only checks when:
-  - A component's @Input reference changes
-  - An event originates from the component
-  - An async pipe emits a new value
-  - You manually call markForCheck()
-
-OnPush dramatically improves performance in large apps.
-
 
 ### Services and Dependency Injection
 
 
+**providedIn**: "root" registers the service as a singleton without needing to add it to any module's providers array.
 
-```java
+```typescript
 @Injectable({ providedIn: "root" })   // singleton for the entire app
 export class UserService {
     constructor(private http: HttpClient) {}
@@ -3285,18 +3711,15 @@ export class UserService {
 }
 ```
 
-providedIn: "root" registers the service as a singleton without needing to
-add it to any module's providers array.
-
 
 ### Rxjs Operators (critical for Angular Interviews)
 
 
 **switchMap** — cancels the previous inner Observable when a new outer value arrives.
 
-```javascript
 Use for: autocomplete search (cancel old search when user types again)
 
+```typescript
 this.searchInput.valueChanges.pipe(
     debounceTime(300),
     distinctUntilChanged(),
@@ -3305,14 +3728,20 @@ this.searchInput.valueChanges.pipe(
 ```
 
 **mergeMap** — subscribes to all inner Observables concurrently, merges results.
+
 Use for: multiple independent operations in parallel (upload multiple files)
+
+
 **concatMap** — subscribes to inner Observables one at a time, in order.
+
 Use for: sequential operations where order matters (process items one by one)
+
+
 **exhaustMap** — ignores new outer values while the current inner Observable is active.
 
-```html
 Use for: login button (ignore extra clicks while request is in-flight)
 
+```html
 // async pipe in template — subscribes and auto-unsubscribes
 <ul>
   <li *ngFor="let user of users$ | async">{{ user.name }}</li>
@@ -3327,10 +3756,7 @@ Use for: login button (ignore extra clicks while request is in-flight)
 
 ### Overview
 
-Three.js is a JavaScript library that wraps WebGL, making 3D rendering
-accessible without writing low-level shader code. WebGL is a JavaScript API
-for GPU-accelerated graphics in the browser — powerful but complex. Three.js
-abstracts it into scenes, cameras, meshes, lights, and materials.
+Three.js is a JavaScript library that wraps WebGL, making 3D rendering accessible without writing low-level shader code. WebGL is a JavaScript API for GPU-accelerated graphics in the browser — powerful but complex. Three.js abstracts it into scenes, cameras, meshes, lights, and materials.
 
 
 ### Core Concepts
@@ -3340,12 +3766,11 @@ Every Three.js application has three essential components:
 
 **Scene**   — the 3D world container; you add objects to it
 
-**Camera**  — defines your viewpoint (PerspectiveCamera for 3D realism;
+**Camera**  — defines your viewpoint (PerspectiveCamera for 3D realism; OrthographicCamera for 2D/isometric)
+
+**Renderer** — draws the scene from the camera's perspective onto a canvas
 
 ```javascript
-           OrthographicCamera for 2D/isometric)
-RENDERER — draws the scene from the camera's perspective onto a canvas
-
 import * as THREE from "three";
 
 const scene = new THREE.Scene();
@@ -3386,7 +3811,8 @@ window.addEventListener("resize", () => {
 ```
 
 
-**Performance**: 3D rendering is GPU-intensive. Key practices:
+**Performance**: 3D rendering is GPU-intensive. 
+Key practices:
   - Reuse geometries and materials across Mesh instances
   - Use LOD (Level of Detail) — simpler meshes for distant objects
   - Dispose geometry/material/texture when removing from scene
@@ -3395,41 +3821,191 @@ window.addEventListener("resize", () => {
 
 ## 3.04 Next.js
 
-
-
 ### Overview
+ 
+Next.js is the most popular React framework, developed by Vercel. It extends React by adding features such as Server-Side Rendering (SSR), Static Site Generation (SSG), Incremental Static Regeneration (ISR), file-based routing, API routes, image optimisation, and more.
 
-Next.js is the most popular React framework, developed by Vercel. It solves
-React's biggest limitations: React alone is a client-side library, meaning the
-browser downloads JavaScript, executes it, and then renders the page. This gives
-poor SEO (search engines may not wait for JavaScript) and slow initial load.
-Next.js adds server-side rendering, static generation, file-based routing,
-API routes, image optimisation, and more — on top of React.
+One of React's biggest limitations is that it performs Client-Side Rendering (CSR) by default. The server initially sends almost empty HTML containing only a root element. The browser must then download the JavaScript bundle, execute React, and finally generate the page. This gives poor SEO (Search Engine Optimization), because search engines may not wait for JavaScript, and slow initial load.
+
+Example of a React app initial response:
+
+```html
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="root"></div>
+    <script src="main.js"></script>
+  </body>
+</html>
+```
+
+Flow of Client-Side Rendering:
+
+```text
+Browser
+  ↓
+Download HTML
+  ↓
+Download JavaScript
+  ↓
+Execute React
+  ↓
+Render UI
+  ↓
+Display page
+```
+
+Why CSR is a problem
+- Slower initial load (user waits for JavaScript)
+- Poor SEO (Search engines may not execute JS immediately)
+- Empty initial HTML
+
+
+**How Next.js solves this**:
+
+Next.js allows React components to be rendered on the server using Node.js before sending HTML to the browser.
+
+Example component:
+
+```Javascript
+export default function Home() {
+  return <h1>Hello World</h1>;
+}
+```
+
+On the server (Node.js), React renders this component into HTML:
+
+```Javascript
+import { renderToString } from "react-dom/server";
+
+const html = renderToString(<Home />);
+```
+
+Result:
+
+```html
+<h1>Hello World</h1>
+```
+
+Flow of Server-Side Rendering:
+
+```text
+Browser request
+  ↓
+Node.js runs React
+  ↓
+HTML is generated
+  ↓
+HTML sent to browser
+  ↓
+Page displayed immediately
+  ↓
+JavaScript loads
+  ↓
+Hydration
+```
+
+**Hydration**: After the HTML is displayed, React “hydrates” the page
+```text
+Static HTML
+  ↓
+Load JavaScript bundle
+  ↓
+Attach event listeners
+  ↓
+Page becomes interactive
+```
+
 
 
 ### The Four Rendering Modes
 
 
-**CSR (Client-Side Rendering)** : browser downloads JavaScript and renders entirely
-in the browser. Standard React. Fast interactions after load but slow first paint
-and poor SEO.
+**CSR (Client-Side Rendering)** : browser downloads JavaScript and renders entirely in the browser. Standard React.
+```text
+Browser
+  ↓
+Download HTML
+  ↓
+Download JS
+  ↓
+Render UI in browser
+```
 
-**SSR (Server-Side Rendering)** : HTML is generated on the server per request, sent
-to the browser, then hydrated (React takes over). Fresh data on every request,
-good SEO, but slower than static (server work on every request).
+Pros:
+- Fast navigation after load
 
-**SSG (Static Site Generation)** : HTML is generated at BUILD time and cached as a
-static file. Served instantly from CDN, perfect SEO, zero server computation per
-request. But data can be stale until the next build.
+Cons:
+- Slow initial load
+- Poor SEO (Search Engine Optimization)
+- Empty initial HTML
 
-**ISR (Incremental Static Regeneration)** : like SSG, but pages are regenerated in
-the background after a specified time. You get static performance with
-reasonably fresh data. The best of SSG and SSR for most cases.
+
+**SSR (Server-Side Rendering)** : HTML is generated on the server per request, sent to the browser, then hydrated (React takes over). 
+```text
+Request
+  ↓
+Server renders React
+  ↓
+HTML sent to browser
+  ↓
+Hydration
+```
+
+Pros:
+- Good SEO
+- Fast first render
+- Always fresh data
+
+Cons:
+- Server work on every request
+- Slower than static pages
+
+
+**SSG (Static Site Generation)** : HTML is generated at BUILD time and cached as a static file.
+```text
+Build time
+  ↓
+Generate HTML
+  ↓
+Serve from CDN
+```
+
+Pros:
+- Extremely fast
+- Excellent SEO
+- No server computation per request
+
+Cons:
+- Data can become outdated until next build
+
+**ISR (Incremental Static Regeneration)** : like SSG, but pages are regenerated in the background after a specified time. You get static performance with reasonably fresh data. The best of SSG and SSR for most cases.
+```text
+Build time
+  ↓
+Generate static page
+  ↓
+Serve from CDN
+  ↓
+Background revalidation
+  ↓
+Regenerate page
+```
+
+Pros:
+- Fast like SSG
+- More up-to-date than SSG
+- Scales extremely well
+
+Cons:
+- Data is not instantly updated
+
 
 ### APP ROUTER FILE CONVENTIONS (NEXT.JS 13+)
 
-Next.js 13 introduced the App Router — a significant change. The file structure
-IS the routing structure. Inside the `app/` directory:
+Next.js 13 introduced the App Router — a significant change. The file structure IS the routing structure. 
+
+Inside the `app/` directory:
 
 ```text
 app/
@@ -3450,12 +4026,11 @@ app/
 
 ### SERVER COMPONENTS vs CLIENT COMPONENTS
 
-This is the central innovation of the App Router. By default, ALL components in
-the app/ directory are React Server Components — they run ONLY on the server
-and send HTML to the browser. No JavaScript for them is shipped to the client.
+This is the central innovation of the App Router. 
+By default, ALL components in the app/ directory are **React Server Components** — they run ONLY on the server and send HTML to the browser. No JavaScript for them is shipped to the client.
 
 
-```sql
+```Javascript
 // app/users/page.tsx — Server Component (no "use client" needed)
 // This can query the database directly — the code never runs in the browser
 export default async function UsersPage() {
@@ -3471,10 +4046,10 @@ export default async function UsersPage() {
 }
 ```
 
-Client Components are needed when you require browser APIs or interactivity:
+**Client Components** are needed when you require browser APIs or interactivity (the user can do things on the page that change the content without reloading the page, for exemple see a counter on click in a button, onClick):
 
 
-```html
+```Javascript
 "use client";   // ← REQUIRED directive — makes this a Client Component
 import { useState, useEffect } from "react";
 
@@ -3491,13 +4066,8 @@ export function SearchBar({ onSearch }: { onSearch: (q: string) => void }) {
 ```
 
 When to use each:
-
-```text
-Server Component (default) — data fetching, accessing backends/databases, 
-                              large dependencies (keep them off the client bundle)
-Client Component — onClick/onChange, useState, useEffect, browser-only APIs,
-                   real-time updates, complex animations
-```
+**Server Component (default)** — data fetching, accessing backends/databases, large dependencies (keep them off the client bundle)
+**Client Component** — onClick/onChange, useState, useEffect, browser-only APIs, real-time updates, complex animations
 
 
 ### Route Handlers (api Routes)
@@ -3506,7 +4076,7 @@ Client Component — onClick/onChange, useState, useEffect, browser-only APIs,
 In Next.js 13+ (App Router), API endpoints are route.ts files:
 
 
-```tsx
+```Javascript
 // app/api/users/route.ts — handles /api/users
 import { NextRequest, NextResponse } from "next/server";
 
@@ -3564,7 +4134,7 @@ revalidatePath("/posts");   // invalidates the cache for this path
 
 
 
-```python
+```Javascript
 import Image from "next/image";
 import { Inter } from "next/font/google";
 
@@ -3589,7 +4159,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 
 
-```tsx
+```Javascript
 // app/layout.tsx — static metadata
 export const metadata: Metadata = {
     title: { default: "MyApp", template: "%s | MyApp" },
@@ -3617,11 +4187,8 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 
 ### Overview
 
-React Native lets you build native iOS and Android apps using React and
-JavaScript. Unlike a web view wrapper (Cordova), React Native renders actual
-native UI components — a <View> becomes a UIView on iOS, a View on Android.
-The JavaScript runs on a separate thread; it communicates with the native side
-through a bridge (or directly with JSI in the new architecture).
+React Native lets you build native iOS and Android apps using React and JavaScript. Unlike a web view wrapper (Cordova), React Native renders actual native UI components — a <View> becomes a UIView on iOS, a View on Android.
+The JavaScript runs on a separate thread; it communicates with the native side through a bridge (or directly with JSI in the new architecture).
 
 
 ### Key Components
@@ -3645,13 +4212,12 @@ const styles = StyleSheet.create({
 
 ### FLATLIST vs SCROLLVIEW
 
-```tsx
-ScrollView renders ALL children at once — fine for short lists but causes
-performance issues with hundreds of items (all rendered even if off-screen).
+**ScrollView** renders ALL children at once — fine for short lists but causes performance issues with hundreds of items (all rendered even if off-screen).
 
-FlatList renders only visible items plus a small buffer (virtualised).
+**FlatList** renders only visible items plus a small buffer (virtualised). 
 Always use FlatList for dynamic lists of unknown or large length.
 
+```Javascript
 <FlatList
     data={users}
     keyExtractor={(item) => item.id.toString()}
@@ -3663,12 +4229,11 @@ Always use FlatList for dynamic lists of unknown or large length.
 
 ### BRIDGE vs JSI (NEW ARCHITECTURE)
 
-**Old architecture**: JavaScript communicates with native code via an asynchronous bridge — serialises data to JSON, sends across, deserialises. This is a
-performance bottleneck for frequent calls.
+**Old architecture**: JavaScript communicates with native code via an asynchronous bridge — serialises data to JSON, sends across, deserialises. 
+This is a performance bottleneck for frequent calls.
 
-**New architecture (JSI — JavaScript Interface)**: JavaScript can call native
-functions synchronously, holding references to native objects directly. No
-serialisation. Enables React Native's Fabric renderer and Turbo Modules.
+**New architecture (JSI — JavaScript Interface)**: JavaScript can call native functions synchronously, holding references to native objects directly. No serialisation. Enables React Native's Fabric renderer and Turbo Modules.
+
 
 
 ## 3.06 Flutter
@@ -3677,23 +4242,16 @@ serialisation. Enables React Native's Fabric renderer and Turbo Modules.
 
 ### Overview
 
-Flutter is Google's UI toolkit for building natively compiled applications for
-mobile, web, and desktop from a single codebase. Written in Dart. Unlike React
-Native, Flutter does NOT use native UI components — it draws every pixel itself
-using its own Skia/Impeller rendering engine. This gives pixel-perfect
-consistency across platforms.
+Flutter is Google's UI toolkit for building natively compiled applications for mobile, web, and desktop from a single codebase. Written in Dart. Unlike React Native, Flutter does NOT use native UI components — it draws every pixel itself using its own Skia/Impeller rendering engine. This gives pixel-perfect consistency across platforms.
 
 
 ### Widgets — EVERYTHING IS A WIDGET
 
-In Flutter, the entire UI is built from widgets — from layout containers to
-buttons to padding to the app itself. There are two kinds:
+In Flutter, the entire UI is built from widgets — from layout containers to buttons to padding to the app itself. 
 
-```text
-StatelessWidget — immutable; build() always produces the same output for the
-```
-same inputs. No mutable state.
+There are two kinds:
 
+**StatelessWidget** — immutable; build() always produces the same output for the same inputs. No mutable state.
 
 ```dart
 class Greeting extends StatelessWidget {
@@ -3707,10 +4265,8 @@ class Greeting extends StatelessWidget {
 }
 ```
 
-**StatefulWidget** — has mutable state that can change over time. Flutter creates a
-separate State object that persists between rebuilds. When you call setState(),
-Flutter schedules a rebuild of the widget.
 
+**StatefulWidget** — has mutable state that can change over time. Flutter creates a separate State object that persists between rebuilds. When you call setState(), Flutter schedules a rebuild of the widget.
 
 ```dart
 class Counter extends StatefulWidget {
@@ -3737,13 +4293,32 @@ class _CounterState extends State<Counter> {
 }
 ```
 
+### BuildContext — THE KEY TO THE WIDGET TREE
 
-**Buildcontext** — THE KEY TO THE WIDGET TREE
+BuildContext is a handle to the widget's location in the widget tree. It represents *where the widget is positioned* in the hierarchy and allows it to interact with other parts of the app.
 
-BuildContext is a handle to the widget's location in the widget tree. It is how
-widgets access inherited data (Theme, MediaQuery, Navigator, Provider) without
-passing it explicitly through every layer.
+It is NOT data storage and NOT used to pass values between widgets. Instead, it is used to:
+- Access inherited widgets (Theme, MediaQuery, Navigator, Provider, etc.)
+- Locate services provided higher up in the tree
+- Interact with the Flutter framework
 
+
+Flutter is like a tree:
+
+```text
+MaterialApp
+  └── HomePage
+        └── Column
+              └── Button (has BuildContext)
+```
+
+Each widget has its own BuildContext, which tells Flutter:
+***“Where am I inside this tree?”***
+
+Instead of passing values manually through every widget, Flutter lets you access shared data directly using context.
+
+
+Common uses of BuildContext:
 
 ```dart
 @override
@@ -3751,6 +4326,12 @@ Widget build(BuildContext context) {
     final theme = Theme.of(context);      // access app theme
     final size = MediaQuery.of(context).size;  // screen dimensions
     return Text("Hello", style: theme.textTheme.headline6);
+    Navigator.push(                      // navigation
+        context,
+        MaterialPageRoute(
+            builder: (context) => SecondPage(),
+        ),
+    );
 }
 ```
 
@@ -3762,38 +4343,43 @@ Widget build(BuildContext context) {
 
 ### Overview
 
-Kotlin is a statically typed language developed by JetBrains, running on the JVM
-(and compilable to native/JS). Google made it the preferred language for Android
-development. Kotlin is fully interoperable with Java — you can call Java code
-from Kotlin and vice versa. Kotlin's design goal is to be more concise, safer,
-and more expressive than Java.
+Kotlin is a statically typed language developed by JetBrains, running on the JVM (and compilable to native/JS). Google made it the preferred language for Android development. Kotlin is fully interoperable with Java — you can call Java code from Kotlin and vice versa. Kotlin's design goal is to be more concise, safer, and more expressive than Java.
 
 
 ### NULL Safety
 
 
-Kotlin distinguishes nullable and non-nullable types at the type-system level,
-eliminating NullPointerExceptions at compile time:
+Kotlin distinguishes nullable and non-nullable types at the type-system level, eliminating NullPointerExceptions at compile time:
 
+```kotlin
 var name: String = "Beatriz"    // non-nullable — cannot be null
 var nickname: String? = null    // nullable — explicitly marked with ?
 
 val length = nickname?.length   // safe call — null if nickname is null
 val len = nickname?.length ?: 0 // elvis operator — default value if null
 val upper = nickname!!.uppercase()  // non-null assertion — throws if null
+```
 
-### Data Classes
 
+### Data Classes (Kotlin)
+
+A `data class` in Kotlin is a special type of class designed to hold data. It is mainly used for models such as API responses, user objects, or any structure whose primary purpose is storing values.
+
+Instead of writing a lot of boilerplate code like in Java (getters, setters, equals, hashCode, toString, etc.), Kotlin automatically generates all of this for you.
 
 
 ```kotlin
 data class User(val id: Long, val name: String, val email: String)
 ```
 
-The data class keyword auto-generates: equals(), hashCode(), toString(), copy(),
-and componentN() functions for destructuring. One line replaces 50+ lines of
-Java boilerplate.
 
+With a single data class, Kotlin generates automatically:
+- equals() and hashCode() → object comparison
+- toString() → readable string representation
+- copy() → create a modified copy of an object
+- componentN() functions → used for destructuring
+
+Example usage:
 
 ```text
 val user = User(1, "Beatriz", "b@example.com")
@@ -3805,10 +4391,7 @@ val (id, name) = user    // destructuring
 ### Coroutines
 
 
-Coroutines are Kotlin's solution for asynchronous programming. They are
-lightweight "suspendable computations" — a coroutine can suspend at a suspension
-point without blocking its underlying thread, and resume later (possibly on a
-different thread). You can have thousands of coroutines on a handful of threads.
+Coroutines are Kotlin's solution for asynchronous programming. They are lightweight "suspendable computations" — a coroutine can suspend at a suspension point without blocking its underlying thread, and resume later (possibly on a different thread). You can have thousands of coroutines on a handful of threads.
 
 
 ```kotlin
@@ -3828,11 +4411,10 @@ viewModelScope.launch {
 
 #### Dispatchers control which thread pool a coroutine runs on
 
-```text
 Dispatchers.Main   — Android UI thread (for UI updates)
 Dispatchers.IO     — for network/disk I/O (large pool of threads)
 Dispatchers.Default — CPU-intensive work (bounded pool, one per CPU core)
-```
+
 
 
 ## 3.08 Swift
@@ -3841,10 +4423,7 @@ Dispatchers.Default — CPU-intensive work (bounded pool, one per CPU core)
 
 ### Overview
 
-Swift is Apple's programming language for iOS, macOS, watchOS, and tvOS
-development. Released in 2014, it replaced Objective-C with a safer, more
-modern syntax. Swift is statically typed, compiled, and designed for both
-safety (optionals, immutability) and performance.
+Swift is Apple's programming language for iOS, macOS, watchOS, and tvOS development. Released in 2014, it replaced Objective-C with a safer, more modern syntax. Swift is statically typed, compiled, and designed for both safety (optionals, immutability) and performance.
 
 
 ### Optionals
@@ -3881,12 +4460,10 @@ let forcedName = name!     // crashes if nil — use sparingly
 ```
 
 
-### Swiftui
+### SwiftUI
 
 
-SwiftUI is Apple's declarative UI framework (2019+). Like React, you describe
-what the UI should look like, and SwiftUI renders it. Views are structs
-(value types), making them lightweight.
+SwiftUI is Apple's declarative UI framework (2019+). Like React, you describe what the UI should look like, and SwiftUI renders it. Views are structs (value types), making them lightweight.
 
 
 ```swift
@@ -3908,13 +4485,12 @@ struct ContentView: View {
 
 #### State management annotations
 
-```text
 @State          — local state for a view
 @StateObject    — owns an ObservableObject (create it)
 @ObservedObject — observes an ObservableObject (passed in)
 @EnvironmentObject — injected from ancestor view
 @Binding        — two-way connection to parent's @State
-```
+
 
 ### Async/Await in Swift
 
@@ -3945,28 +4521,21 @@ func fetchUser(id: Int) async throws -> User {
 
 ### Overview
 
-Vite is a modern frontend build tool created by Evan You (Vue.js creator). It
-was designed to solve the pain points of webpack-based tools: slow cold starts
-and slow Hot Module Replacement (HMR) in large projects. Vite achieves this by
-leveraging native ES modules in the browser during development — no bundling
-needed at dev time.
+Vite is a modern frontend build tool created by Evan You (Vue.js creator). It was designed to solve the pain points of webpack-based tools: slow cold starts and slow Hot Module Replacement (HMR) in large projects. Vite achieves this by leveraging native ES modules in the browser during development — no bundling needed at dev time.
 
 
 ### How Vite Works
 
 
-DEVELOPMENT (no bundling):
-Vite starts instantly because it does not bundle anything upfront. When the
-browser requests a file, Vite transforms it on demand (TypeScript → JS,
-CSS → injected styles) using esbuild (written in Go — extremely fast).
+**DEVELOPMENT (no bundling)**:
+Vite starts instantly because it does not bundle anything upfront. When the browser requests a file, Vite transforms it on demand (TypeScript → JS, CSS → injected styles) using esbuild (written in Go — extremely fast).
 The browser uses native ES module imports, loading files lazily.
-PRODUCTION (bundled with Rollup):
 
-```python
-For production, Vite uses Rollup to bundle and optimise everything — tree
-shaking, code splitting, asset fingerprinting. The browser gets efficient
-bundles, not individual module files (which would be too many HTTP requests).
 
+**PRODUCTION (bundled with Rollup)**:
+For production, Vite uses Rollup to bundle and optimise everything — tree shaking, code splitting, asset fingerprinting. The browser gets efficient bundles, not individual module files (which would be too many HTTP requests).
+
+```Typescript
 // vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -3993,54 +4562,314 @@ export default defineConfig({
 ## 3.10 Tailwind CSS
 
 
-
 ### Overview
 
-Tailwind CSS is a utility-first CSS framework. Instead of writing custom CSS
-classes, you compose pre-defined utility classes directly in HTML/JSX. Every
-class does exactly one thing: text-blue-500 sets the text colour, p-4 sets
-16px padding on all sides, flex makes the element a flex container.
+Tailwind CSS is a **utility-first CSS framework**. Instead of writing custom CSS classes, you compose pre-defined utility classes directly in HTML/JSX. Every class does exactly one thing: `text-blue-500` sets the text colour, `p-4` sets 16px padding, `flex` makes an element a flex container.
 
+At build time, Tailwind scans your source files for class names and generates a CSS file containing **only the classes actually used** — production bundles are typically a few KB.
 
-### How It Works
+```html
+<!-- Traditional approach — CSS written separately -->
+<button class="btn-primary">Save</button>
 
-
-At build time, Tailwind scans your HTML/JSX/Vue files for class names and
-generates a CSS file containing only the utilities actually used (tree-shaking).
-This keeps the production CSS file tiny even though Tailwind has thousands of
-utilities.
-
-
-```c
-<!-- Without Tailwind — write CSS in separate file -->
-<button class="btn btn-primary">Save</button>
-
-<!-- With Tailwind — describe appearance inline -->
-<button class="bg-blue-500 hover:bg-blue-600 text-white font-medium
-               px-4 py-2 rounded-lg shadow transition-colors">
-    Save
+<!-- Tailwind — compose utilities directly in markup -->
+<button class="bg-blue-500 hover:bg-blue-600 text-white font-semibold
+               px-4 py-2 rounded-lg shadow-md transition-colors duration-150">
+  Save
 </button>
 ```
 
-#### Breakpoints with responsive prefixes
+
+### Spacing Scale
+
+Tailwind uses a consistent numeric scale where **1 unit = 4px**:
 
 ```text
-sm:   — applies at ≥ 640px
-md:   — applies at ≥ 768px
-lg:   — applies at ≥ 1024px
-xl:   — applies at ≥ 1280px
+p-0   →  0px        p-1   →  4px        p-2   →  8px
+p-3   →  12px       p-4   →  16px       p-6   →  24px
+p-8   →  32px       p-10  →  40px       p-12  →  48px
+p-16  →  64px       p-20  →  80px       p-24  →  96px
+```
+
+The same scale applies to **margin** (`m-`), **gap** (`gap-`), **width** (`w-`), **height** (`h-`), and others.
+
+Directional variants:
+- `p-4` — all sides
+- `px-4` — left + right (horizontal)
+- `py-4` — top + bottom (vertical)
+- `pt-4` / `pr-4` / `pb-4` / `pl-4` — individual sides
+- `mx-auto` — auto margin (centres block elements horizontally)
+
+
+### Color System
+
+Colors follow the pattern `{property}-{color}-{shade}`. Shades range from 50 (lightest) to 950 (darkest):
+
+```text
+slate  gray  zinc  neutral  stone          — neutrals
+red  orange  amber  yellow  lime  green    — warm/cool
+emerald  teal  cyan  sky  blue  indigo     — cool
+violet  purple  fuchsia  pink  rose        — purple/pink
+```
+
+```html
+<p class="text-blue-600">Blue text</p>
+<div class="bg-emerald-100 border border-emerald-300">Green card</div>
+<button class="bg-red-500 hover:bg-red-600 text-white">Delete</button>
+```
+
+Common shade usage:
+- `50`–`100` — very light backgrounds, tints
+- `200`–`300` — borders, dividers
+- `400`–`600` — primary interactive colours
+- `700`–`900` — dark text, dark backgrounds
+
+
+### Typography
+
+```text
+font-sans / font-serif / font-mono        — font family
+
+text-xs    →  12px       text-sm   →  14px
+text-base  →  16px       text-lg   →  18px
+text-xl    →  20px       text-2xl  →  24px
+text-3xl   →  30px       text-4xl  →  36px
+
+font-thin / font-light / font-normal / font-medium
+font-semibold / font-bold / font-extrabold / font-black
+
+leading-none / leading-tight / leading-snug
+leading-normal / leading-relaxed / leading-loose
+
+tracking-tight / tracking-normal / tracking-wide / tracking-widest
+
+text-left / text-center / text-right / text-justify
+
+uppercase / lowercase / capitalize / normal-case
+
+truncate            — overflow: hidden + ellipsis on one line
+line-clamp-2        — clamp to N lines with ellipsis
+```
+
+
+### Layout — Flexbox
+
+```html
+<div class="flex items-center justify-between gap-4">
+  <span>Left</span>
+  <span>Right</span>
+</div>
 ```
 
 ```text
-<div class="flex-col sm:flex-row">   <!-- stack on mobile, row on tablet+ -->
-State variants:
-hover:bg-blue-600   — on hover
-focus:ring-2        — on focus
-active:scale-95     — on click
-dark:bg-gray-800    — in dark mode
-The @layer and @apply directives let you extract repeated patterns into reusable
-classes without losing the utility-first approach.
+flex                — display: flex
+inline-flex         — display: inline-flex
+flex-row            — direction: row (default)
+flex-col            — direction: column
+flex-wrap           — wrap: wrap
+
+justify-start / justify-center / justify-end
+justify-between / justify-around / justify-evenly
+
+items-start / items-center / items-end / items-stretch / items-baseline
+
+flex-1              — flex: 1 1 0 (fill available space)
+flex-none           — flex: none (fixed size)
+shrink-0            — flex-shrink: 0 (don't shrink)
+grow                — flex-grow: 1
 ```
+
+
+### Layout — Grid
+
+```html
+<div class="grid grid-cols-3 gap-6">
+  <div>Card 1</div>
+  <div>Card 2</div>
+  <div>Card 3</div>
+</div>
+```
+
+```text
+grid                       — display: grid
+grid-cols-1 to grid-cols-12
+grid-cols-none             — no fixed columns
+col-span-2                 — span 2 columns
+col-span-full              — span all columns
+
+grid-rows-3                — 3 explicit rows
+row-span-2                 — span 2 rows
+
+gap-4                      — gap on both axes
+gap-x-4 / gap-y-4         — horizontal / vertical gap
+```
+
+
+### Sizing
+
+```text
+w-full      — width: 100%          h-full     — height: 100%
+w-screen    — width: 100vw         h-screen   — height: 100vh
+w-auto      — width: auto          h-auto     — height: auto
+w-1/2       — width: 50%           w-1/3 / w-2/3 / w-1/4
+w-fit       — width: fit-content   w-max      — width: max-content
+min-w-0     — min-width: 0         max-w-sm / max-w-md / max-w-lg
+max-w-xl / max-w-2xl / max-w-prose / max-w-screen-xl
+```
+
+
+### Borders & Shadows
+
+```text
+border              — 1px border (uses border-color, default gray-200)
+border-2            — 2px border
+border-t / border-b / border-l / border-r
+
+border-gray-300     — border colour
+rounded             — border-radius: 4px
+rounded-md          — 6px
+rounded-lg          — 8px
+rounded-xl          — 12px
+rounded-2xl         — 16px
+rounded-full        — 9999px (circles, pills)
+
+shadow-sm / shadow / shadow-md / shadow-lg / shadow-xl / shadow-2xl
+shadow-none
+ring-2              — focus ring (outline-style: solid)
+ring-blue-500       — ring colour
+```
+
+
+### Position & Display
+
+```text
+block / inline-block / inline / hidden
+relative / absolute / fixed / sticky
+
+top-0 / right-0 / bottom-0 / left-0
+inset-0             — top+right+bottom+left: 0 (fill parent)
+
+z-0 / z-10 / z-20 / z-30 / z-40 / z-50
+overflow-hidden / overflow-auto / overflow-scroll
+```
+
+
+### Responsive Prefixes
+
+Tailwind is **mobile-first** — unprefixed classes apply to all screen sizes, prefixed classes apply at the breakpoint and above:
+
+```text
+sm:   — ≥ 640px
+md:   — ≥ 768px
+lg:   — ≥ 1024px
+xl:   — ≥ 1280px
+2xl:  — ≥ 1536px
+```
+
+```html
+<div class="flex-col md:flex-row">     <!-- stack on mobile, row on desktop -->
+<p class="text-sm lg:text-base">       <!-- smaller text on mobile -->
+<div class="hidden md:block">          <!-- visible only on md+ -->
+```
+
+
+### State Variants
+
+```text
+hover:bg-blue-600      — on mouse hover
+focus:ring-2           — when focused
+active:scale-95        — while being clicked
+disabled:opacity-50    — when disabled
+checked:bg-blue-500    — when checkbox is checked
+group-hover:underline  — when parent (.group) is hovered
+peer-focus:block       — when sibling (.peer) is focused
+dark:bg-gray-900       — in dark mode
+```
+
+```html
+<!-- group: parent controls children on hover -->
+<div class="group cursor-pointer">
+  <h3 class="group-hover:text-blue-500">Title</h3>
+  <p class="group-hover:underline">Description</p>
+</div>
+```
+
+
+### Dark Mode
+
+Add `dark:` prefix — Tailwind toggles based on the `dark` class on `<html>` (or `prefers-color-scheme` media query):
+
+```html
+<div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  Content adapts to dark mode
+</div>
+```
+
+```js
+// tailwind.config.js — 'class' strategy lets you toggle manually
+module.exports = {
+  darkMode: 'class',   // or 'media' to follow system preference
+}
+// Toggle: document.documentElement.classList.toggle('dark')
+```
+
+
+### Extracting Reusable Styles
+
+When the same utility combination repeats, extract it with `@apply` in CSS:
+
+```css
+/* globals.css */
+@layer components {
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-semibold
+           px-4 py-2 rounded-lg transition-colors;
+  }
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200;
+  }
+}
+```
+
+```html
+<!-- Now use the abstracted class -->
+<button class="btn-primary">Save</button>
+```
+
+`@layer` tells Tailwind where to inject the CSS so it can be purged correctly:
+- `@layer base` — HTML element defaults (body, h1, a…)
+- `@layer components` — reusable component classes
+- `@layer utilities` — custom one-off utilities
+
+
+### Configuration (tailwind.config.js)
+
+```js
+module.exports = {
+  content: ['./src/**/*.{html,js,jsx,ts,tsx}'],  // files to scan for classes
+  theme: {
+    extend: {
+      colors: {
+        brand: '#E84393',          // adds text-brand, bg-brand, etc.
+      },
+      fontFamily: {
+        hand: ['Caveat', 'cursive'],
+      },
+      spacing: {
+        '18': '72px',              // adds p-18, m-18, w-18, etc.
+      },
+      screens: {
+        'xs': '480px',             // adds xs: prefix
+      },
+    },
+  },
+  plugins: [],
+}
+```
+
+`extend` adds to the default theme without replacing it. Without `extend`, you would completely override the defaults.
+
+
 
 ## 3.11 SCSS
 
@@ -4109,18 +4938,17 @@ $spacing-unit: 8px;
 }
 ```
 
-Rule of thumb: use CSS custom properties for theme tokens and values that need
-to change at runtime; use SCSS variables for build-time constants like breakpoints
-or to feed into SCSS functions and loops.
+Rule of thumb: 
+- use CSS custom properties for theme tokens and values that need to change at runtime; 
+- use SCSS variables for build-time constants like breakpoints or to feed into SCSS functions and loops.
 
 
 ### Nesting
 
 
-SCSS lets you nest selectors inside each other, mirroring the HTML structure.
-This eliminates repetition and keeps related styles together. The & symbol
-refers to the parent selector and is used for pseudo-classes, modifiers, and
-BEM naming.
+SCSS lets you nest selectors inside each other, mirroring the HTML structure. This eliminates repetition and keeps related styles together. 
+
+The & symbol refers to the parent selector and is used for pseudo-classes, modifiers, and BEM naming.
 
 
 ```scss
@@ -4159,15 +4987,12 @@ BEM naming.
 .card .card__body { color: #555; line-height: 1.6; }
 ```
 
-Avoid nesting more than 3 levels deep — it generates overly specific selectors
-that are hard to override and slow for the browser to match.
+Avoid nesting more than 3 levels deep — it generates overly specific selectors that are hard to override and slow for the browser to match.
 
 
 ### Mixins** — REUSABLE STYLE BLOCKS WITH PARAMETERS
 
-A mixin is a named block of CSS declarations that can be included anywhere with
-@include. Mixins can accept parameters, making them far more powerful than
-copy-pasting CSS. They are the SCSS equivalent of a function that outputs CSS.
+A mixin is a named block of CSS declarations that can be included anywhere with @include. Mixins can accept parameters, making them far more powerful than copy-pasting CSS. They are the SCSS equivalent of a function that outputs CSS.
 
 
 ```scss
@@ -4227,8 +5052,7 @@ copy-pasting CSS. They are the SCSS equivalent of a function that outputs CSS.
 ### Extend and Inheritance
 
 
-@extend lets one selector inherit all the styles of another. Useful for shared
-base styles (e.g. all buttons share a base, then each variant extends it).
+@extend lets one selector inherit all the styles of another. Useful for shared base styles (e.g. all buttons share a base, then each variant extends it).
 Use %placeholder selectors (silent classes) to avoid generating unused CSS.
 
 
@@ -4279,12 +5103,11 @@ Use %placeholder selectors (silent classes) to avoid generating unused CSS.
   - Use @mixin when you need parameters or when the same styles appear in many unrelated components — mixins copy the CSS into each selector.
   - se @extend when styles are shared between closely related selectors — extend groups selectors together, which is more efficient but less flexible.
 
+
 ### Partials and @use
 
 
-Partials are SCSS files prefixed with _ (e.g. _variables.scss). They are not
-compiled to CSS on their own — they must be imported into another file. This
-lets you split your styles into logical modules.
+Partials are SCSS files prefixed with _ (e.g. _variables.scss). They are not compiled to CSS on their own — they must be imported into another file. This lets you split your styles into logical modules.
 
 
 ```scss
@@ -4311,16 +5134,14 @@ body {
 
 #### @use (modern) vs @import (legacy)
 
-```text
 @import — global scope, everything pollutes the same namespace, deprecated
 @use    — namespaced (v.$primary), no global leaks, loads each file only once
-```
+
 
 ### Built-in Functions and Loops
 
 
-SCSS ships with colour functions and control flow that let you generate CSS
-programmatically — impossible in plain CSS.
+SCSS ships with colour functions and control flow that let you generate CSS programmatically — impossible in plain CSS.
 
 
 ```scss
@@ -4363,10 +5184,10 @@ Use SCSS when:
 Use plain CSS when:
   - Building small projects or prototypes where a build step adds overhead
   - Using a CSS framework like Tailwind (which already generates utility classes)
-  - You need runtime theming — CSS custom properties change dynamically, SCSS
-variables cannot
-• Working in a CSS-in-JS context (Styled Components, Emotion) where JavaScript
-already provides variables and logic
+  - You need runtime theming — CSS custom properties change dynamically, SCSS variables cannot
+  -  Working in a CSS-in-JS context (Styled Components, Emotion) where JavaScript already provides variables and logic
+
+
 Key interview facts:
   - SCSS compiles to CSS — browsers never see SCSS, zero runtime overhead
   - & is the parent selector reference: .card { &:hover {} } → .card:hover {}
@@ -4376,85 +5197,6 @@ Key interview facts:
   - SCSS is a strict superset of CSS — any valid CSS file can be renamed .scss
 
 
-#### Appendix — Quick Interview Reference
-
-**Languages**
-
-```text
-Java:       OOP (4 pillars), HashMap internals, Optional, Streams API, @Transactional
-TypeScript: interface vs type, generics, utility types (Partial/Pick/Omit), narrowing
-JavaScript: event loop, microtasks vs macrotasks, closures, this, async/await
-Dart:       null safety, final vs const, Future vs Stream, isolates
-C:          pointers, malloc/free, stack vs heap, buffer overflow
-```
-
-**Web & APIs**
-
-```text
-HTML:         semantic elements, DOM, defer vs async, aria accessibility
-CSS:          box model, specificity, flexbox vs grid, custom properties
-Spring Boot:  IoC/DI, bean scopes, @Transactional, N+1 problem, Spring Data JPA
-Node.js:      event loop phases, process.nextTick, streams, middleware pattern
-REST APIs:    HTTP methods + idempotency, status codes (401 vs 403), naming
-Microservices: circuit breaker (3 states), saga pattern, CAP theorem
-AuthN/AuthZ:  JWT structure, OAuth2 flows, RBAC vs ABAC, bcrypt, httpOnly cookies
-WebSockets:   upgrade handshake, SSE vs WS, scaling with Redis pub/sub
-```
-
-**Frameworks & Mobile**
-
-```text
-React:        virtual DOM, hooks (all), keys, reconciliation, memo/callback
-Angular:      RxJS operators (switchMap vs mergeMap!), OnPush CD, async pipe
-React Native: FlatList vs ScrollView, bridge vs JSI, StyleSheet.create
-Flutter:      StatefulWidget + setState, BuildContext, ListView.builder
-Kotlin:       null safety, coroutines, Dispatchers, data classes
-Swift:        optionals (if let, guard let), @State/@StateObject, async/await
-```
-
-**Cloud & DevOps**
-
-```text
-Azure:       IaaS vs PaaS vs FaaS, App Service slots, Functions triggers, Key Vault, Managed Identity
-GCP:         Cloud Run, BigQuery (analytics, not OLTP), Pub/Sub at-least-once delivery
-Firebase:    Firestore data model, security rules, onSnapshot cleanup
-Docker:      image vs container, layer caching, multi-stage build, CMD vs ENTRYPOINT
-Kubernetes:  Pod/Deployment/Service/Ingress, requests vs limits, liveness vs readiness
-CI/CD:       pipeline stages, blue-green vs canary, feature flags
-Maven:       POM, GAV coordinates, dependency scopes, build lifecycle, BOM
-```
-
-**Databases**
-
-```text
-MySQL:      ACID, InnoDB, B-tree index, composite index order, EXPLAIN, utf8mb4
-MongoDB:    embed vs reference, aggregation pipeline, $lookup, TTL index
-SQL:        JOINs, window functions (RANK/LAG/ROW_NUMBER), CTEs, offset vs keyset
-Data Model: normalization (3NF), soft delete, audit columns, price snapshot
-```
-
-**Quality & Process**
-
-```text
-JUnit 5:     AAA pattern, @Nested, @ParameterizedTest, @WebMvcTest, @DataJpaTest
-Mockito:     mock vs spy, when/thenReturn, verify, ArgumentCaptor
-SonarQube:   bug vs vulnerability vs hotspot vs smell, quality gate, coverage
-Testing:     testing pyramid, unit vs integration, Testcontainers
-Debugging:   read full stack trace, breakpoints (conditional), structured logging
-Code Review: blocking vs nit, feedback on code not on the person
-Agile/Scrum: PO + SM + Team, backlog + sprint backlog + increment, velocity ≠ productivity
-```
-
-**Architecture & Production**
-
-```text
-SDLC:         7 phases, functional vs non-functional requirements
-Architecture: SOLID (all 5), design patterns, CAP theorem, system design framework
-Security:     OWASP Top 10, SQL injection fix, JWT storage, CSP header
-Performance:  measure first, cache strategies, Core Web Vitals (LCP/INP/CLS)
-Production:   3 pillars of observability, SLI/SLO/SLA/error budget, blameless post-mortem
-```
-
 
 ## 3.12 SPA (Single-Page Applications)
 
@@ -4462,50 +5204,36 @@ Production:   3 pillars of observability, SLI/SLO/SLA/error budget, blameless po
 
 ### Overview
 
-A Single-Page Application loads one HTML page and dynamically updates content
-as the user navigates, instead of requesting a new HTML page from the server
-on every navigation. React, Angular, and Vue are SPA frameworks.
+A Single-Page Application loads one HTML page and dynamically updates content as the user navigates, instead of requesting a new HTML page from the server on every navigation. React, Angular, and Vue are SPA frameworks.
 
 
 ### How Routing Works in an SPA
 
 
-Client-side routing intercepts navigation and updates the URL and rendered
-component WITHOUT a server request:
+Client-side routing intercepts navigation and updates the URL and rendered component WITHOUT a server request:
 
-
-```text
-History API: window.history.pushState() changes the URL bar silently.
+**History API**: window.history.pushState() changes the URL bar silently.
 The browser does NOT send a request to the server.
-React Router or Angular Router listen for these URL changes and render
-the matching component.
+React Router or Angular Router listen for these URL changes and render the matching component.
 
-Server configuration: the server must return the SPA's index.html for ALL
-routes (not just /). If a user refreshes /users/123, the server must serve
-index.html — the SPA's JavaScript then reads the URL and renders the right
-component. Without this config, a refresh on any non-root URL gives a 404.
-```
+**Server configuration**: the server must return the SPA's index.html for ALL routes (not just /). If a user refreshes /users/123, the server must serve index.html — the SPA's JavaScript then reads the URL and renders the right component. Without this config, a refresh on any non-root URL gives a 404.
+
 
 
 ### SPA Tradeoffs
 
 
-#### Advantages
+Advantages:
+- Smooth, app-like UX — no full page reloads
+- Rich interactivity — can update parts of the page independently
+- Reduced server load after initial load
 
-```text
-• Smooth, app-like UX — no full page reloads
-• Rich interactivity — can update parts of the page independently
-• Reduced server load after initial load
-```
+Disadvantages:
+- Initial load is heavy — must download JS bundle before anything renders
+- SEO is harder — crawlers may not execute JavaScript (SSR/SSG mitigate this)
+- Browser history management requires care
+- Accessibility: focus management on route changes must be handled manually
 
-#### Disadvantages
-
-```text
-• Initial load is heavy — must download JS bundle before anything renders
-• SEO is harder — crawlers may not execute JavaScript (SSR/SSG mitigate this)
-• Browser history management requires care
-• Accessibility: focus management on route changes must be handled manually
-```
 
 
 ## 3.13 Responsive UI
@@ -4514,22 +5242,22 @@ component. Without this config, a refresh on any non-root URL gives a 404.
 
 ### Overview
 
-Responsive UI means the interface adapts its layout to the screen size and
-device capabilities — desktop, tablet, or phone — using the same HTML/CSS
-codebase.
+Responsive UI means the interface adapts its layout to the screen size and device capabilities — desktop, tablet, or phone — using the same HTML/CSS codebase.
 
 
 ### Core Techniques
 
 
 
-#### Viewport Meta Tag
-required for mobile rendering to work correctly
-<meta name="viewport" content="width=device-width, initial-scale=1">
+**Viewport Meta Tag** - required for mobile rendering to work correctly.
+
 Without this, mobile browsers render at 980px and shrink down (tiny text).
 
-#### Media Queries
-apply styles conditionally based on screen characteristics
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1">
+```
+
+**Media Queries** - apply styles conditionally based on screen characteristics
 
 ```css
 @media (max-width: 768px) {       /* mobile */
@@ -4541,29 +5269,31 @@ apply styles conditionally based on screen characteristics
 /* Prefer min-width (mobile-first) over max-width (desktop-first) */
 ```
 
-#### RELATIVE UNITS
+**Relative Units**
+
+```text
 %    — relative to parent element
 em   — relative to the element's own font-size
 rem  — relative to the root (html) font-size — more predictable than em
 vw/vh — relative to viewport width/height
-**clamp** (min, preferred, max) — fluid sizing: font-size: clamp(16px, 2vw, 24px)
-#### FLEXIBLE IMAGES
+clamp (min, preferred, max) — fluid sizing: font-size: clamp(16px, 2vw, 24px)
+```
+
+**Flexible Images**
 
 ```css
 img { max-width: 100%; height: auto; }   /* images never overflow container */
 <img srcset="img-400.jpg 400w, img-800.jpg 800w" sizes="(max-width: 600px) 400px, 800px">
 ```
 
-CORE WEB VITALS (what Google measures):
+**Core Web Vitals (what Google measures)**:
 
-```text
 LCP (Largest Contentful Paint) — time until largest visible element renders
                                  Target: < 2.5 seconds
 INP (Interaction to Next Paint) — delay between user input and next paint
                                   Target: < 200ms
 CLS (Cumulative Layout Shift) — how much content unexpectedly shifts around
                                  Target: < 0.1
-```
 
 
 
@@ -4573,44 +5303,36 @@ CLS (Cumulative Layout Shift) — how much content unexpectedly shifts around
 
 ### Overview
 
-Cross-platform development means writing one codebase that runs on multiple
-platforms: iOS, Android, web, or desktop. The main approaches differ in their
-output and performance tradeoffs.
+Cross-platform development means writing one codebase that runs on multiple platforms: iOS, Android, web, or desktop. The main approaches differ in their output and performance tradeoffs.
 
 
 ### Approaches
 
 
-
-**Native** — separate codebases per platform (Swift/ObjC for iOS, Kotlin/Java for
-Android). Maximum performance and access to all platform APIs, but doubles the
-work. Used by: large companies with dedicated iOS and Android teams.
+**Native** — separate codebases per platform (Swift/ObjC for iOS, Kotlin/Java for Android). Maximum performance and access to all platform APIs, but doubles the work. 
+Used by: large companies with dedicated iOS and Android teams.
 
 
-**React Native** — JavaScript + React. Renders actual native components. Good
-performance for most apps; some limits for animation-heavy or graphics-intensive
-apps. Large ecosystem (Expo), code sharing with web is possible.
+**React Native** — JavaScript + React. Renders actual native components. Good performance for most apps; some limits for animation-heavy or graphics-intensive apps. Large ecosystem (Expo), code sharing with web is possible.
 
 
-**Flutter** — Dart. Renders everything itself with its own engine (no native UI
-components). Pixel-perfect consistency across platforms; excellent animation
-performance. Faster to develop than native but larger app size.
+**Flutter** — Dart. Renders everything itself with its own engine (no native UI components). Pixel-perfect consistency across platforms; excellent animation performance. Faster to develop than native but larger app size.
 
 
-**Progressive Web Apps (pwa)** — web apps that can be installed on devices, run
-offline (Service Worker), and access some native features (notifications, camera).
-Works on all platforms with a browser; limited access to native APIs.
+**Progressive Web Apps (pwa)** — web apps that can be installed on devices, run offline (Service Worker), and access some native features (notifications, camera). Works on all platforms with a browser; limited access to native APIs.
 
-Tradeoffs:
-┌──────────────┬──────────┬──────────────┬──────────────┐
-│              │ Native   │ React Native │ Flutter      │
-├──────────────┼──────────┼──────────────┼──────────────┤
-│ Performance  │ Best     │ Good         │ Very Good    │
-│ Code sharing │ 0%       │ ~70-80%      │ ~90%+        │
-│ Native feel  │ Perfect  │ Good         │ Custom       │
-│ Time to ship │ Slowest  │ Medium       │ Fast         │
-│ Team needed  │ 2 teams  │ 1 team       │ 1 team       │
-└──────────────┴──────────┴──────────────┴──────────────┘
+
+### Tradeoffs
+
+|              | Native  | React Native | Flutter   |
+|--------------|---------|--------------|-----------|
+| Performance  | Best    | Good         | Very Good |
+| Code sharing | 0%      | ~70-80%      | ~90%+     |
+| Native feel  | Perfect | Good         | Custom    |
+| Time to ship | Slowest | Medium       | Fast      |
+| Team needed  | 2 teams | 1 team       | 1 team    |
+
+
 
 ---
 
@@ -7909,6 +8631,1282 @@ those mistakes from causing incidents, or to detect and recover from them quickl
 
 
 
+
+# Part 8 — Quick Interview Questions
+
+
+## 8.01 Java
+
+### Interview Questions
+
+**Q: What is the difference between an abstract class and an interface?**
+An abstract class can have constructors, instance fields, and concrete methods. Interfaces define a contract — all methods are implicitly public and abstract (before Java 8 default methods). A class can implement many interfaces but extend only one class. Use abstract class for shared base implementation; use interface for capabilities across unrelated class hierarchies.
+
+**Q: Explain the four pillars of OOP.**
+Encapsulation hides internal state behind public methods. Inheritance lets a class extend another, reusing and overriding behaviour. Polymorphism allows one interface to represent multiple types at runtime. Abstraction exposes only what is necessary, hiding implementation details.
+
+**Q: What is the difference between == and .equals() in Java?**
+== compares object references (memory addresses) for objects, and values for primitives. .equals() compares object content — it can be overridden. Always use .equals() for String comparisons; == for Strings only works by coincidence when the JVM interns them.
+
+**Q: What is the difference between checked and unchecked exceptions?**
+Checked exceptions (e.g. IOException) must be declared with throws or caught at compile time — they represent recoverable conditions. Unchecked exceptions (RuntimeException subclasses, e.g. NullPointerException) are programming errors and don't need to be declared.
+
+**Q: What are generics and why are they used?**
+Generics parameterise types at compile time (e.g. List<String>). They provide type safety without casting and eliminate ClassCastException at runtime. The compiler erases generic types at runtime (type erasure), so List<String> and List<Integer> are both List at bytecode level.
+
+**Q: What is the difference between HashMap and Hashtable?**
+HashMap is not synchronised (not thread-safe) and allows one null key. Hashtable is synchronised and doesn't allow null keys or values. For thread-safe maps, prefer ConcurrentHashMap over Hashtable — it has far better concurrency performance via lock striping.
+
+**Q: What is the Java Memory Model and what are the main JVM memory areas?**
+The JVM divides memory into: Heap (objects and class instances, managed by GC), Stack (per-thread, holds stack frames with local variables and method calls), Metaspace (class metadata, replaced PermGen in Java 8), and Code Cache (compiled native code from JIT).
+
+**Q: What is the Stream API and when would you use it?**
+Streams (Java 8+) provide a declarative, functional way to process collections. They support lazy evaluation — intermediate operations (filter, map) are only executed when a terminal operation (collect, forEach, count) is called. Use streams for clean, composable data transformations on collections.
+
+
+## 8.02 TypeScript
+
+### Interview Questions
+
+**Q: What is TypeScript and how does it differ from JavaScript?**
+TypeScript is a statically typed superset of JavaScript that compiles to plain JavaScript. It adds optional type annotations, interfaces, generics, and enums that catch errors at compile time. The output is valid JavaScript, so TypeScript runs anywhere JavaScript runs.
+
+**Q: What is the difference between type and interface?**
+Both define object shapes, but interface is open — it can be extended with additional declarations. type is closed and can represent union types, tuples, or computed types. Prefer interface for object shapes and public APIs; prefer type for unions, intersections, or complex computed types.
+
+**Q: What are union and intersection types?**
+A union type (A | B) means a value can be one of several types. An intersection type (A & B) means a value must satisfy all combined types simultaneously. Union is used for values that can vary; intersection is used for mixing and combining type structures.
+
+**Q: What is a generic in TypeScript?**
+A generic is a type parameter that makes a function, class, or interface work with multiple types without losing type information. Example: function identity<T>(x: T): T returns the same type it receives, preserving the caller's specific type rather than returning any.
+
+**Q: What is the difference between any, unknown, and never?**
+any disables type checking entirely. unknown is the type-safe counterpart — you must narrow it before using. never represents a value that can never occur (e.g. a function that always throws, or the bottom of an exhaustive switch).
+
+**Q: What is a type guard?**
+A type guard is a runtime check that narrows a type within a conditional block. Built-in guards include typeof and instanceof. Custom type guards use the is keyword in the return type (e.g. param is string) so the compiler trusts your runtime check.
+
+**Q: What are decorators in TypeScript?**
+Decorators are functions that modify class, method, property, or parameter behaviour at design time using the @ syntax. They're widely used by frameworks like Angular and NestJS for dependency injection, routing, and validation. They require experimentalDecorators: true in tsconfig.
+
+
+## 8.03 JavaScript
+
+### Interview Questions
+
+**Q: What is the difference between var, let, and const?**
+var is function-scoped and hoisted (initialised to undefined). let and const are block-scoped and exist in a temporal dead zone until their declaration. const requires initialisation and prevents reassignment of the binding, but the referenced object can still be mutated.
+
+**Q: What is a closure?**
+A closure is a function that retains access to variables from its lexical scope even after that scope has exited. Closures are how JavaScript modules, callbacks, and private state patterns work — the inner function closes over the outer function's variables.
+
+**Q: What is the event loop?**
+JavaScript is single-threaded. The event loop processes the call stack first, then the microtask queue (Promises, queueMicrotask), then the macrotask queue (setTimeout, setInterval, I/O). Promises resolve before setTimeout even with the same delay.
+
+**Q: What is the difference between == and ===?**
+=== (strict equality) compares both value and type without coercion. == performs type coercion before comparison, producing surprising results (e.g. 0 == '0' is true). Always prefer === in practice.
+
+**Q: What are Promises and async/await?**
+A Promise represents a future value with three states: pending, fulfilled, or rejected. async/await is syntactic sugar over Promises that lets you write asynchronous code in a synchronous style. await pauses execution of the async function until the Promise settles.
+
+**Q: What is prototypal inheritance?**
+Every JavaScript object has a prototype chain. When you access a property, JS looks up the chain until it finds it or reaches null. Classes (ES6) are syntactic sugar over this prototype mechanism — they don't introduce a new inheritance model.
+
+**Q: What is the difference between call, apply, and bind?**
+All three change the this context of a function. call invokes immediately with individual arguments. apply invokes immediately with an array of arguments. bind returns a new function with this permanently set, without invoking immediately.
+
+
+## 8.04 Dart
+
+### Interview Questions
+
+**Q: What is Dart and why does Flutter use it?**
+Dart is a strongly typed, object-oriented language from Google. Flutter uses Dart because it compiles to native ARM code (AOT) for high performance in production, while also supporting JIT compilation during development for fast hot reload. Dart's sound null safety makes Flutter apps safer at compile time.
+
+**Q: What is sound null safety in Dart?**
+Sound null safety means the compiler guarantees that non-nullable types can never be null at runtime. Types are non-nullable by default; nullable types are declared with ? (e.g. String?). The late keyword marks non-nullable variables that will be initialised after declaration.
+
+**Q: What is the difference between final and const in Dart?**
+final means the variable can be set once (at runtime). const means the value is a compile-time constant — it's deeply immutable and the compiler can share instances. A const constructor creates a canonical instance if called with the same arguments.
+
+**Q: What are async, await, and Future in Dart?**
+Future<T> represents an asynchronous computation that will eventually return T. async marks a function as asynchronous. await pauses execution until the Future completes. This is nearly identical to JavaScript's Promise/async-await model.
+
+**Q: What is the difference between Stream and Future?**
+A Future delivers one value asynchronously. A Stream delivers a sequence of values over time — like an event emitter. Streams can be single-subscription (one listener) or broadcast (multiple listeners). Used in Flutter for real-time data like user input or network events.
+
+**Q: What are mixins in Dart?**
+Mixins allow adding functionality to a class without inheritance. Declared with the mixin keyword and used with the with clause. Unlike abstract classes, a mixin cannot have constructors and is meant purely to add capabilities (e.g. with Serializable, with Logging).
+
+
+## 8.05 HTML
+
+### Interview Questions
+
+**Q: What is the difference between semantic and non-semantic HTML?**
+Semantic elements (<article>, <nav>, <main>, <section>, <header>, <footer>) describe the meaning of content to browsers and assistive technologies. Non-semantic elements (<div>, <span>) carry no inherent meaning. Semantic HTML improves SEO, accessibility, and code readability.
+
+**Q: What is the difference between inline and block elements?**
+Block elements (<div>, <p>, <h1>) start on a new line and take the full available width. Inline elements (<span>, <a>, <strong>) flow within text and only take as much width as their content. This distinction is overridable with the CSS display property.
+
+**Q: What is the difference between id and class attributes?**
+id must be unique per page and is used for direct element targeting (CSS, JS, fragment links). class can be reused on multiple elements and is used for styling groups. Multiple classes can be applied to one element; only one id is allowed.
+
+**Q: What are data attributes and when would you use them?**
+data-* attributes store custom data on HTML elements (e.g. data-user-id="42"). They're accessible via JavaScript (element.dataset.userId) and are useful for storing state without using hidden inputs, or passing information to JS without polluting global scope.
+
+**Q: What is the difference between script with defer and async?**
+Without attributes, a script blocks HTML parsing while downloading and executing. async downloads in parallel and executes as soon as ready (order not guaranteed). defer downloads in parallel and executes after HTML is parsed, in order — preferred for most scripts.
+
+**Q: What is ARIA and when should you use it?**
+ARIA (Accessible Rich Internet Applications) adds semantic meaning to non-semantic HTML for screen readers using attributes like role, aria-label, and aria-hidden. Use ARIA only when semantic HTML elements can't express the needed semantics — native HTML semantics are always preferred.
+
+
+## 8.06 CSS
+
+### Interview Questions
+
+**Q: What is the CSS box model?**
+Every element is a rectangular box. Content is surrounded by padding (space inside the border), then border, then margin (space outside). With box-sizing: border-box, width and height include padding and border. With the default content-box, they apply only to the content area.
+
+**Q: What is specificity and how is it calculated?**
+Specificity determines which CSS rule wins when multiple rules target the same element. It's calculated as a four-part score: inline styles, IDs, classes/attributes/pseudoclasses, elements. Inline styles beat IDs, IDs beat classes, classes beat elements. !important overrides everything but is considered bad practice.
+
+**Q: What is the difference between Flexbox and Grid?**
+Flexbox is one-dimensional — it lays out items along a single axis (row or column). Grid is two-dimensional — it controls both rows and columns simultaneously. Use Flexbox for linear components like navigation bars; use Grid for page-level layouts and complex two-dimensional arrangements.
+
+**Q: What are CSS custom properties (variables)?**
+Custom properties (--variable-name) store reusable values and are scoped to the element they're declared on (the cascade applies). Accessed via var(--variable-name). They're live — changing a variable's value instantly updates all usages, unlike SCSS variables which are resolved at build time.
+
+**Q: What is the difference between position relative, absolute, fixed, and sticky?**
+relative offsets from normal position without removing from flow. absolute positions relative to the nearest positioned ancestor (not static), removed from flow. fixed positions relative to the viewport, removed from flow. sticky toggles between relative and fixed based on a scroll threshold.
+
+**Q: What is the CSS cascade?**
+The cascade determines which rule applies when multiple declarations target the same property. Priority order: origin and importance (!important), then specificity, then source order. The cascade is the C in CSS and is why specificity management matters so much in large codebases.
+
+**Q: What are pseudo-classes and pseudo-elements?**
+Pseudo-classes (:hover, :focus, :nth-child) select elements based on state or position. Pseudo-elements (::before, ::after, ::placeholder) create virtual elements or target specific sub-parts of an element. Pseudo-classes use a single colon; pseudo-elements use double colon (::).
+
+
+## 8.07 Python
+
+### Interview Questions
+
+**Q: What is the difference between a list and a tuple?**
+Lists are mutable ordered sequences ([1, 2, 3]). Tuples are immutable ordered sequences ((1, 2, 3)). Tuples are faster and use less memory. Use tuples for fixed data (coordinates, RGB values); use lists when items need to change.
+
+**Q: What are Python decorators?**
+Decorators are functions that wrap another function to add behaviour without modifying its source code. Applied with @decorator_name above the function definition. Common uses: logging, authentication checks, caching (@functools.lru_cache), and Flask/FastAPI route registration.
+
+**Q: What is the difference between *args and **kwargs?**
+*args collects extra positional arguments as a tuple. **kwargs collects extra keyword arguments as a dictionary. They allow functions to accept a variable number of arguments. The names are convention — the * and ** syntax is what matters.
+
+**Q: What is a generator in Python?**
+A generator function uses yield instead of return. It returns a generator object that produces values lazily — one at a time on demand. This is memory-efficient for large sequences since values aren't all created at once. Generator expressions use () instead of [].
+
+**Q: What is the GIL (Global Interpreter Lock)?**
+The GIL is a mutex in CPython that allows only one thread to execute Python bytecode at a time. This means Python threads don't achieve true CPU parallelism for CPU-bound tasks. Use multiprocessing (separate processes) for CPU parallelism, and asyncio for I/O-bound concurrency.
+
+**Q: What is list comprehension and how does it differ from a regular loop?**
+List comprehensions provide a concise syntax for creating lists: [x*2 for x in range(10) if x % 2 == 0]. They're faster than equivalent for loops because they're optimised at the bytecode level, and more readable for simple transformations.
+
+
+## 8.08 C
+
+### Interview Questions
+
+**Q: What is a pointer in C?**
+A pointer is a variable that stores the memory address of another variable. Declared with * (e.g. int *p). Dereferenced with * to access the value at that address. & gets the address of a variable. Pointers enable dynamic memory allocation and efficient array and struct manipulation.
+
+**Q: What is the difference between malloc and calloc?**
+malloc(size) allocates a block of uninitialised memory. calloc(n, size) allocates n elements of size bytes and initialises all bytes to zero. Both return void* and require free() when done. realloc() resizes an existing allocation.
+
+**Q: What is a memory leak?**
+A memory leak occurs when dynamically allocated memory (malloc/calloc) is never freed with free(). The process holds onto memory indefinitely even after it's no longer needed. In long-running programs this causes steadily increasing memory usage until the OS runs out.
+
+**Q: What is the difference between stack and heap memory?**
+Stack memory is managed automatically — it grows and shrinks with function calls and is fast but limited in size. Heap memory is manually managed with malloc/free, is larger, but requires explicit deallocation. Stack overflow occurs when recursion is too deep.
+
+**Q: What is the difference between #define and const?**
+#define is a preprocessor directive that substitutes text before compilation — it has no type and no scope. const declares a typed, scoped constant that participates in type checking. Prefer const for type safety; use #define for macro constants or conditional compilation.
+
+**Q: What are struct and union in C?**
+A struct groups named fields, each occupying its own memory — total size is the sum of field sizes (plus padding). A union also groups fields but all share the same memory — total size is the largest field. Unions are used when a value can only be one type at a time.
+
+
+## 8.09 Spring Boot
+
+### Interview Questions
+
+**Q: What is Spring Boot and how does it differ from the Spring Framework?**
+Spring Framework is a comprehensive IoC/DI container. Spring Boot adds auto-configuration, an embedded web server (Tomcat/Netty), starter POMs, and production-ready features (Actuator). Spring Boot eliminates most XML configuration and lets you write a runnable application with minimal setup.
+
+**Q: What is IoC (Inversion of Control) and DI (Dependency Injection)?**
+IoC is a design principle where object creation and lifecycle management are delegated to a container rather than done manually. DI is the specific pattern IoC uses — dependencies are injected into objects (via constructor, setter, or field) rather than instantiated inside them. Spring's ApplicationContext is the IoC container.
+
+**Q: What is the difference between @Component, @Service, @Repository, and @Controller?**
+All four are stereotypes that mark classes as Spring beans. @Component is generic. @Service semantically marks business logic. @Repository marks data access and adds exception translation. @Controller marks MVC controllers. @RestController is @Controller + @ResponseBody combined.
+
+**Q: What is the difference between constructor injection, setter injection, and field injection?**
+Constructor injection is preferred — dependencies are required and the class is immutable. It makes testing easier since no Spring context is needed to instantiate with mocks. Field injection (@Autowired on a field) is concise but hides dependencies and makes unit testing harder. Setter injection is for optional dependencies.
+
+**Q: What is @Transactional and what does it do?**
+@Transactional wraps a method in a database transaction. If the method completes successfully, the transaction commits; if a RuntimeException is thrown, it rolls back. Transactions are managed via AOP proxy — the class must be called from another Spring bean for the proxy to intercept.
+
+**Q: What is Spring Data JPA?**
+Spring Data JPA provides repository abstractions over JPA. By extending JpaRepository<Entity, ID>, you get save, findById, findAll, delete, and more for free. Query methods can be derived from method names (findByEmailAndActive) or written with @Query. No boilerplate DAO code needed.
+
+**Q: What is the purpose of Spring Actuator?**
+Actuator exposes production-ready endpoints for health checks (/actuator/health), metrics (/actuator/metrics), and environment properties. It's used by load balancers (Kubernetes liveness/readiness probes) and monitoring tools (Prometheus). Endpoints can be individually enabled and secured.
+
+
+## 8.10 Node.js
+
+### Interview Questions
+
+**Q: What is Node.js and how does its event loop work?**
+Node.js is a runtime that executes JavaScript outside the browser, built on Chrome's V8 engine. It's single-threaded with a non-blocking I/O model. The event loop processes callbacks from I/O operations, timers, and network requests without spawning threads — ideal for high-concurrency I/O-bound workloads.
+
+**Q: What is the difference between require() and import?**
+require() is CommonJS (Node's original module system) — synchronous, dynamic, evaluated at runtime. import is ES Modules — static, hoisted, and enables tree-shaking. Node.js supports both; ES Modules require .mjs extension or "type": "module" in package.json.
+
+**Q: What is middleware in Express?**
+Middleware is a function with (req, res, next) signature that sits in the request-response cycle. It can modify req/res objects, end the request, or call next() to pass control to the next middleware. Used for logging, authentication, body parsing, error handling, and more.
+
+**Q: What is the difference between process.nextTick, setImmediate, and setTimeout with 0ms delay?**
+process.nextTick runs before the next event loop iteration — highest priority, before any I/O. setImmediate runs in the check phase after I/O events. setTimeout with 0ms runs in the timers phase — which may come before or after I/O depending on load. nextTick beats I/O beats setImmediate/setTimeout.
+
+**Q: What is an npm package-lock.json and why is it important?**
+package-lock.json records the exact version tree of every installed dependency and its transitive dependencies. This ensures deterministic installs — everyone on the team and CI gets identical dependency versions regardless of which newer versions have been published since.
+
+**Q: How do you handle CPU-intensive work in Node.js without blocking the event loop?**
+Since Node is single-threaded, CPU-intensive work blocks all other requests. Solutions: worker_threads (true parallelism on a thread pool), child_process.fork() (separate processes), or offloading to a message queue or dedicated service. For I/O-bound work, async/await is sufficient.
+
+
+## 8.11 REST APIs
+
+### Interview Questions
+
+**Q: What are the core REST constraints?**
+REST has six constraints: Client-Server (separation of concerns), Stateless (each request contains all information needed), Cacheable (responses declare their cacheability), Uniform Interface (standard HTTP methods and URIs), Layered System (clients don't know if they're talking to a proxy), and Code on Demand (optional — return executable code).
+
+**Q: What is the difference between PUT and PATCH?**
+PUT replaces the entire resource — the client sends a complete representation. PATCH applies a partial update — only the fields sent are changed. PUT is idempotent; PATCH may or may not be depending on implementation.
+
+**Q: What do HTTP status codes 2xx, 4xx, and 5xx mean?**
+2xx: success (200 OK, 201 Created, 204 No Content). 4xx: client error — request is wrong (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 422 Unprocessable Entity). 5xx: server error — server failed (500 Internal Server Error, 503 Service Unavailable).
+
+**Q: What is HATEOAS?**
+Hypermedia As The Engine Of Application State. Responses include links to related actions and resources so clients discover them dynamically rather than hardcoding URLs. For example, a GET /orders/123 response includes links to cancel, pay, or track the order. Rarely implemented fully in practice.
+
+**Q: What is the difference between authentication and authorisation?**
+Authentication verifies identity (who are you?). Authorisation determines permissions (what are you allowed to do?). In REST APIs: authentication typically uses JWT or session tokens; authorisation checks roles and scopes before returning or modifying resources.
+
+**Q: What is API versioning and what are the common strategies?**
+Versioning ensures clients aren't broken by API changes. Strategies: URI versioning (/v1/users), query parameter (?version=1), request header (Accept: application/vnd.api.v1+json), or content negotiation. URI versioning is most common and easiest to consume.
+
+
+## 8.12 Microservices
+
+### Interview Questions
+
+**Q: What are microservices and how do they differ from monoliths?**
+A monolith is a single deployable unit containing all functionality. Microservices split functionality into small, independently deployable services that each own their data. Microservices enable independent scaling and deployment, but introduce network latency, distributed tracing complexity, and data consistency challenges.
+
+**Q: What is service discovery?**
+Services in a microservices architecture need to locate each other dynamically since instances come and go. Client-side discovery: the client queries a registry (Eureka) and picks an instance. Server-side discovery: the client calls a load balancer that queries the registry. Kubernetes provides built-in service discovery via DNS.
+
+**Q: What is the difference between synchronous and asynchronous communication in microservices?**
+Synchronous: Service A calls Service B via HTTP/gRPC and waits for a response — simple but creates temporal coupling. Asynchronous: Service A publishes a message to a queue (Kafka, RabbitMQ) and continues — Service B consumes when ready. Async decouples services and improves resilience but adds complexity.
+
+**Q: What is a circuit breaker?**
+A circuit breaker (pattern from Resilience4j / Hystrix) monitors calls to an external service. When failures exceed a threshold, it opens the circuit — subsequent calls fail immediately without attempting the downstream call. After a timeout, it enters half-open to test recovery. Prevents cascade failures.
+
+**Q: What is the Saga pattern?**
+Sagas manage distributed transactions across multiple services. Instead of a 2-phase commit, a saga is a sequence of local transactions where each step publishes events that trigger the next. If a step fails, compensating transactions undo previous steps. Two variants: Choreography (event-driven) and Orchestration (central coordinator).
+
+**Q: What is the API Gateway pattern?**
+An API Gateway is the single entry point for all clients. It handles: routing requests to the correct microservice, authentication and authorisation, rate limiting, SSL termination, request aggregation, and response transformation. Examples: Kong, AWS API Gateway, Spring Cloud Gateway.
+
+
+## 8.13 Authentication & Authorization
+
+### Interview Questions
+
+**Q: What is JWT and how does it work?**
+A JSON Web Token has three Base64url-encoded parts: Header (algorithm), Payload (claims like sub, exp, roles), and Signature (HMAC of header.payload using a secret, or RSA/EC signature). The server validates the signature on each request — no database lookup needed. Tokens expire via the exp claim.
+
+**Q: What is the difference between OAuth 2.0 and OpenID Connect?**
+OAuth 2.0 is an authorisation framework — it grants third-party apps access to resources on behalf of a user. OpenID Connect (OIDC) is an identity layer on top of OAuth 2.0 — it adds authentication, providing an ID token with user identity information. OAuth answers what you can do; OIDC answers who you are.
+
+**Q: What is PKCE and why is it needed?**
+PKCE (Proof Key for Code Exchange) prevents authorisation code interception attacks in public clients (SPAs, mobile apps) where a client secret can't be kept confidential. The client generates a code_verifier, sends its SHA-256 hash (code_challenge) to the auth server, then proves ownership by sending the original verifier when exchanging the code for a token.
+
+**Q: What is the difference between stateful and stateless sessions?**
+Stateful (session-based): the server stores session data; the client holds only a session ID cookie. Server must share session state across instances (Redis). Stateless (token-based): all session data is in the token (JWT). No server state needed, scales horizontally — but token revocation before expiry is harder.
+
+**Q: What is the principle of least privilege?**
+Users and services should only have the minimum permissions required to perform their function. In APIs this means scopes on tokens, role-based access control (RBAC), and resource-level permissions. Reduces attack surface if credentials are compromised.
+
+**Q: What is CORS and how does it work?**
+Cross-Origin Resource Sharing lets browsers make requests to a different origin. The browser sends a preflight OPTIONS request asking if the origin is allowed. The server responds with Access-Control-Allow-Origin and related headers. Only after the response permits the origin does the browser send the real request.
+
+
+## 8.14 API Integration
+
+### Interview Questions
+
+**Q: What is the difference between REST and gRPC?**
+REST uses HTTP/1.1 with JSON — human-readable, widely supported, easy to debug. gRPC uses HTTP/2 with Protocol Buffers (binary) — smaller payloads, strongly typed via .proto schema, bidirectional streaming, and faster serialisation. gRPC is preferred for internal service-to-service communication; REST for public APIs.
+
+**Q: How do you handle API rate limiting?**
+Implement exponential backoff with jitter on the client side — retry after increasing delays when receiving 429 Too Many Requests. Respect Retry-After headers. On the server side, common rate limiting algorithms include token bucket, leaky bucket, and fixed/sliding window counters.
+
+**Q: What is a webhook and how does it differ from polling?**
+Polling: the client repeatedly calls an API to check for updates — wastes bandwidth when there's nothing new. Webhook: the server calls the client's registered URL when an event occurs — real-time and efficient. Webhooks require the client to have a public HTTP endpoint and to handle payload verification (HMAC signature).
+
+**Q: What is API pagination and what are the common strategies?**
+Pagination prevents returning thousands of records in one response. Strategies: offset/limit (?page=2&limit=20), cursor-based (next_cursor token pointing to the last item — consistent even if data changes), and keyset pagination (WHERE id > last_seen_id ORDER BY id LIMIT 20). Cursor and keyset are preferred for large datasets.
+
+**Q: How do you secure API keys?**
+Never commit to source control — use .gitignore and environment variables. Store in secrets managers (AWS Secrets Manager, Vault, Kubernetes Secrets). Rotate regularly. Scope keys to minimum required permissions. Use short-lived tokens where possible rather than long-lived API keys.
+
+
+## 8.15 WebSockets
+
+### Interview Questions
+
+**Q: What is WebSocket and how does it differ from HTTP?**
+WebSocket provides a full-duplex, persistent connection between client and server over a single TCP connection. Unlike HTTP's request-response cycle, either side can send messages at any time. The connection starts as HTTP and upgrades via the Upgrade header. Used for real-time features like chat, live updates, and gaming.
+
+**Q: What is the WebSocket handshake?**
+The client sends an HTTP request with Upgrade: websocket and Sec-WebSocket-Key headers. The server responds with 101 Switching Protocols and a Sec-WebSocket-Accept value derived from the key. After this, the connection is no longer HTTP — it's a WebSocket tunnel.
+
+**Q: What is Socket.IO and how does it relate to WebSockets?**
+Socket.IO is a library that provides event-based real-time communication. It uses WebSocket when available, with automatic fallback to long-polling. It adds rooms (logical groupings of sockets), namespaces, automatic reconnection, and broadcasting. It uses its own framing on top of WebSocket — not a pure WebSocket protocol.
+
+**Q: What are the main challenges of scaling WebSocket connections?**
+WebSocket connections are stateful and long-lived, making horizontal scaling harder. When a message arrives on one server, clients connected to other servers won't receive it. Solution: use a pub/sub broker (Redis Pub/Sub, Kafka) to fan out messages across all server instances, or use sticky sessions.
+
+**Q: When would you choose WebSockets over Server-Sent Events (SSE)?**
+Choose WebSockets for true bidirectional communication where the client also sends messages frequently. Choose SSE for server-to-client streaming only (notifications, live feeds) — SSE is simpler, uses plain HTTP (no special handshake), supports automatic reconnection natively, and works naturally through HTTP/2 multiplexing.
+
+
+## 8.16 SOAP
+
+### Interview Questions
+
+**Q: What is SOAP and what are its main components?**
+SOAP (Simple Object Access Protocol) is an XML-based messaging protocol for web services. Components: Envelope (wrapper for the whole message), Header (optional metadata like auth tokens), Body (the actual request or response), and Fault (error information). Transmitted over HTTP or SMTP.
+
+**Q: What is WSDL?**
+Web Services Description Language is an XML document that describes a SOAP service — available operations, message formats, data types, and endpoint addresses. Clients use WSDL to generate type-safe stubs. It's the equivalent of an OpenAPI spec for SOAP services.
+
+**Q: What is the difference between SOAP and REST?**
+SOAP is a protocol with strict standards (WSDL, WS-Security, WS-AtomicTransaction). REST is an architectural style — more flexible, uses HTTP natively, typically JSON. SOAP has built-in standards for security and distributed transactions, which is why it's still used in banking, healthcare, and enterprise legacy systems.
+
+**Q: What are WS-Security standards?**
+WS-Security is a SOAP extension providing message-level security: authentication (username/password or X.509 certificates in the header), digital signing (ensures message integrity), and encryption (ensures confidentiality). Unlike transport-level TLS, message-level security survives intermediary processing.
+
+
+## 8.17 JSON
+
+### Interview Questions
+
+**Q: What are the valid JSON data types?**
+String (double-quoted), Number (integer or float), Boolean (true/false), null, Array ([]), and Object ({}). Keys must be strings. Dates have no native JSON type — use ISO 8601 strings or Unix timestamps by convention.
+
+**Q: What is the difference between JSON.parse() and JSON.stringify()?**
+JSON.stringify() converts a JavaScript value to a JSON string. JSON.parse() converts a JSON string back to a JavaScript value. Both accept optional replacer/reviver functions for customising serialisation and deserialisation. Circular references in objects throw an error in JSON.stringify.
+
+**Q: What is JSON Schema?**
+JSON Schema is a vocabulary for validating the structure and types of JSON documents. It defines required fields, data types, formats, constraints (min/max, pattern), and allows nested schemas. Used for API validation, form generation, and documentation — similar to XSD for XML.
+
+**Q: What are common JSON security concerns?**
+Never concatenate user input into JSON strings — use proper serialisation libraries to avoid JSON injection. Watch for prototype pollution when using insecure deep-merge patterns with untrusted JSON in JavaScript. Always validate JSON against a schema on untrusted input at API boundaries.
+
+
+## 8.18 XML
+
+### Interview Questions
+
+**Q: What is the difference between XML and HTML?**
+HTML is a specific markup language with predefined tags for displaying content. XML is a general-purpose markup language where you define your own tags. HTML is about presentation; XML is about data storage and transport. HTML parsers are lenient; XML parsers are strict — malformed XML is a fatal error.
+
+**Q: What is XML Schema (XSD)?**
+XML Schema Definition validates the structure and content types of an XML document. It defines allowed elements, attributes, data types, constraints, and nesting rules — like a type system for XML. WSDL uses XSD to define SOAP message types.
+
+**Q: What is XPath?**
+XPath is a query language for navigating XML documents using path expressions (e.g. /catalog/book[@id='bk101']/title) to select nodes. It's used by XSLT for transformations, Java's javax.xml.xpath API, and in testing (Selenium locators support XPath).
+
+**Q: What is XSLT?**
+XSLT (XSL Transformations) transforms XML into another format — another XML document, HTML, or plain text — using a stylesheet written in XML. Still used for document pipelines, report generation, and transforming legacy XML feeds from enterprise systems.
+
+
+## 8.19 React
+
+### Interview Questions
+
+**Q: What is the virtual DOM and how does React use it?**
+React maintains a lightweight in-memory representation of the real DOM. When state or props change, React re-renders the component tree into a new virtual DOM, diffs it against the previous one (reconciliation), and applies only the minimal set of changes to the real DOM. This batching avoids expensive direct DOM manipulations.
+
+**Q: What is the difference between useState and useReducer?**
+useState is for simple, independent state values. useReducer is better for complex state with multiple sub-values, or when the next state depends on the previous and requires actions to describe transitions. useReducer works like Redux — dispatch(action) triggers reducer(state, action) to return the new state.
+
+**Q: What is useEffect and when does it run?**
+useEffect runs after every render by default. With an empty dependency array [], it runs only after the first mount. With [dep1, dep2], it runs after mount and whenever those values change. Return a cleanup function to run before the next effect or on unmount — clear timers, cancel subscriptions, abort fetches.
+
+**Q: What is the difference between controlled and uncontrolled components?**
+Controlled: form input value is driven by React state via value prop and onChange handler — React is the single source of truth. Uncontrolled: input manages its own state in the DOM; React reads it via useRef. Controlled is preferred for validation and programmatic control.
+
+**Q: What is React Context and when should you use it?**
+Context provides a way to pass data through the component tree without prop drilling. Use it for truly global data: current user, theme, locale. Don't use it as a substitute for state management in performance-sensitive scenarios — every consumer re-renders when the context value changes.
+
+**Q: What is useMemo and useCallback?**
+useMemo memoises the result of an expensive computation, recomputing only when dependencies change. useCallback memoises a function reference, preventing child components from re-rendering because a new function instance was passed as a prop. Both are optimisations — only use them when a performance problem exists.
+
+**Q: What is the React reconciliation algorithm (Fiber)?**
+React Fiber is the reconciliation engine introduced in React 16. It renders work in increments (units of work called fibers), allowing high-priority updates (user input) to interrupt low-priority renders. This enables concurrent features like useTransition and Suspense without blocking the main thread.
+
+
+## 8.20 Angular
+
+### Interview Questions
+
+**Q: What is Angular and how does it differ from React?**
+Angular is a complete opinionated framework from Google with its own module system, router, HTTP client, forms module, and CLI. React is a UI library — you compose your own stack. Angular uses TypeScript by default, has a strong structure (modules, components, services, pipes), and uses two-way data binding.
+
+**Q: What is dependency injection in Angular?**
+Angular's DI system creates and manages service instances. Services declared as @Injectable are registered in a provider (module, component, or root). Angular injects them via constructor parameters based on type. This decouples components from concrete implementations and makes testing easy by allowing mock injection.
+
+**Q: What is the difference between @Component and @NgModule?**
+@Component defines a UI building block with its template, styles, and logic. @NgModule organises related components, directives, pipes, and services into a cohesive unit. Modules declare what they contain, import what they need from other modules, and export what they share. In standalone components (Angular 14+), NgModule is optional.
+
+**Q: What is change detection and what strategies are available?**
+Angular's change detection checks if the view needs updating. Default strategy: checks every component on every event. OnPush: only checks when input references change, an event originates in the component, or an observable emits. OnPush is a major performance optimisation for large component trees.
+
+**Q: What are Angular pipes?**
+Pipes transform values in templates: {{ date | date:'shortDate' }}, {{ price | currency:'EUR' }}. Built-in pipes: async (subscribes to Observables/Promises), date, currency, percent, json, keyvalue. Custom pipes implement PipeTransform. Mark pure: false for pipes that should re-run even when the input reference hasn't changed.
+
+**Q: What is RxJS and why does Angular use it?**
+RxJS provides Observable-based reactive programming. Angular uses it throughout: HttpClient returns Observables, Router exposes navigation events as Observables, and forms expose value changes as Observables. Operators (map, filter, switchMap, combineLatest) let you compose asynchronous streams declaratively.
+
+
+## 8.21 Three.js
+
+### Interview Questions
+
+**Q: What is Three.js and what does it abstract?**
+Three.js is a JavaScript library that abstracts WebGL — the low-level browser API for GPU-accelerated 3D graphics. Without Three.js, you'd write GLSL shader programs, manage buffers, and handle the full GPU pipeline manually. Three.js provides Scenes, Cameras, Geometries, Materials, Meshes, and Lights as easy-to-use objects.
+
+**Q: What are the three core concepts needed to render a 3D scene?**
+Scene (container that holds all objects, lights, and cameras), Camera (defines what's visible and how — perspective or orthographic), and Renderer (draws the scene to a canvas using WebGL). Minimum: create a Mesh, add to scene, point a camera, call renderer.render(scene, camera).
+
+**Q: What is the difference between PerspectiveCamera and OrthographicCamera?**
+PerspectiveCamera mimics human vision — objects farther away appear smaller (defined by FOV, aspect ratio, near/far clip planes). OrthographicCamera has no perspective — parallel lines remain parallel regardless of distance, useful for 2D overlays, architectural views, and isometric games.
+
+**Q: What is the render loop and why is requestAnimationFrame used?**
+The render loop calls renderer.render(scene, camera) on every frame. requestAnimationFrame is used instead of setInterval because it syncs to the display refresh rate, pauses when the tab is hidden (saving battery and CPU), and provides a high-resolution timestamp for smooth animations.
+
+**Q: What are geometries and materials in Three.js?**
+Geometry defines the shape — vertex positions, faces, and UVs (BoxGeometry, SphereGeometry, or custom BufferGeometry). Material defines the surface appearance — how it reacts to light, its colour, texture, and transparency (MeshBasicMaterial ignores light; MeshStandardMaterial uses PBR). A Mesh combines geometry and material.
+
+
+## 8.22 Next.js
+
+### Interview Questions
+
+**Q: What is Next.js and what problem does it solve?**
+Next.js is a React framework that adds server-side rendering (SSR), static site generation (SSG), file-based routing, API routes, and image optimisation on top of React. It solves React SPA limitations: poor SEO (no HTML on initial load), slow time-to-first-byte, and lack of a built-in routing and data-fetching convention.
+
+**Q: What is the difference between SSR, SSG, and ISR in Next.js?**
+SSR (Server-Side Rendering): page rendered on each request — data is always fresh but adds latency. SSG (Static Site Generation): page pre-rendered at build time — fast and cacheable, but stale if data changes. ISR (Incremental Static Regeneration): pages are static but revalidated in the background after a specified interval — best of both.
+
+**Q: What is the App Router and how does it differ from the Pages Router?**
+The App Router (Next.js 13+) uses the app/ directory and React Server Components by default — server-rendered with zero client JavaScript sent. The Pages Router (pages/) uses Client Components with getServerSideProps/getStaticProps. The App Router enables streaming, nested layouts, and parallel routes.
+
+**Q: What are React Server Components?**
+Server Components run only on the server — they can fetch data directly (database, filesystem), produce no client-side JavaScript, and never re-render. Client Components (marked 'use client') run in the browser and can use hooks and browser APIs. Server Components can render Client Components but not vice versa.
+
+**Q: What is Next.js middleware?**
+Middleware runs before a request is processed, at the edge (CDN network layer). It can redirect, rewrite, add headers, or return responses. Common uses: authentication checks (redirect to login before serving a page), A/B testing, and geolocation-based routing. Written in middleware.ts at the project root.
+
+
+## 8.23 React Native
+
+### Interview Questions
+
+**Q: What is React Native and how does it render?**
+React Native is a framework for building native mobile apps using JavaScript and React. Unlike a WebView, React Native uses a bridge to communicate with native components — so UI elements are real native views (UIView on iOS, View on Android), not HTML. This gives native look, feel, and performance.
+
+**Q: What is the difference between React Native and Flutter?**
+React Native uses JavaScript and renders native platform components via a bridge. Flutter uses Dart and draws all UI with its own Skia/Impeller rendering engine — consistent pixel-for-pixel across platforms. Flutter has better performance (no bridge overhead) but less native platform fidelity; React Native leverages the platform's own UI components.
+
+**Q: What is Expo?**
+Expo is a toolchain and platform built on React Native that provides a unified build system, pre-built native modules (camera, location, notifications), over-the-air updates, and a managed workflow where you don't touch native code. Ideal for apps that don't need custom native modules.
+
+**Q: What is the Metro bundler?**
+Metro is React Native's JavaScript bundler — it resolves imports, bundles JS, and serves files to the device during development. It supports fast refresh (hot module replacement). In production, Metro produces a single JS bundle that the native app loads at startup.
+
+**Q: How do you handle platform differences in React Native?**
+Platform.OS ('ios' | 'android') for conditional logic in code. Platform.select({ios: ..., android: ...}) for object-based switching. File-name suffixes (.ios.tsx, .android.tsx) for component-level platform splits. StyleSheet.create with Platform.OS for platform-specific styles.
+
+
+## 8.24 Flutter
+
+### Interview Questions
+
+**Q: What is Flutter and what language does it use?**
+Flutter is Google's UI toolkit for building natively compiled applications for mobile, web, and desktop from a single Dart codebase. Unlike React Native, Flutter doesn't use native platform components — it draws every pixel itself using the Skia/Impeller graphics engine, ensuring consistent UI across all platforms.
+
+**Q: What is the widget tree?**
+In Flutter, everything is a widget — layouts, buttons, text, padding, animations. Widgets are immutable configuration objects describing what to render. Flutter builds a widget tree, a corresponding element tree (managing state and lifecycle), and a render object tree. When state changes, Flutter rebuilds the minimal subtree.
+
+**Q: What is the difference between StatelessWidget and StatefulWidget?**
+StatelessWidget is immutable and renders based only on its constructor parameters — suitable for UI that doesn't change. StatefulWidget has a companion State object that persists across rebuilds and can call setState() to trigger re-renders. Prefer Stateless; use Stateful only when local mutable state is needed.
+
+**Q: What is the BLoC pattern?**
+Business Logic Component separates UI from business logic using Streams. The BLoC receives events (user actions), processes them, and emits states. The UI listens to state streams and rebuilds accordingly. The flutter_bloc package provides BlocBuilder, BlocProvider, and Cubit (a simplified BLoC with direct method calls instead of events).
+
+**Q: What is hot reload vs hot restart in Flutter?**
+Hot reload injects updated source code into the running app while preserving state — useful for UI tweaks. Hot restart restarts the app from scratch (losing state) but picks up changes to app initialisation code. Neither requires recompiling the native shell.
+
+**Q: What is pubspec.yaml?**
+pubspec.yaml is Flutter's package manifest — it declares dependencies, dev dependencies, assets (images, fonts), and Flutter SDK constraints. Equivalent to package.json in Node.js. Run flutter pub get after changes to download packages.
+
+
+## 8.25 Kotlin
+
+### Interview Questions
+
+**Q: What are the main improvements Kotlin makes over Java?**
+Null safety (nullable types with ?), data classes (auto-generated equals, hashCode, toString, copy), extension functions (add methods to existing classes without inheritance), coroutines (structured concurrency), smart casts, string templates, concise lambda syntax, and sealed classes.
+
+**Q: What is null safety in Kotlin?**
+Types are non-nullable by default — String cannot hold null. Nullable types are declared with ? (String?). The safe call operator (?.) returns null instead of throwing NPE. The Elvis operator (?:) provides a default value. The !! operator forces non-null and throws NPE if null — use sparingly.
+
+**Q: What is a data class?**
+A data class (data class User(val name: String, val age: Int)) automatically generates: equals() and hashCode() based on all properties, toString(), copy() for creating modified copies, and componentN() functions for destructuring. Ideal for value objects and DTOs.
+
+**Q: What are coroutines and how do they differ from threads?**
+Coroutines are lightweight suspended computations. Unlike threads (OS-managed, ~1MB stack each), thousands of coroutines can run on a small thread pool by suspending (not blocking) when waiting for I/O. launch creates a fire-and-forget coroutine; async returns a Deferred. Structured concurrency via CoroutineScope ensures no coroutine outlives its scope.
+
+**Q: What is a sealed class?**
+A sealed class restricts subclasses to the same file or package — the compiler knows all possible subtypes. This makes when expressions exhaustive without an else branch. Perfect for modelling states: sealed class Result { class Success(val data: T) : Result(); class Error(val msg: String) : Result() }.
+
+**Q: What are extension functions?**
+Extension functions add methods to existing classes without modifying their source or subclassing. fun String.capitalise() = this.replaceFirstChar { it.uppercase() }. They're syntactic sugar — compiled to static functions at bytecode level. Widely used in Android via Kotlin KTX extensions.
+
+
+## 8.26 Swift
+
+### Interview Questions
+
+**Q: What is the difference between struct and class in Swift?**
+Structs are value types (copied on assignment), usually stored on the stack. Classes are reference types (shared on assignment), stored on the heap and managed by ARC. Swift prefers structs for model types — they're safer (no shared mutable state) and often faster. Classes are needed for inheritance, Objective-C interop, and identity semantics.
+
+**Q: What is ARC (Automatic Reference Counting)?**
+ARC automatically manages memory for class instances by tracking the reference count. When the count reaches zero, the memory is freed. Retain cycles (two objects holding strong references to each other) prevent deallocation — broken with weak (optional, zeroed when deallocated) or unowned (non-optional, crashes if accessed after deallocation) references.
+
+**Q: What are Optionals in Swift?**
+An Optional (String?) wraps a value that may be absent. Unwrapped safely with if let or guard let. Optional chaining (object?.property?.method()) returns nil if any link is nil. Force unwrap (!) crashes if nil — avoid it. Similar in purpose to Kotlin's nullable types.
+
+**Q: What is the difference between @escaping and non-escaping closures?**
+A non-escaping closure is guaranteed to be called before the function returns — the compiler can optimise stack allocation. An @escaping closure can outlive the function (stored, called later, or passed to async work). Self must be captured explicitly in @escaping closures to clarify ownership and avoid retain cycles.
+
+**Q: What is SwiftUI?**
+SwiftUI is Apple's declarative UI framework (Swift-only, iOS 13+). Views are structs that describe what to render; state changes trigger automatic re-renders. @State, @Binding, @ObservedObject, and @StateObject manage state. Similar philosophy to React — UI is a function of state.
+
+**Q: What are generics in Swift?**
+Generics parameterise functions and types over types unknown at definition time. func swap<T>(_ a: inout T, _ b: inout T). Protocols with associated types (associatedtype) enable generic protocol conformance. Swift generics are monomorphised at compile time — no type erasure like in Java.
+
+
+## 8.27 Vite
+
+### Interview Questions
+
+**Q: What is Vite and how does it differ from Webpack?**
+Vite uses native ES Modules in the browser during development — no bundling step at startup. Only the requested module is transformed (via esbuild, written in Go) and served directly. Webpack bundles everything upfront. Vite starts in milliseconds; large Webpack projects can take seconds to minutes.
+
+**Q: What is HMR (Hot Module Replacement) and how does Vite implement it?**
+HMR updates changed modules in the browser without a full page reload, preserving state. Vite uses a WebSocket to notify the browser of changes. Since Vite serves unbundled modules, only the changed file is retransformed and sent — making HMR nearly instant even in large projects.
+
+**Q: What is esbuild and what role does it play in Vite?**
+esbuild is a JavaScript bundler and transpiler written in Go — 10-100x faster than JS-based tools. Vite uses esbuild to pre-bundle node_modules (CommonJS to ESM) once at startup and for TypeScript/JSX transpilation during development. For production builds, Vite uses Rollup for better code splitting and tree-shaking.
+
+**Q: What are Vite plugins?**
+Vite plugins extend the build pipeline using a Rollup-compatible API. They can transform files, inject code, handle virtual modules, or modify the dev server. Examples: @vitejs/plugin-react (React Fast Refresh), vite-plugin-svgr (SVG as React components). Plugins are configured in the plugins array in vite.config.ts.
+
+**Q: What is the ?raw import suffix in Vite?**
+Vite supports special import suffixes: ?raw imports the file content as a string (useful for reading text files, markdown, GLSL shaders). ?url returns the asset's URL. ?worker imports a Web Worker. These suffixes let you import non-JS assets in a type-safe way without needing Webpack loaders.
+
+
+## 8.28 Tailwind CSS
+
+### Interview Questions
+
+**Q: What is utility-first CSS and how does Tailwind implement it?**
+Utility-first means building UIs by composing small, single-purpose utility classes directly in HTML/JSX — rather than writing semantic CSS in separate files. Tailwind provides classes like flex, pt-4, text-gray-900, rounded-lg, hover:bg-blue-500. There's no context-switching to CSS files; styles live alongside structure.
+
+**Q: How does Tailwind handle responsive design?**
+Tailwind uses mobile-first breakpoint prefixes: sm: (640px), md: (768px), lg: (1024px), xl: (1280px), 2xl: (1536px). Prefix any utility with a breakpoint to apply it only at that viewport width and above. Example: class="w-full md:w-1/2" — full width on mobile, half width on medium and larger screens.
+
+**Q: What is the Tailwind configuration file and what can you customise?**
+tailwind.config.js allows extending or overriding the default theme: colours, spacing, fonts, breakpoints, shadows, border radii. The extend key adds to defaults; values at the top level replace them. Also configure content paths (for tree-shaking), plugins, and dark mode strategy.
+
+**Q: How does Tailwind remove unused styles in production?**
+Tailwind scans files specified in content (HTML, JSX, TSX, etc.) for class names and removes all unused utilities — a process called purging. This reduces a full Tailwind CSS bundle (~3MB) to typically just a few KB of actually used utilities.
+
+**Q: What is the JIT (Just-In-Time) compiler?**
+JIT mode (now the default) generates styles on demand as you write classes. This enables arbitrary values (w-[137px], bg-[#1a2b3c]), all variants without configuration, faster build times, and a smaller dev bundle. Previously, arbitrary values required explicitly extending the config file.
+
+
+## 8.29 SCSS
+
+### Interview Questions
+
+**Q: What is SCSS and how does it relate to CSS?**
+SCSS (Sassy CSS) is a preprocessor that extends CSS with variables, nesting, mixins, functions, and modules. It compiles to plain CSS. SCSS syntax is a superset of CSS — valid CSS is valid SCSS. The older Sass indented syntax uses indentation instead of braces.
+
+**Q: What are SCSS variables and how do they differ from CSS custom properties?**
+SCSS variables ($primary: #E84393) are resolved at compile time — they don't exist in the output CSS. CSS custom properties (--primary: #E84393) are evaluated at runtime and can be changed dynamically via JavaScript or media queries. CSS custom properties are preferable for theming; SCSS variables for build-time constants.
+
+**Q: What are SCSS mixins and when would you use them?**
+A mixin is a reusable block of CSS that can accept arguments: @mixin flex-center($direction: row) { display: flex; justify-content: center; align-items: center; flex-direction: $direction; }. Included with @include flex-center(column). Use mixins for repeated patterns that vary by parameter.
+
+**Q: What is the difference between @extend and mixins?**
+@extend shares a ruleset — selectors are grouped in the output (.btn, .btn-primary { ... }). Mixins copy the CSS into each usage, which can increase output size. @extend can lead to surprising selector groupings across file boundaries; most modern style guides prefer mixins for clarity and predictability.
+
+**Q: What are SCSS modules (@use and @forward)?**
+@use imports a file as a namespace (sass.math.round()), preventing global variable conflicts. @forward re-exports a file's members to consumers. These replaced the older @import which polluted the global namespace and loaded files multiple times.
+
+
+## 8.30 SPA
+
+### Interview Questions
+
+**Q: What is a Single-Page Application?**
+A SPA loads a single HTML page and dynamically updates content using JavaScript as the user navigates — no full page reloads. The initial HTML is minimal; routing and rendering happen client-side. SPAs provide native app-like interactions but face challenges with SEO, initial load time, and browser history management.
+
+**Q: How does client-side routing work?**
+Client-side routers intercept navigation events and update the URL (via the History API — pushState/replaceState) without triggering a full browser reload. The router matches the current URL to a component tree and renders it. On page refresh, the server must return the same HTML for all routes (a catch-all in server config).
+
+**Q: What is code splitting and why is it important for SPAs?**
+Code splitting breaks the JavaScript bundle into chunks loaded on demand. Without it, the entire app JS is downloaded before any content shows. With splitting, only the code needed for the current route loads initially. React.lazy + Suspense and Vite's dynamic import() both achieve this.
+
+**Q: What are the SEO challenges of SPAs and how are they addressed?**
+Search engine crawlers historically couldn't execute JavaScript, so SPAs rendered empty pages. Solutions: SSR (pre-render HTML on the server), SSG (pre-render at build time), prerendering tools, or dynamic rendering (serve pre-rendered HTML to crawlers). Modern Googlebot executes JavaScript but can still miss late-loaded content.
+
+**Q: What is the difference between localStorage, sessionStorage, and cookies?**
+localStorage persists until explicitly cleared — available across tabs and sessions, same origin only. sessionStorage persists for the tab's lifetime — cleared when the tab closes. Cookies are sent with every HTTP request, can have expiry, httpOnly (inaccessible from JS), Secure (HTTPS only), and SameSite flags. Cookies are the only option for cross-request server-side state.
+
+
+## 8.31 Responsive UI
+
+### Interview Questions
+
+**Q: What is responsive design and what are its core techniques?**
+Responsive design makes UIs adapt to different screen sizes with a single codebase. Core techniques: fluid layouts (percentage widths), CSS media queries (@media (min-width: 768px)), relative units (em, rem, %, vw, vh), flexible images (max-width: 100%), and mobile-first CSS (base styles for small screens, add complexity for larger).
+
+**Q: What is the difference between em and rem units?**
+em is relative to the font-size of the parent element — it compounds in nested elements. rem is relative to the root element's font-size (html, typically 16px) — consistent regardless of nesting. Use rem for component sizing and typography; use em for component-internal proportional scaling.
+
+**Q: What is the viewport meta tag and why is it critical for mobile?**
+The viewport meta tag tells the browser to use the actual device width as the viewport width instead of a virtual desktop width (~980px). Without it, mobile browsers scale everything down, making responsive CSS useless. Always include: content="width=device-width, initial-scale=1.0".
+
+**Q: What are CSS media queries and what can they target?**
+Media queries apply CSS conditionally based on device characteristics: viewport width (min-width, max-width), orientation (landscape/portrait), resolution (for HiDPI/Retina), colour scheme (prefers-color-scheme: dark), reduced motion (prefers-reduced-motion), and print. Used to implement responsive breakpoints.
+
+**Q: What is a CSS container query?**
+Container queries (@container) apply styles based on the size of a parent container rather than the viewport. This enables truly component-based responsive design — a card component responds to its container's width regardless of where in the page it's placed. Supported in all modern browsers since 2023.
+
+
+## 8.32 Cross-Platform Development
+
+### Interview Questions
+
+**Q: What are the main approaches to cross-platform mobile development?**
+Native (separate Swift/Kotlin codebases) — maximum performance and platform fidelity, highest cost. Hybrid/WebView (Ionic, Cordova) — web tech in a native shell, lowest performance. Cross-compiled (Flutter) — single Dart codebase compiled to native code with a custom rendering engine. JavaScript bridge (React Native) — JS controls native components via a bridge. Each trades performance against development speed.
+
+**Q: What is the trade-off between native and cross-platform development?**
+Native gives best performance, full platform API access, native UX patterns, and no abstraction overhead — at the cost of maintaining two separate codebases. Cross-platform reduces code duplication and team specialisation requirements. The gap has narrowed — Flutter and React Native offer near-native performance. Choose cross-platform for standard UIs; native for deeply platform-specific features.
+
+**Q: How does Flutter achieve cross-platform consistency?**
+Flutter renders all UI using its own graphics engine (Skia/Impeller) instead of native platform components. This means UI looks pixel-identical across iOS, Android, web, and desktop. The trade-off is that platform-specific UI conventions (iOS Cupertino style vs Android Material Design) must be manually implemented.
+
+**Q: What are common challenges in cross-platform development?**
+Platform API differences (push notifications, biometrics, file system access), platform-specific UI conventions, native module gaps, performance tuning for different hardware, testing on many physical devices, and handling OS-specific bugs. Good abstractions and platform-specific code paths (Platform.OS, #if os(iOS)) mitigate these.
+
+
+## 8.33 Microsoft Azure
+
+### Interview Questions
+
+**Q: What is the difference between Azure App Service, Azure Functions, and Azure Container Apps?**
+App Service runs long-lived web apps with always-on compute — choose it for traditional web APIs. Functions are event-driven and serverless, billed per execution — ideal for short tasks triggered by HTTP, queues, or timers. Container Apps is a managed Kubernetes-based platform for containerised microservices with automatic scaling including scale-to-zero.
+
+**Q: What is Azure Active Directory (Entra ID)?**
+Azure AD (now Microsoft Entra ID) is Microsoft's cloud identity platform. It provides authentication (OAuth 2.0, OIDC), single sign-on, multi-factor authentication, and application registration for securing APIs. Enterprise apps integrate via app registrations; users authenticate with Microsoft accounts or organisation identities.
+
+**Q: What is a Managed Identity in Azure?**
+A Managed Identity gives an Azure resource (VM, App Service, Function) an automatic identity in Azure AD — without storing credentials in configuration. The resource can authenticate to any Azure service that supports Azure AD auth (Storage, Key Vault, SQL) without secrets in config files. Always prefer Managed Identity over connection strings.
+
+**Q: What is Azure Service Bus vs Azure Event Hub?**
+Service Bus is an enterprise message queue/topic broker for reliable, ordered, at-least-once message delivery between services — suited for command-driven workflows. Event Hub is a high-throughput event streaming platform for ingesting millions of events per second (telemetry, logs) — suited for analytics pipelines and Kafka-compatible workloads.
+
+**Q: What is Azure Blob Storage vs Azure Table Storage?**
+Blob Storage stores unstructured binary or text data (files, images, backups) organised in containers. Table Storage is a NoSQL key-value store for structured schemaless data accessed by partition and row key. For most structured data scenarios, Cosmos DB is now preferred over Table Storage.
+
+
+## 8.34 Google Cloud Platform
+
+### Interview Questions
+
+**Q: What is the difference between GCE, GKE, Cloud Run, and Cloud Functions?**
+GCE (Compute Engine) is raw VMs — maximum control. GKE (Google Kubernetes Engine) is managed Kubernetes for containerised workloads. Cloud Run is serverless containers — runs stateless containers scaled to zero, billed per request. Cloud Functions is event-driven serverless — individual functions triggered by HTTP, Pub/Sub, or Cloud Storage events.
+
+**Q: What is Google Cloud Pub/Sub?**
+Pub/Sub is a managed asynchronous messaging service. Publishers send messages to a topic; subscribers pull from subscriptions or receive push delivery. Guaranteed at-least-once delivery, global availability, and scales to millions of messages per second. Used for event-driven architectures, pipeline ingestion, and service decoupling.
+
+**Q: What is BigQuery?**
+BigQuery is Google's serverless, fully managed data warehouse for analytics at petabyte scale. It uses columnar storage and separates compute from storage. Queries use Standard SQL. Optimised for OLAP (large analytical queries), not OLTP. Pricing is per byte scanned — use column selection and partitioning to reduce costs.
+
+**Q: What is Cloud IAM?**
+Identity and Access Management controls who (principal) can do what (role) on which resource. Roles bundle permissions: primitive (Owner/Editor/Viewer — too broad), predefined (roles/storage.objectViewer — service-specific), or custom. Always grant the narrowest role at the lowest scope (resource > project > organisation) following least privilege.
+
+
+## 8.35 Firebase
+
+### Interview Questions
+
+**Q: What is Firebase and what services does it provide?**
+Firebase is Google's app development platform providing: Firestore (NoSQL document database with real-time sync), Realtime Database (JSON tree, simpler), Authentication (OAuth, email/password, phone), Cloud Storage (files), Cloud Functions (serverless backend), Hosting (static and dynamic), and App Check (abuse prevention).
+
+**Q: What is the difference between Firestore and Realtime Database?**
+Realtime Database is a single JSON tree — simpler, lower latency for basic sync, but hard to query at scale. Firestore is a document/collection model with richer query support, better scalability, offline support, and stronger security rules. New projects should use Firestore.
+
+**Q: How do Firestore security rules work?**
+Security rules are server-side rules controlling read/write access to documents. Evaluated before any operation reaches the database. Rules can check authentication status (request.auth != null), user roles stored in a document, or field values. Rules run on Google's servers — they cannot be bypassed from the client even with direct API access.
+
+**Q: What is Firebase Authentication and how does it integrate with Firestore?**
+Firebase Auth handles sign-in flows and issues JWTs. The signed-in user's UID (request.auth.uid) is available in Firestore security rules, allowing per-user data isolation (allow read, write: if request.auth.uid == resource.data.userId). Auth state syncs in real-time; the SDK provides an onAuthStateChanged listener.
+
+
+## 8.36 Docker
+
+### Interview Questions
+
+**Q: What is Docker and what problem does it solve?**
+Docker packages applications and their dependencies into containers — lightweight, isolated environments that run identically regardless of the host OS. It solves the "works on my machine" problem by ensuring the same runtime environment from development through production. Containers share the host OS kernel, making them far lighter than VMs.
+
+**Q: What is the difference between a Docker image and a container?**
+An image is a read-only template — a layered filesystem defined by a Dockerfile. A container is a running instance of an image. Multiple containers can run from the same image simultaneously. Images are immutable; containers add a writable layer on top.
+
+**Q: What is a multi-stage Docker build?**
+Multi-stage builds use multiple FROM statements in one Dockerfile. Early stages compile and build; the final stage copies only the output artifacts into a minimal base image. This dramatically reduces image size (no build tools in production) and improves security by shrinking the attack surface.
+
+**Q: What is the difference between CMD and ENTRYPOINT?**
+ENTRYPOINT defines the process that runs when the container starts — not easily overridden by docker run arguments. CMD provides default arguments to ENTRYPOINT, or the default command if no ENTRYPOINT is set. Together: ENTRYPOINT sets the executable; CMD sets the default arguments.
+
+**Q: What is a Docker volume and why is it used?**
+Containers are ephemeral — their filesystem is lost on removal. Volumes mount host directories or Docker-managed storage into containers, persisting data across restarts and removals. Named volumes are managed by Docker and preferred over bind mounts for databases and other stateful services.
+
+**Q: What is Docker Compose and when do you use it?**
+Docker Compose defines and runs multi-container applications via a docker-compose.yml file. Services, networks, and volumes are declared declaratively. docker compose up starts the whole stack. Used in local development to run app + database + cache + message broker together — not typically used in production.
+
+
+## 8.37 Kubernetes
+
+### Interview Questions
+
+**Q: What is Kubernetes and what problems does it solve?**
+Kubernetes (K8s) is a container orchestration platform that automates deployment, scaling, and management of containerised applications. It solves: scheduling containers to nodes with available resources, self-healing (restarting failed containers), horizontal scaling, rolling updates with zero downtime, service discovery, and secrets management.
+
+**Q: What is the difference between a Pod, Deployment, and Service?**
+A Pod is the smallest deployable unit — one or more containers sharing network and storage. A Deployment manages a set of identical Pod replicas, handling rolling updates and rollbacks. A Service provides a stable network endpoint for a set of Pods (selected by labels) — abstracting over Pod IPs that change as Pods are replaced.
+
+**Q: What is the difference between ClusterIP, NodePort, and LoadBalancer Service types?**
+ClusterIP (default) is internal-only — accessible only within the cluster. NodePort exposes the Service on a static port on every node — accessible externally but not production-ready. LoadBalancer provisions a cloud load balancer to expose the Service externally — standard for production traffic in managed Kubernetes environments.
+
+**Q: What are ConfigMaps and Secrets?**
+ConfigMap stores non-sensitive configuration data (env vars, config files) decoupled from Pod specs. Secret stores sensitive data (passwords, tokens, keys) — base64-encoded in etcd (and encrypted at rest if configured). Both are injected into Pods as environment variables or volume mounts, keeping configuration out of container images.
+
+**Q: What is the difference between a Kubernetes liveness and readiness probe?**
+Liveness probe detects if a container is alive — if it fails, Kubernetes restarts the container. Readiness probe detects if a container is ready to serve traffic — if it fails, Kubernetes removes the Pod from Service endpoints without restarting. Both prevent traffic from reaching broken or still-starting Pods.
+
+
+## 8.38 CI/CD Pipelines
+
+### Interview Questions
+
+**Q: What is the difference between CI and CD?**
+CI (Continuous Integration) automates building and testing code on every push — ensuring the mainline is always in a working state. CD can mean Continuous Delivery (every passing build is deployable with a manual gate) or Continuous Deployment (every passing build deploys automatically to production). CI is the prerequisite for CD.
+
+**Q: What are the typical stages of a CI/CD pipeline?**
+Source trigger (push or PR), Build (compile, bundle), Test (unit, integration, e2e), Static analysis (linting, SAST, code coverage), Security scanning (dependency vulnerabilities, container scanning), Publish (push Docker image to registry), Deploy (to staging then production), Verification (smoke tests, health checks).
+
+**Q: What is a blue-green deployment?**
+Two identical production environments (blue and green) are maintained. The new version is deployed to the inactive environment. After verification, the load balancer switches traffic to it. Rollback is instant — switch back to the old environment. Trade-off: requires double the infrastructure cost.
+
+**Q: What is a canary deployment?**
+The new version is deployed to a small percentage of production traffic (e.g. 5%). Metrics and error rates are monitored. If healthy, traffic is gradually shifted until 100% runs the new version. If problems occur, only a small fraction of users is affected and rollback is fast.
+
+**Q: What is a pipeline as code?**
+Defining CI/CD pipelines in version-controlled files (Jenkinsfile, .github/workflows/deploy.yml, .gitlab-ci.yml) rather than clicking through a GUI. Benefits: pipelines are reviewed like code, changes are tracked in git history, and the pipeline definition lives alongside the code it builds.
+
+
+## 8.39 Git
+
+### Interview Questions
+
+**Q: What is the difference between git merge and git rebase?**
+git merge combines two branches by creating a merge commit, preserving the full branch history. git rebase moves commits from one branch onto another, rewriting their hashes — produces a linear history. Use merge for shared branches; use rebase to clean up local feature branches before merging. Never rebase commits already pushed to a shared branch.
+
+**Q: What is a detached HEAD state?**
+HEAD normally points to a branch name. Detached HEAD means HEAD points directly to a commit hash rather than a branch. This happens when you checkout a specific commit or tag. New commits won't belong to any branch and can be lost when switching away — create a branch with git checkout -b if you want to keep the work.
+
+**Q: What is git stash?**
+git stash temporarily saves uncommitted changes (both staged and unstaged) to a stack, restoring a clean working directory. Useful for switching branches without committing half-done work. git stash pop restores the latest stash. git stash list shows all stashes. git stash push -m "message" names the stash.
+
+**Q: What is the difference between git reset, git revert, and git restore?**
+git reset moves HEAD (and optionally the branch and working tree) — destructive, rewrites history, never use on public branches. git revert creates a new commit that undoes a previous commit — safe for shared history. git restore discards changes in the working tree or unstages staged changes — affects only working files, not history.
+
+**Q: What is a git hook?**
+Git hooks are scripts that run automatically at specific points in the git workflow: pre-commit (run linting before committing), commit-msg (validate commit message format), pre-push (run tests before pushing). Stored in .git/hooks/. Tools like Husky manage hooks across teams via package.json.
+
+
+## 8.40 GitHub
+
+### Interview Questions
+
+**Q: What is the difference between a fork and a branch?**
+A branch lives inside the same repository — used for feature development when you have write access. A fork is a copy of a repository to your own account — used for contributing to repos you don't have write access to. Pull requests can originate from either.
+
+**Q: What is GitHub Actions and how does it work?**
+GitHub Actions is a CI/CD platform integrated into GitHub. Workflows are defined in .github/workflows/*.yml files. Triggered by events (push, PR, schedule, webhook). Workflows contain jobs that run on runners (GitHub-hosted or self-hosted). Jobs contain steps (run shell commands or use Actions from the marketplace).
+
+**Q: What is a CODEOWNERS file?**
+A CODEOWNERS file (.github/CODEOWNERS) maps file paths to required reviewers. When a PR changes those files, the owners are automatically requested for review and their approval may be required via branch protection rules. This ensures subject-matter experts review changes to their areas of the codebase.
+
+**Q: What are GitHub Environments and how do you use them for deployments?**
+Environments (Settings → Environments) add protection rules to deployments: required reviewers, wait timers, and deployment branch restrictions. A job in Actions targeting a protected environment must wait for human approval. This prevents accidental deploys to production from feature branches.
+
+**Q: What is the difference between a GitHub Issue, PR, and Discussion?**
+Issues track bugs, feature requests, and tasks — structured work items with labels, assignees, and milestones. Pull Requests propose code changes and have reviews, checks, and merge capabilities. Discussions are open-ended conversations (Q&A, ideas, announcements) without the formality of an issue.
+
+
+## 8.41 Bitbucket
+
+### Interview Questions
+
+**Q: What is Bitbucket and how does it differ from GitHub?**
+Bitbucket is Atlassian's Git hosting platform, deeply integrated with Jira and Confluence. It supports Git repositories and offers Bitbucket Pipelines as its built-in CI/CD using bitbucket-pipelines.yml. Preferred in organisations already on the Atlassian ecosystem where Jira integration is essential.
+
+**Q: What are Bitbucket Pipelines?**
+Bitbucket Pipelines is a CI/CD system defined in bitbucket-pipelines.yml at the repo root. Pipelines are triggered by branch pushes or PRs and run steps in Docker containers. Steps can be run in parallel with the parallel: key. Deployment steps can target named environments and require manual triggers.
+
+**Q: What is a Bitbucket workspace?**
+A workspace is the organisational unit in Bitbucket (equivalent to a GitHub organisation). It contains repositories, teams, and access permissions. Projects group repositories within a workspace for easier management and bulk permission settings.
+
+**Q: How does Bitbucket integrate with Jira?**
+Branch names, commit messages, and PR titles that include a Jira issue key (PROJECT-123) are automatically linked in Jira. The Jira issue shows development activity (commits, branches, PRs) directly. Smart commits in messages can also update Jira issue status or log time automatically.
+
+
+## 8.42 Maven
+
+### Interview Questions
+
+**Q: What is Maven and what problem does it solve?**
+Maven is a Java build automation and dependency management tool. It defines a standard project structure and build lifecycle, downloads dependencies from repositories (Maven Central, Nexus), manages transitive dependencies, and provides plugins for compilation, testing, packaging, and deployment.
+
+**Q: What is a POM (Project Object Model)?**
+pom.xml is Maven's project descriptor. It declares: coordinates (groupId, artifactId, version), dependencies, plugins, build configuration, repositories, and inherited settings from a parent POM. Maven uses the POM to determine how to build and package the project.
+
+**Q: What is the Maven build lifecycle and its main phases?**
+The default lifecycle: validate → compile → test → package → verify → install → deploy. Each phase runs all previous phases. compile compiles source. test runs unit tests. package creates the JAR or WAR. install copies to local repository. deploy publishes to a remote repository.
+
+**Q: What is dependency scope in Maven?**
+Scope controls when a dependency is on the classpath. compile (default): all phases. provided: compile time only, provided at runtime by a container (e.g. servlet-api in Tomcat). runtime: only at runtime, not compile. test: only during testing. Correct scope prevents dependency pollution and reduces artifact size.
+
+**Q: What is a Maven parent POM?**
+A parent POM allows inheriting configuration across modules — dependency versions, plugin versions, and settings. Multi-module projects have a root POM with packaging=pom listing all <modules>. A BOM (Bill of Materials) is a special parent that manages only dependency versions, imported with scope=import and type=pom.
+
+
+## 8.43 YAML
+
+### Interview Questions
+
+**Q: What is YAML and what are its main use cases?**
+YAML (YAML Ain't Markup Language) is a human-readable data serialisation format. It's whitespace-significant — indentation defines structure. Used for configuration files (Docker Compose, Kubernetes manifests, GitHub Actions, Ansible, Helm charts) where readability is more important than verbosity.
+
+**Q: What is the difference between a YAML scalar, sequence, and mapping?**
+Scalar: a single value — string, number, boolean, or null (name: Alice, age: 30, active: true). Sequence (list): ordered collection using - prefix or inline [a, b, c]. Mapping (object): key-value pairs indented under a parent key or inline {key: value}.
+
+**Q: What are YAML anchors and aliases?**
+Anchors (&anchor-name) mark a value for reuse. Aliases (*anchor-name) reference it elsewhere. Useful for avoiding repetition in configs: define defaults with &defaults and inherit them in multiple services with <<: *defaults (the merge key). Docker Compose extension fields use this pattern extensively.
+
+**Q: What are common YAML pitfalls?**
+Indentation with tabs (YAML requires spaces only). Strings that look like other types — yes/no/true/false are parsed as booleans; 1.0 as a float; 2024-01-01 as a date. Quote strings when the content is ambiguous. Duplicate keys (last value wins, silently). Trailing spaces causing unexpected errors.
+
+
+## 8.44 MySQL
+
+### Interview Questions
+
+**Q: What is the difference between MyISAM and InnoDB?**
+InnoDB is the default MySQL storage engine — it supports transactions (ACID), foreign key constraints, row-level locking, and crash recovery. MyISAM lacks transactions and foreign keys, uses table-level locking, but can be faster for read-heavy workloads without concurrent writes. Always use InnoDB for new projects.
+
+**Q: What is an index and how does it improve query performance?**
+An index is a data structure (typically a B-tree) allowing MySQL to find rows without scanning the full table. Without an index on a WHERE column, MySQL performs a full table scan — O(n). With an index, the lookup is O(log n). Indexes speed up reads but slow down writes since the index must be updated on INSERT/UPDATE/DELETE.
+
+**Q: What is the difference between INNER JOIN, LEFT JOIN, and RIGHT JOIN?**
+INNER JOIN returns only rows with matching values in both tables. LEFT JOIN returns all rows from the left table and matched rows from the right (NULLs for non-matches). RIGHT JOIN is the mirror image. FULL OUTER JOIN (not natively in MySQL — use UNION) returns all rows from both tables.
+
+**Q: What is normalisation and what are the first three normal forms?**
+Normalisation organises data to reduce redundancy. 1NF: each column holds atomic values, no repeating groups. 2NF: 1NF plus no partial dependencies (non-key columns depend on the full primary key). 3NF: 2NF plus no transitive dependencies (non-key columns don't depend on other non-key columns).
+
+**Q: What is a transaction and what does ACID mean?**
+A transaction is a unit of work that either fully completes or fully rolls back. ACID: Atomicity (all or nothing), Consistency (database remains valid before and after), Isolation (concurrent transactions appear sequential), Durability (committed data survives crashes).
+
+
+## 8.45 MongoDB
+
+### Interview Questions
+
+**Q: What is MongoDB and how does it differ from relational databases?**
+MongoDB is a document-oriented NoSQL database. Data is stored as BSON documents (JSON-like) in collections with no fixed schema. Unlike SQL tables (rigid schema, normalised rows, JOINs), MongoDB documents embed related data — no JOINs needed but data may be duplicated. It scales horizontally via sharding.
+
+**Q: What is the difference between embedding and referencing in MongoDB?**
+Embedding: store related data inside the parent document — good for data always queried together (one query, atomic updates). Referencing: store only the _id of related documents (like a foreign key) — good for large related data, many-to-many relationships, or data that changes independently. Lookups use $lookup in the aggregation pipeline.
+
+**Q: What is a MongoDB index and what types exist?**
+Indexes speed up queries. Types: Single field, Compound (multiple fields), Text (full-text search on strings), Geospatial (2dsphere for location queries), Sparse (only indexes documents that have the field), and TTL (auto-deletes documents after a time period — ideal for sessions or logs).
+
+**Q: What is the aggregation pipeline?**
+The aggregation pipeline processes documents through sequential stages that transform data. Common stages: $match (filter), $group (group and aggregate — sum, count, avg), $sort, $project (reshape documents), $lookup (left outer join to another collection), $unwind (flatten arrays).
+
+**Q: What is MongoDB Atlas?**
+Atlas is MongoDB's managed cloud database service (available on AWS, GCP, Azure). It handles provisioning, backups, monitoring, scaling, and security. Features include Atlas Search (full-text with Lucene), App Services (serverless functions and triggers), and Atlas Vector Search.
+
+
+## 8.46 SQL
+
+### Interview Questions
+
+**Q: What is the difference between WHERE and HAVING?**
+WHERE filters rows before grouping — it operates on individual rows and cannot use aggregate functions. HAVING filters groups after GROUP BY — it can use aggregate functions (HAVING COUNT(*) > 5). If you need to filter on aggregate results, you must use HAVING.
+
+**Q: What are window functions?**
+Window functions (ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD, SUM OVER, AVG OVER) compute a value for each row relative to a window of related rows — without collapsing them like GROUP BY. PARTITION BY divides rows into groups; ORDER BY determines row ordering within the window. Essential for ranking, running totals, and moving averages.
+
+**Q: What is a CTE (Common Table Expression)?**
+A CTE is a named, temporary result set defined with the WITH keyword that can be referenced in the main query. CTEs improve readability and can be recursive (WITH RECURSIVE) for hierarchical data like trees and graphs. Non-recursive CTEs are typically equivalent to subqueries but far more readable.
+
+**Q: What is the difference between clustered and non-clustered indexes?**
+A clustered index determines the physical order of rows in the table — there can only be one (usually the primary key). A non-clustered index is a separate structure with pointers to the actual rows — a table can have many. In MySQL InnoDB, all secondary indexes store the primary key as the row pointer.
+
+**Q: What is SQL injection and how do you prevent it?**
+SQL injection occurs when user input is concatenated directly into SQL queries, allowing attackers to modify the query logic. Prevented by: parameterised queries and prepared statements (? or :name placeholders — input is never interpreted as SQL), ORMs that handle escaping automatically, and input validation at API boundaries.
+
+
+## 8.47 Data Modelling
+
+### Interview Questions
+
+**Q: What is an Entity-Relationship (ER) diagram?**
+An ER diagram visually represents entities (tables), their attributes (columns), and relationships between them (one-to-one, one-to-many, many-to-many). Used in the conceptual design phase to agree on the data model before implementation. Crow's foot notation shows cardinality (0..* means zero or more).
+
+**Q: What is the difference between a primary key, foreign key, and unique key?**
+Primary key: uniquely identifies each row — not null, unique, one per table. Foreign key: a column referencing another table's primary key — enforces referential integrity. Unique key: enforces uniqueness like a PK but can be null and a table can have multiple unique keys.
+
+**Q: What is denormalisation and when would you use it?**
+Denormalisation intentionally introduces redundancy to improve read performance — by duplicating data or pre-joining tables, you avoid expensive JOINs at query time. Used in read-heavy analytical workloads (data warehouses) and NoSQL document stores. Trade-off: faster reads but harder writes since multiple copies must stay in sync.
+
+**Q: What is the difference between OLTP and OLAP database design?**
+OLTP (Online Transaction Processing) optimises for fast, frequent, small read/write transactions — highly normalised, row-oriented. OLAP (Online Analytical Processing) optimises for large analytical queries over historical data — denormalised (star or snowflake schema), column-oriented storage.
+
+**Q: What is a star schema?**
+A star schema is a denormalised dimensional model with a central fact table (containing measurable events — sales, orders) surrounded by dimension tables (describing who, what, when, where). Denormalisation makes analytical queries fast and simple. Used in data warehouses (Redshift, BigQuery, Snowflake).
+
+
+## 8.48 PostgreSQL
+
+### Interview Questions
+
+**Q: What makes PostgreSQL different from MySQL?**
+PostgreSQL is more standards-compliant and feature-rich: native JSON/JSONB support with GIN indexing, full-text search, array types, CTEs with MATERIALIZED, window functions, LISTEN/NOTIFY for async notifications, table inheritance, and extensibility (PostGIS for geospatial). MySQL is traditionally faster for simple read-heavy workloads but the gap has narrowed.
+
+**Q: What is JSONB in PostgreSQL?**
+JSONB stores JSON data in a binary decomposed format — parsed on input, stored efficiently, and supports GIN indexing. Unlike the json type (stores raw text), JSONB supports efficient operators (@>, ?, #>>) for querying nested paths and can be indexed on specific fields. Used to handle semi-structured data without a separate document database.
+
+**Q: What are PostgreSQL sequences and SERIAL?**
+A sequence is an auto-incrementing counter. SERIAL (or BIGSERIAL) is shorthand for creating an integer column with a default drawn from a sequence — equivalent to MySQL AUTO_INCREMENT. In PostgreSQL 10+, GENERATED ALWAYS AS IDENTITY is the SQL-standard alternative and is preferred.
+
+**Q: What is VACUUM in PostgreSQL?**
+PostgreSQL uses MVCC (Multi-Version Concurrency Control) — old row versions are kept after UPDATE/DELETE for concurrent transactions. VACUUM reclaims storage occupied by dead tuples. AUTOVACUUM runs automatically in the background. VACUUM ANALYZE also updates the statistics used by the query planner.
+
+**Q: What are PostgreSQL advisory locks?**
+Advisory locks are application-level locks that PostgreSQL manages but doesn't enforce on specific tables — your application code decides when to acquire and release them (pg_try_advisory_lock, pg_advisory_unlock). Useful for distributed mutex patterns such as ensuring only one instance of a cron job runs across horizontally scaled servers.
+
+
+## 8.49 GraphQL
+
+### Interview Questions
+
+**Q: What is GraphQL and how does it differ from REST?**
+GraphQL is a query language where the client specifies exactly what data it needs — no over-fetching (extra fields) or under-fetching (needing multiple requests for related data). A single /graphql endpoint handles all operations. The schema defines types and relationships; resolvers fetch the data.
+
+**Q: What is the difference between Query, Mutation, and Subscription?**
+Query: read-only data fetching (equivalent to GET). Mutation: data modification — create, update, delete (equivalent to POST/PUT/DELETE). Subscription: long-lived connections for real-time updates — the server pushes data when specified events occur, typically via WebSocket.
+
+**Q: What is the N+1 problem in GraphQL and how is it solved?**
+When resolving a list of N items and fetching related data for each, a naive implementation makes 1 query for the list plus N queries for related items. DataLoader solves this by batching and deduplicating database calls within a single request tick, reducing 1+N queries to just 1+1.
+
+**Q: What is a GraphQL schema?**
+The schema is the contract between client and server — it defines types (type User { id: ID! name: String! }), queries (type Query { user(id: ID!): User }), mutations, subscriptions, and custom scalars. The schema is strongly typed and introspectable, enabling tools like GraphiQL and schema-based code generation.
+
+**Q: What are the pros and cons of GraphQL vs REST?**
+GraphQL pros: precise data fetching, single endpoint, strong typing, self-documenting, great for complex UIs. REST pros: simpler HTTP-level caching (by URL), familiar to all clients, no special library needed, easier to rate-limit per endpoint. GraphQL cons: complex caching, all requests are POST (bypasses HTTP caching), harder to secure per-operation.
+
+
+## 8.50 JUnit 5
+
+### Interview Questions
+
+**Q: What are the main annotations in JUnit 5?**
+@Test marks a test method. @BeforeEach / @AfterEach run before/after each test method. @BeforeAll / @AfterAll run once per class (must be static by default). @Disabled skips a test. @ParameterizedTest with @ValueSource / @CsvSource / @MethodSource runs a test with multiple inputs. @ExtendWith integrates extensions (Spring, Mockito).
+
+**Q: What is the difference between JUnit 4 and JUnit 5?**
+JUnit 5 = JUnit Platform (launcher) + JUnit Jupiter (new API) + JUnit Vintage (runs JUnit 4 tests). Key changes: @RunWith → @ExtendWith, @Rule → extensions, @Before/@After → @BeforeEach/@AfterEach, parameterised tests are first-class, assertions support lambdas, and @Nested enables hierarchically organised test classes.
+
+**Q: What is @ParameterizedTest?**
+Parameterised tests run the same test method with different inputs. Sources: @ValueSource (literal values), @CsvSource (CSV rows), @MethodSource (static factory method returning a Stream), @EnumSource (all enum values). Eliminates duplicated test methods for testing multiple input/output combinations.
+
+**Q: What is the difference between Assumptions and Assertions in JUnit 5?**
+Assertions (assertThat, assertEquals, assertThrows) fail the test with an error if the condition is not met. Assumptions (assumeTrue, assumingThat) abort the test and mark it as skipped rather than failing — used for preconditions that aren't always applicable (e.g. run only on a specific OS).
+
+**Q: How do you test that an exception is thrown?**
+assertThrows(ExpectedException.class, () -> methodUnderTest()) asserts that the lambda throws exactly that exception type and returns the exception instance for further assertions on the message or cause. assertThrowsExactly requires exact type match, not accepting subclasses.
+
+
+## 8.51 Mockito
+
+### Interview Questions
+
+**Q: What is Mockito and what problem does it solve?**
+Mockito is a Java mocking framework that creates mock objects — fake implementations of dependencies — so you can test a class in isolation without real databases, HTTP clients, or external services. You define what the mock returns when called and verify interactions afterward.
+
+**Q: What is the difference between @Mock and @Spy?**
+@Mock creates a complete fake of the class — all methods return null, 0, or false by default; no real code runs. @Spy wraps a real instance — unstubbed methods call the real implementation; stubbed methods return defined values. Use Spy when you want to test a partial mock of a real class.
+
+**Q: What is the difference between when().thenReturn() and doReturn().when()?**
+Both stub methods but differ in safety. when(mock.method()).thenReturn(value) invokes the method during stubbing — can cause issues for methods with side effects. doReturn(value).when(mock).method() stubs without invoking the method. doReturn is preferred for Spy objects and void methods.
+
+**Q: How do you verify that a method was called with specific arguments?**
+verify(mock).method(args) asserts the method was called exactly once with those args. verify(mock, times(2)).method() for exact call count. verify(mock, never()).method() for no calls. Use ArgumentCaptor to capture the actual argument passed and assert on its properties separately.
+
+**Q: What is @InjectMocks?**
+@InjectMocks creates an instance of the class under test and automatically injects @Mock and @Spy fields via constructor, setter, or field injection. Used with @ExtendWith(MockitoExtension.class) to initialise all annotations automatically without calling MockitoAnnotations.openMocks(this) manually.
+
+
+## 8.52 SonarQube
+
+### Interview Questions
+
+**Q: What is SonarQube and what does it analyse?**
+SonarQube is a static code analysis platform that continuously inspects code quality. It detects: bugs (potential runtime errors), vulnerabilities (security issues like SQL injection, XSS), code smells (maintainability issues), duplications, test coverage, and complexity. It tracks trends over time and enforces a Quality Gate.
+
+**Q: What is a Quality Gate?**
+A Quality Gate is a set of conditions that code must meet to pass. Example: no new critical bugs, test coverage on new code above 80%, no new security vulnerabilities. When integrated with CI, a failing Quality Gate can block a PR from merging. The default Sonar Way gate is a good starting point.
+
+**Q: What are the severity levels in SonarQube?**
+Blocker (must fix — severe bugs or security issues), Critical (likely bugs or security issues), Major (quality flaws impacting productivity), Minor (style issues with small impact), Info (informational only). Security findings additionally map to OWASP, CWE, and SANS categories.
+
+**Q: What is SonarLint?**
+SonarLint is an IDE plugin that provides SonarQube analysis inline as you code — catching issues in real time before committing. It uses the same rules as the SonarQube server. In connected mode, it syncs the project's custom rule profiles and suppressions from your SonarQube instance.
+
+**Q: How does SonarQube address the OWASP Top 10?**
+SonarQube maps its rules to OWASP Top 10 categories (injection, broken auth, XSS, insecure deserialization, etc.), allowing filtering and reporting by security standard. It can detect many Top 10 vulnerabilities statically — injection patterns, hardcoded credentials, weak cryptography, and insecure random number generation.
+
+
+## 8.53 Unit & Integration Testing
+
+### Interview Questions
+
+**Q: What is the difference between unit, integration, and end-to-end tests?**
+Unit tests: test a single class or function in isolation with mocked dependencies — fast, numerous, cheap. Integration tests: test how components work together — real database, real service interactions, may use TestContainers. E2E tests: simulate real user flows through the full stack — slowest, highest confidence, most brittle. The test pyramid says: many unit, some integration, few E2E.
+
+**Q: What is the test pyramid vs the test trophy?**
+Test pyramid (Fowler): wide base of unit tests, fewer integration, few E2E. Test trophy (Kent C. Dodds): fewer unit tests (they over-mock and couple to implementation details), heavy integration tests that test realistic user workflows, few E2E. The trophy shifts weight to integration tests as they give more confidence with less brittleness.
+
+**Q: What is TestContainers?**
+TestContainers is a library that starts real Docker containers (PostgreSQL, Redis, Kafka, etc.) for tests and tears them down after. This replaces mocked database layers with real integration tests, ensuring queries, transactions, and schema migrations actually work.
+
+**Q: What is TDD (Test-Driven Development)?**
+TDD is a discipline where you write a failing test first, then write the minimum code to pass it, then refactor. The Red-Green-Refactor cycle ensures that every line of production code is tested by design. Benefits: forces testable design, prevents over-engineering, and produces a comprehensive test suite.
+
+**Q: What is test coverage and what is a good target?**
+Test coverage measures what percentage of code paths are exercised by tests. 80% is commonly cited as a reasonable target, but coverage is a floor, not a goal — 100% coverage doesn't mean tests are meaningful. Focus on testing critical paths and business logic rather than chasing coverage numbers on trivial getters and setters.
+
+
+## 8.54 Debugging
+
+### Interview Questions
+
+**Q: What is the difference between a breakpoint, a conditional breakpoint, and a logpoint?**
+Breakpoint: pauses execution at a specific line. Conditional breakpoint: pauses only when an expression is true (e.g. userId == 42) — essential for debugging inside loops. Logpoint: prints a message without pausing execution — like a temporary log statement added without changing code. All modern IDEs support all three.
+
+**Q: What is the difference between step over, step into, and step out?**
+Step over: execute the current line and move to the next without entering called methods. Step into: enter the called method on the current line. Step out: continue execution until the current method returns, pausing back in the caller. These controls let you navigate the call stack precisely.
+
+**Q: What is remote debugging?**
+Attaching a debugger to a process running on a different machine or in a container. In Java, start the JVM with -agentlib:jdwp=transport=dt_socket,server=y,address=5005 and connect the IDE to that port. Useful for debugging issues in staging environments or Docker containers without modifying the running application.
+
+**Q: What is heap dump analysis and when would you use it?**
+A heap dump is a snapshot of JVM memory — all live objects, their sizes, and references. Analysed with tools like Eclipse MAT or VisualVM to find memory leaks (objects not collected because they're unexpectedly still reachable). Take a heap dump when you observe steadily growing heap usage or an OutOfMemoryError.
+
+**Q: What is rubber duck debugging?**
+Explaining a problem out loud — to a rubber duck, a colleague, or an AI — often reveals the solution. Articulating the problem forces you to structure your thinking, notice your own assumptions, and spot logical errors you overlooked while staring at the code. It's genuinely effective.
+
+
+## 8.55 Code Reviews
+
+### Interview Questions
+
+**Q: What is the purpose of a code review?**
+Code reviews catch bugs before production, spread knowledge across the team, enforce standards, improve code quality, and reduce bus factor by ensuring multiple people understand each part of the codebase. They also help onboard junior developers by exposing them to established patterns.
+
+**Q: What should you look for as a reviewer?**
+Correctness (does it do what it should? edge cases handled?), readability (is it understandable at a glance?), security (SQL injection, input validation, secrets in code), performance (unnecessary queries, missing indexes), test coverage, adherence to architecture patterns, and consistency with the rest of the codebase.
+
+**Q: How should you write review comments?**
+Be specific and not personal. Say "this will throw a NullPointerException when X is null" not "this is wrong." Use prefix conventions: "nit:" for nitpicks that don't block, "blocker:" for must-fix issues. Offer solutions alongside criticisms. Use questions to seek understanding before assuming an error.
+
+**Q: What is pair programming and how does it relate to code review?**
+Pair programming is real-time collaboration where two developers share one workstation — one types (driver), one reviews and suggests (navigator). Unlike async reviews, pairs catch issues immediately, share knowledge continuously, and produce code that's already been reviewed. Trade-off: higher immediate time cost vs reduced review cycles.
+
+**Q: What should a good pull request description contain?**
+A good PR description explains what changed and why (not just what — the diff shows that), any important context or alternatives considered, how to test it, and any risks or known limitations. It helps reviewers understand intent quickly and helps future developers understand why code exists.
+
+
+## 8.56 Agile / Scrum
+
+### Interview Questions
+
+**Q: What is the difference between Scrum and Kanban?**
+Scrum uses fixed-length Sprints (1-4 weeks), defined ceremonies (Sprint Planning, Daily Standup, Sprint Review, Retrospective), and fixed team capacity. Kanban is a flow-based system with no fixed iterations — work flows continuously through columns limited by WIP (Work In Progress) limits. Scrum is structured; Kanban is continuous and flexible.
+
+**Q: What are the Scrum roles?**
+Product Owner: owns the backlog, prioritises, and represents stakeholder needs. Scrum Master: facilitates the Scrum process, removes impediments, coaches the team — not a project manager or line manager. Development Team: cross-functional, self-organising, responsible for delivering the Sprint increment. No hierarchy within the team.
+
+**Q: What is the Definition of Done (DoD)?**
+The DoD is a shared checklist of criteria every story must meet to be considered complete (e.g. code reviewed, unit tests passing, deployed to staging, acceptance criteria met, documentation updated). It prevents "done" from meaning different things to different people and ensures consistent quality.
+
+**Q: What is a user story and what is the INVEST acronym?**
+A user story captures a feature from the user's perspective: "As a [user], I want [feature] so that [benefit]." INVEST: Independent (deliverable standalone), Negotiable (details can evolve), Valuable (delivers user value), Estimable (team can size it), Small (fits in a Sprint), Testable (clear acceptance criteria).
+
+**Q: What is velocity and how is it used?**
+Velocity is the sum of story points completed in a Sprint. Tracked over multiple Sprints, it gives an average used to forecast how much work the team can take on per Sprint. Useful for release planning. Velocity is a planning tool — not a performance metric to compare between teams.
+
+
+## 8.57 SDLC
+
+### Interview Questions
+
+**Q: What are the main phases of the SDLC?**
+Requirements (what to build), Design (architecture, UX, data model), Implementation (coding), Testing (QA, UAT), Deployment (release to production), Maintenance (monitoring, bug fixes, enhancements). Waterfall goes through these once sequentially; Agile iterates through them in short cycles.
+
+**Q: What is the difference between Waterfall and Agile SDLC?**
+Waterfall is sequential — each phase must complete before the next begins. Requirements are frozen upfront; the product is delivered at the end. High risk of building the wrong thing. Agile is iterative — short cycles deliver working software continuously. Requirements evolve with feedback. Lower risk, but requires ongoing stakeholder engagement.
+
+**Q: What is technical debt?**
+Technical debt is the accumulated cost of shortcuts taken to deliver faster — poor design, missing tests, duplicated code, outdated dependencies. Like financial debt, it accrues interest: every new feature takes longer to build on a poor foundation. It must be intentionally managed and paid down through refactoring.
+
+**Q: What is the difference between a release and a deployment?**
+A deployment is making code available in an environment (pushing to production). A release is making a feature visible to users. With feature flags, you can deploy code without releasing the feature. Continuous Deployment means every passing commit deploys automatically; releasing is a separate concern controlled by flags.
+
+**Q: What is a Software Requirements Specification (SRS)?**
+An SRS is a comprehensive document describing the intended behaviour of a software system — functional requirements (what it does), non-functional requirements (performance, security, scalability), constraints, and user needs. In Agile, requirements are typically captured as user stories and epics in a backlog rather than a monolithic SRS.
+
+
+## 8.58 Software Architecture
+
+### Interview Questions
+
+**Q: What is the difference between monolithic, SOA, and microservices architecture?**
+Monolith: single deployable unit, simple to develop and deploy, becomes harder to scale and modify at size. SOA (Service-Oriented Architecture): services communicate via an enterprise service bus (ESB), typically SOAP/XML, more granular than a monolith. Microservices: fine-grained services with bounded contexts, independently deployed, communicate via REST or events.
+
+**Q: What is SOLID?**
+Single Responsibility (one reason to change), Open/Closed (open for extension, closed for modification), Liskov Substitution (subclasses must be substitutable for their base class), Interface Segregation (clients shouldn't depend on methods they don't use), Dependency Inversion (depend on abstractions, not concretions). SOLID principles guide maintainable OOP design.
+
+**Q: What is the difference between horizontal and vertical scaling?**
+Vertical scaling (scale up): adding more resources to a single machine (more CPU, RAM). Has a hard ceiling and is expensive. Horizontal scaling (scale out): adding more instances of the application. Requires stateless design (sessions in Redis, not in-process). Cloud environments are built for horizontal scaling.
+
+**Q: What is eventual consistency?**
+In distributed systems, it's often impossible to guarantee that all nodes see the same data at the same instant (the CAP theorem). Eventual consistency means updates will propagate and all nodes will converge to the same state — used in DNS, NoSQL databases, and event-driven microservices.
+
+**Q: What is the CAP theorem?**
+A distributed system can only guarantee two of three properties: Consistency (every read reflects the latest write), Availability (every request gets a response), Partition Tolerance (system works despite network partitions). Since partitions are unavoidable in practice, the real choice is between CP (consistent but may be unavailable during partitions) and AP (always available but may serve stale data).
+
+
+## 8.59 Secure Development
+
+### Interview Questions
+
+**Q: What is the OWASP Top 10?**
+The ten most critical web security risks: Broken Access Control, Cryptographic Failures, Injection (SQL, command, XSS), Insecure Design, Security Misconfiguration, Vulnerable and Outdated Components, Identification and Authentication Failures, Software and Data Integrity Failures, Security Logging Failures, and SSRF. Every developer should know these.
+
+**Q: What is SQL injection and how do you prevent it?**
+SQL injection embeds malicious SQL into user input: ' OR '1'='1 can bypass authentication. Prevention: parameterised queries and prepared statements (never concatenate user input into SQL), ORM frameworks (Hibernate/JPA handle escaping automatically), input validation, and least-privilege database accounts.
+
+**Q: What is XSS (Cross-Site Scripting) and how do you prevent it?**
+XSS injects malicious scripts into pages viewed by other users. Stored XSS: injected content is saved in the database. Reflected XSS: input is echoed in the response. DOM XSS: client-side JavaScript processes untrusted data unsafely. Prevention: encode output (HTML-escape user data before rendering), use Content Security Policy (CSP), avoid innerHTML with user-controlled data.
+
+**Q: What is CSRF (Cross-Site Request Forgery) and how do you prevent it?**
+CSRF tricks authenticated users into submitting requests they didn't intend to make — by embedding a malicious form on another site. Prevention: CSRF tokens (server-issued random token included in forms, validated on submit), SameSite cookie attribute (Strict or Lax), and checking Origin/Referer headers.
+
+**Q: What is the principle of defence in depth?**
+Security should be layered — multiple independent controls so that if one fails, others still protect the system. Application-level (input validation, auth checks), network-level (firewalls, TLS), infrastructure-level (least-privilege IAM, encrypted storage), and monitoring/alerting all work together. No single control should be the only line of defence.
+
+
+## 8.60 Performance Optimization
+
+### Interview Questions
+
+**Q: What is the difference between latency and throughput?**
+Latency: the time for a single operation to complete (milliseconds per request). Throughput: the number of operations completed per unit of time (requests per second). They can be in tension — batching increases throughput but adds latency to individual operations. Optimise for what matters most for the specific use case.
+
+**Q: What is caching and what are the common cache invalidation strategies?**
+Caching stores frequently accessed data in fast storage (Redis, in-memory) to avoid expensive recomputation or database calls. Invalidation strategies: TTL (expire after time), cache-aside (application manages reads and invalidates on writes), write-through (cache updated on every write), and event-based invalidation (clear cache on specific domain events).
+
+**Q: What is the N+1 query problem?**
+Loading a list of N records and then making an additional query for each — 1 + N total queries. Extremely common with ORMs used naively. Solution: eager loading (JOIN or IN query), DataLoader pattern (GraphQL), or denormalisation. The N+1 problem often only becomes visible at scale when N is large.
+
+**Q: What is database query optimisation?**
+Add indexes on columns used in WHERE, JOIN, and ORDER BY clauses. Use EXPLAIN/EXPLAIN ANALYZE to understand the query execution plan. Avoid SELECT * — only fetch needed columns. Use pagination (LIMIT/OFFSET or cursor-based). Avoid functions on indexed columns in WHERE clauses (prevents index use). Optimise joins and eliminate unnecessary subqueries.
+
+**Q: What is a CDN and how does it improve performance?**
+A Content Delivery Network is a globally distributed network of servers that caches static assets (images, CSS, JS, fonts) at edge locations close to users. Instead of serving from a single origin server, files are served from the nearest edge node — reducing latency from 200ms+ to under 20ms for geographically distant users.
+
+
+## 8.61 Production Support
+
+### Interview Questions
+
+**Q: What is SLA, SLO, and SLI?**
+SLI (Service Level Indicator): a metric measuring service performance (e.g. 99.5% of requests succeed in under 200ms). SLO (Service Level Objective): the target for that SLI (e.g. 99.9% availability per month). SLA (Service Level Agreement): the contractual commitment to the customer with penalties if breached. SLOs are internal targets; SLAs are external contracts.
+
+**Q: What is an incident runbook?**
+A runbook is a document with step-by-step procedures for handling a specific incident type — what to check, what commands to run, who to escalate to, and how to mitigate. Runbooks reduce cognitive load in high-stress situations and allow anyone on call to handle known failure modes quickly.
+
+**Q: What is the difference between monitoring and observability?**
+Monitoring tells you if something is wrong (dashboards and alerts on known metrics). Observability lets you understand why — by combining metrics (what is happening), logs (what happened in detail), and distributed traces (how a request flowed through services). Observability handles the unknown unknowns that monitoring can't anticipate.
+
+**Q: What is a post-mortem (incident review)?**
+A blameless post-mortem analyses a production incident after resolution. It documents: timeline of events, root cause, impact, detection method, resolution steps, and action items to prevent recurrence. Blameless means the focus is on systemic failures and process improvements — not on assigning blame to individuals.
+
+**Q: What is on-call and what are best practices for it?**
+On-call means being available to respond to production incidents outside business hours. Best practices: runbooks for known incidents, alerting on symptoms (latency, error rate) not just causes, meaningful alert thresholds to avoid fatigue, rotating schedules, shadow on-call for learning, post-mortems for every significant incident, and fixing toil that causes repeated pages.
 
 
 ### End of Guide

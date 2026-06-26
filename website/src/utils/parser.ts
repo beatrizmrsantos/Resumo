@@ -1,4 +1,4 @@
-import type { Block, Part, ParsedDocument, Section, TocEntry } from '../types'
+import type { Part, ParsedDocument, Section, TocEntry } from '../types'
 
 const PART_COLORS: Record<string, string> = {
   '1': '#E84393',
@@ -8,6 +8,7 @@ const PART_COLORS: Record<string, string> = {
   '5': '#D97706',
   '6': '#0891B2',
   '7': '#DC2626',
+  '8': '#EA580C',
 }
 
 const DEFAULT_COLOR = '#6B7280'
@@ -76,8 +77,13 @@ export function parseDocument(rawContent: string): ParsedDocument {
     codeSpacing = 0
   }
 
-  const parseTableRow = (s: string): string[] =>
-    s.split('|').map(c => c.trim()).filter(c => c !== '')
+  const parseTableRow = (s: string): string[] => {
+    const cells = s.split('|').map(c => c.trim())
+    // Only strip leading/trailing empty strings caused by | at the line edges
+    if (cells[0] === '') cells.shift()
+    if (cells.length && cells[cells.length - 1] === '') cells.pop()
+    return cells
+  }
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx]
