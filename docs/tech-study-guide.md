@@ -27,14 +27,15 @@ Code examples are part of the learning — read them as explanatory text.
 - 2.01 Spring Boot
 - 2.02 Node.js
 - 2.03 REST APIs
-- 2.04 Microservices
-- 2.05 Authentication & Authorization
-- 2.06 API Integration
-- 2.07 WebSockets
-- 2.08 SOAP
-- 2.09 JSON
-- 2.10 XML
-- 2.11 Network protocols
+- 2.04 GraphQL
+- 2.05 Microservices
+- 2.06 Authentication & Authorization
+- 2.07 API Integration
+- 2.08 WebSockets
+- 2.09 SOAP
+- 2.10 JSON
+- 2.11 XML
+- 2.12 Network protocols
 
 
 **Part 3 — Frontend & Mobile**
@@ -56,26 +57,27 @@ Code examples are part of the learning — read them as explanatory text.
 
 
 **Part 4 — Cloud & Devops**
-- 4.01 Microsoft Azure
-- 4.02 Google Cloud Platform (GCP)
-- 4.03 Firebase
-- 4.04 Docker
-- 4.05 Kubernetes
-- 4.06 CI/CD Pipelines
-- 4.07 Git
-- 4.08 GitHub
-- 4.09 Bitbucket
-- 4.10 Maven
-- 4.11 YAML
+- 4.01 Cloud
+- 4.02 Microsoft Azure
+- 4.03 Google Cloud Platform (GCP)
+- 4.04 Firebase
+- 4.05 Docker
+- 4.06 Kubernetes
+- 4.07 CI/CD Pipelines
+- 4.08 Git
+- 4.09 GitHub
+- 4.10 Bitbucket
+- 4.11 Maven
+- 4.12 YAML
 
 
 **Part 5 — Databases**
-- 5.01 MySQL
-- 5.02 MongoDB
-- 5.03 SQL — Querying & Optimization
-- 5.04 Data Modelling
-- 5.05 PostgreSQL
-- 5.06 GraphQL
+- 5.01 SQL — Querying & Optimization
+- 5.02 MySQL
+- 5.03 PostgreSQL
+- 5.04 NoSQL
+- 5.05 MongoDB
+- 5.06 Data Modelling
 
 
 **Part 6 — Testing & Quality**
@@ -107,56 +109,59 @@ Code examples are part of the learning — read them as explanatory text.
 - 8.09 Spring Boot
 - 8.10 Node.js
 - 8.11 REST APIs
-- 8.12 Microservices
-- 8.13 Authentication & Authorization
-- 8.14 API Integration
-- 8.15 WebSockets
-- 8.16 SOAP
-- 8.17 JSON
-- 8.18 XML
-- 8.19 React
-- 8.20 Angular
-- 8.21 Three.js
-- 8.22 Next.js
-- 8.23 React Native
-- 8.24 Flutter
-- 8.25 Kotlin
-- 8.26 Swift
-- 8.27 Vite
-- 8.28 Tailwind CSS
-- 8.29 SCSS
-- 8.30 SPA
-- 8.31 Responsive UI
-- 8.32 Cross-Platform Development
-- 8.33 Microsoft Azure
-- 8.34 Google Cloud Platform
-- 8.35 Firebase
-- 8.36 Docker
-- 8.37 Kubernetes
-- 8.38 CI/CD Pipelines
-- 8.39 Git
-- 8.40 GitHub
-- 8.41 Bitbucket
-- 8.42 Maven
-- 8.43 YAML
-- 8.44 MySQL
-- 8.45 MongoDB
-- 8.46 SQL
-- 8.47 Data Modelling
-- 8.48 PostgreSQL
-- 8.49 GraphQL
-- 8.50 JUnit 5
-- 8.51 Mockito
-- 8.52 SonarQube
-- 8.53 Unit & Integration Testing
-- 8.54 Debugging
-- 8.55 Code Reviews
-- 8.56 Agile / Scrum
-- 8.57 SDLC
-- 8.58 Software Architecture
-- 8.59 Secure Development
-- 8.60 Performance Optimization
-- 8.61 Production Support
+- 8.12 GraphQL
+- 8.13 Microservices
+- 8.14 Authentication & Authorization
+- 8.15 API Integration
+- 8.16 WebSockets
+- 8.17 SOAP
+- 8.18 JSON
+- 8.19 XML
+- 8.20 Network Protocols
+- 8.21 React
+- 8.22 Angular
+- 8.23 Three.js
+- 8.24 Next.js
+- 8.25 React Native
+- 8.26 Flutter
+- 8.27 Kotlin
+- 8.28 Swift
+- 8.29 Vite
+- 8.30 Tailwind CSS
+- 8.31 SCSS
+- 8.32 SPA
+- 8.33 Responsive UI
+- 8.34 Cross-Platform Development
+- 8.35 Cloud
+- 8.36 Microsoft Azure
+- 8.37 Google Cloud Platform
+- 8.38 Firebase
+- 8.39 Docker
+- 8.40 Kubernetes
+- 8.41 CI/CD Pipelines
+- 8.42 Git
+- 8.43 GitHub
+- 8.44 Bitbucket
+- 8.45 Maven
+- 8.46 YAML
+- 8.47 SQL — Querying & Optimization
+- 8.48 MySQL
+- 8.49 PostgreSQL
+- 8.50 NoSQL
+- 8.51 MongoDB
+- 8.52 Data Modelling
+- 8.53 JUnit 5
+- 8.54 Mockito
+- 8.55 SonarQube
+- 8.56 Unit & Integration Testing
+- 8.57 Debugging
+- 8.58 Code Reviews
+- 8.59 Agile / Scrum
+- 8.60 SDLC
+- 8.61 Software Architecture
+- 8.62 Secure Development
+- 8.63 Performance Optimization
+- 8.64 Production Support
 
 
 ---
@@ -2749,7 +2754,243 @@ Use query parameters for filtering, sorting, pagination: GET /users?role=admin&s
 **Accept**: application/vnd.myapi.v1+json   — header versioning
 
 
-## 2.04 Microservices
+## 2.04 GraphQL
+
+
+
+### Overview
+
+GraphQL is a query language for APIs developed by Facebook in 2012, open-sourced in 2015. It is not a database query language — it is an API communication protocol. Where REST has many endpoints (one URL per resource), GraphQL has a single endpoint. Clients specify exactly what data they need, and the server returns precisely that — no more, no less.
+
+
+### The Problems Graphql Solves
+
+
+**Over-fetching (rest)**: GET /api/users/42 returns 20 fields — the mobile client only needs name and avatar. You download 20x more data than necessary.
+
+
+**Under-fetching (rest)**: A single endpoint doesn't have enough data, and the client must make multiple requests to assemble a view:
+
+```text
+GET /api/users/42
+GET /api/users/42/posts
+GET /api/users/42/followers
+```
+
+— three round trips, each with latency. GraphQL solution — one request for exactly what you need:
+
+```typescript
+query {
+    user(id: "42") {
+        name
+        avatar
+        posts(limit: 5) { title }
+        followers { count }
+    }
+}
+```
+
+
+### The Schema — CONTRACT BETWEEN CLIENT AND SERVER
+
+Every GraphQL API is defined by a schema written in SDL (Schema Definition Language). The schema declares all available types, queries, mutations, and subscriptions — it is the contract between client and server.
+
+
+```typescript
+scalar DateTime
+scalar URL
+
+type User {
+    id:        ID!           # ID — unique identifier (serialised as String, but semantic ID)
+    name:      String!       # ! means non-null — guaranteed to be present
+    email:     String!
+    bio:       String        # nullable — may be absent
+    createdAt: DateTime!
+    posts:     [Post!]!      # non-null list of non-null Posts
+    avatar:    URL
+}
+
+type Post {
+    id:        ID!
+    title:     String!
+    content:   String!
+    published: Boolean!
+    author:    User!         # relation to User
+    tags:      [String!]!
+}
+
+enum Role { ADMIN EDITOR VIEWER }
+
+input CreateUserInput {
+    name:     String!
+    email:    String!
+    password: String!
+    role:     Role = VIEWER   # default value
+}
+
+interface Node { id: ID! }   # interface — all implementors must have id
+
+union SearchResult = User | Post   # a field can be one of several types
+```
+
+
+The schema has three special root types that define available operations:
+
+```typescript
+type Query {                  # read operations (equivalent to GET in REST)
+    user(id: ID!): User
+    users(limit: Int = 20, offset: Int = 0, role: Role): [User!]!
+    search(query: String!): [SearchResult!]!
+}
+
+type Mutation {               # write operations (equivalent to POST/PUT/DELETE)
+    createUser(input: CreateUserInput!): User!
+    updateUser(id: ID!, input: UpdateUserInput!): User!
+    deleteUser(id: ID!): Boolean!
+}
+
+type Subscription {           # real-time (WebSocket-based)
+    newPost(authorId: ID): Post!
+    userStatusChanged: User!
+}
+```
+
+
+### Writing Queries, Mutations, and Subscriptions
+
+```typescript
+# Basic query — request exactly the fields you need
+query {
+    user(id: "42") {
+        name
+        email
+        posts(limit: 3) {
+            title
+            published
+        }
+    }
+}
+
+# Named query with variables — best practice for logging/debugging
+query GetUserWithPosts($userId: ID!, $postLimit: Int = 5) {
+    user(id: $userId) {
+        name
+        posts(limit: $postLimit) { title }
+    }
+}
+# Variables passed separately as JSON:
+{ "userId": "42", "postLimit": 3 }
+
+# Fragments — reusable field selections
+fragment UserBasicInfo on User {
+    id
+    name
+    email
+}
+
+query {
+    user(id: "1") { ...UserBasicInfo }
+}
+
+# Inline fragments for union types
+query {
+    search(query: "beatriz") {
+        ... on User { name email }      # fields specific to User
+        ... on Post { title content }   # fields specific to Post
+    }
+}
+
+# Mutation
+mutation CreateNewUser($input: CreateUserInput!) {
+    createUser(input: $input) {
+        id
+        name
+        createdAt
+    }
+}
+
+# Variables:
+{ "input": { "name": "Beatriz", "email": "b@example.com", "password": "secure" } }
+
+# Multiple mutations in one request — execute in SEQUENCE (not in parallel)
+mutation {
+    createPost(input: { title: "Hello" }) { id }
+    publishPost(id: "123") { published }
+}
+```
+
+
+### Resolvers — HOW GRAPHQL ACTUALLY FETCHES DATA
+
+For each field in the schema, there is a RESOLVER — a function that knows how to fetch that field's value. 
+Resolvers receive four arguments:
+
+parent  — the resolved value of the parent type
+args    — the arguments passed to this field in the query
+context — shared object (database connection, auth info, services)
+info    — information about the query (fields requested, etc.)
+
+```typescript
+const resolvers = {
+    Query: {
+        user: async (parent, { id }, context) => {
+            return context.db.users.findById(id);
+        },
+    },
+
+    User: {
+        posts: async (parent, { limit }, context) => {
+            // parent is the User object resolved above
+            return context.db.posts.findByAuthorId(parent.id, limit);
+        },
+    },
+};
+```
+
+### THE N+1 PROBLEM AND DATALOADER
+
+The most critical GraphQL performance issue. When loading 100 posts, each with an author, the User.author resolver is called 100 times — 100 database queries!
+
+DataLoader solves this with batching:
+  1. Collects all IDs requested within a single event loop tick
+  2. Makes ONE batch query: SELECT * FROM users WHERE id IN (1, 2, 3, ...)
+  3. Caches results — if the same user appears in multiple posts, only queried once
+
+
+```javascript
+const userLoader = new DataLoader(async (userIds) => {
+    const users = await db.users.findByIds(userIds);
+    // CRITICAL: return in the same order as the input IDs!
+    return userIds.map(id => users.find(u => u.id === id));
+});
+
+// In resolver — uses loader instead of direct DB call
+User: {
+    author: (parent, args, context) =>
+        context.loaders.user.load(parent.authorId),  // batched automatically
+}
+// 100 posts → 1 query for users + 1 query for posts. Not 101!
+```
+
+
+### REST vs GRAPHQL — WHEN TO USE WHICH
+
+Use GraphQL when:
+- Multiple clients (web, mobile, third-party) need different data shapes
+- You have deeply nested, relational data
+- You want to avoid over-fetching / under-fetching
+- Rapid product iteration where data requirements change often
+
+Use REST when:
+- Public API for third parties (more familiar, better HTTP caching)
+- Simple CRUD with predictable, uniform data
+- File uploads (GraphQL handles these awkwardly)
+- Strong HTTP caching requirements (GET + URL = cacheable; GraphQL POST is not)
+
+
+
+
+## 2.05 Microservices
 
 
 
@@ -2992,7 +3233,7 @@ Common use cases:
 
 
 
-## 2.05 Authentication & Authorization
+## 2.06 Authentication & Authorization
 
 
 
@@ -3126,7 +3367,7 @@ boolean matches = encoder.matches(rawPassword, hashed);  // verify
 NEVER use MD5 or SHA-1 for passwords — they are fast, which is good for data integrity but terrible for passwords (allows billions of guesses per second).
 
 
-## 2.06 API Integration
+## 2.07 API Integration
 
 
 
@@ -3201,7 +3442,7 @@ Only retry on transient errors (network timeouts, 500, 502, 503, 429). Never ret
 
 
 
-## 2.07 WebSockets
+## 2.08 WebSockets
 
 
 
@@ -3247,7 +3488,7 @@ Good for: notifications, live feed, progress updates.
 Solution: use a pub/sub broker (Redis pub/sub, Kafka) so any server can broadcast to all connected clients.
 
 
-## 2.08 SOAP
+## 2.09 SOAP
 
 
 
@@ -3306,7 +3547,7 @@ public class SoapClientService {
 When you encounter SOAP in the wild: it is common in banking, insurance, government, and healthcare systems where contracts are strict, auditable, and change slowly.
 
 
-## 2.09 JSON
+## 2.10 JSON
 
 JSON (JavaScript Object Notation) is a lightweight data format used to represent structured data. It is the standard format for most modern APIs because it is simple, human-readable, and easy to convert into objects in almost any programming language.
 
@@ -3378,7 +3619,7 @@ public class User {
 ```
 
 
-## 2.10 XML
+## 2.11 XML
 
 XML (eXtensible Markup Language) is a more structured and verbose data format designed to store and transport data in a highly flexible way. Unlike JSON, XML uses tags to define both structure and data, similar to HTML.
 
@@ -3438,7 +3679,7 @@ XML focuses on structure and flexibility:
 - Strong schema validation (XSD)
 
 
-## 2.11 Network Protocols
+## 2.12 Network Protocols
 
 Network protocols are standardized rules that define how data is exchanged between devices over a network. They enable different systems (browsers, servers, mobile apps, databases, etc.) to communicate reliably by agreeing on how data is structured, transmitted, and interpreted.
 
@@ -4381,7 +4622,7 @@ With a single data class, Kotlin generates automatically:
 
 Example usage:
 
-```text
+```javascript
 val user = User(1, "Beatriz", "b@example.com")
 val updated = user.copy(email = "new@example.com")   // copy with one field changed
 val (id, name) = user    // destructuring
@@ -5339,62 +5580,280 @@ Used by: large companies with dedicated iOS and Android teams.
 # Part 4 — Cloud & Devops
 
 
-
-## 4.01 Microsoft Azure
-
-
+## 4.01 Cloud
 
 ### Overview
 
-Azure is Microsoft's cloud platform. It covers IaaS (raw VMs, disks, networks),
-PaaS (managed services like databases, app hosting), and FaaS (Functions,
-serverless). Azure is the dominant cloud in enterprises and organisations
-already using Microsoft tools (Active Directory, Office 365, .NET).
+**Cloud computing** is the delivery of computing services over the internet instead of running everything on your own physical hardware.
+
+Rather than buying, maintaining, and upgrading servers, you rent computing resources from cloud providers whenever you need them.
+
+Cloud platforms provide services such as:
+- Virtual machines
+- Storage
+- Databases
+- Networking
+- Containers
+- AI services
+- Monitoring
+- Identity management
+- Serverless computing
+
+
+The main advantages of cloud computing are:
+- Pay only for what you use
+- Scale resources on demand
+- No physical hardware to maintain
+- High availability
+- Faster deployment
+- Global infrastructure
+
+
+### Cloud Service Models
+
+
+#### On-Premises
+
+Everything runs on your own infrastructure.
+
+You are responsible for:
+- Servers
+- Storage
+- Networking
+- Operating systems
+- Security
+- Updates
+- Applications
+- Data
+
+This offers maximum control but also maximum responsibility.
+
+
+
+#### IaaS (Infrastructure as a Service)
+
+The cloud provider gives you virtual infrastructure.
+
+You manage:
+- Operating system
+- Runtime
+- Applications
+- Data
+
+The provider manages:
+- Servers
+- Storage
+- Networking
+- Virtualization
+
+Think of IaaS as **renting a virtual computer**.
+
+
+#### CaaS (Containers as a Service)
+
+The cloud provider manages the infrastructure needed to run containers.
+
+You manage:
+- Docker images
+- Containers
+- Applications
+
+The provider manages:
+- Infrastructure
+- Kubernetes
+- Networking
+- Scaling
+
+Ideal for containerized and microservice architectures.
+
+
+
+#### PaaS (Platform as a Service)
+
+The provider also manages the operating system and runtime.
+
+You simply deploy your application.
+
+You manage:
+- Application
+- Configuration
+- Data
+
+The provider manages:
+- Infrastructure
+- Operating system
+- Runtime
+- Scaling
+
+Ideal for web applications and APIs.
+
+
+#### FaaS (Function as a Service)
+
+Also called **Serverless Computing**.
+
+Instead of deploying an entire application, you deploy individual functions that execute only when triggered.
+
+Typical triggers include:
+- HTTP requests
+- Timers
+- Queue messages
+- Database changes
+- File uploads
+
+You only pay while the function is executing.
+
+
+
+#### SaaS (Software as a Service)
+
+The provider delivers a complete application.
+
+You simply use the software.
+
+Examples include:
+- Microsoft 365
+- Gmail
+- Slack
+- Notion
+- Dropbox
+
+No infrastructure or application management is required.
+
+
+
+Cloud providers offer different levels of abstraction. The higher the abstraction, the less infrastructure you manage yourself.
+
+| Service Model | You Manage | Cloud Provider Manages |
+|---------------|------------|------------------------|
+| On-Premises | Everything | Nothing |
+| IaaS | OS, runtime, applications, data | Infrastructure |
+| CaaS | Containers and applications | Infrastructure and container platform |
+| PaaS | Application and data | Infrastructure, OS and runtime |
+| FaaS | Individual functions | Almost everything |
+| SaaS | Nothing (just use the software) | Everything |
+
+As you move from **On-Premises** to **SaaS**, you give up some control over the infrastructure, but you also have far less to maintain.
+
+```
+You manage more
+        ↑
+
+On-Premises
+      │
+IaaS
+      │
+CaaS
+      │
+PaaS
+      │
+FaaS
+      │
+SaaS
+
+        ↓
+Cloud provider manages more
+```
+
+
+## 4.02 Microsoft Azure
+
+### Overview
+
+**Microsoft Azure** is Microsoft's cloud computing platform.
+
+It provides hundreds of cloud services that allow businesses to build, deploy, and manage applications without owning physical infrastructure.
+
+Azure is one of the three largest public cloud providers alongside:
+- Amazon Web Services (AWS)
+- Google Cloud Platform (GCP)
+
+Azure is especially popular among organizations that already use Microsoft technologies such as:
+- Windows Server
+- Active Directory
+- Microsoft 365
+- .NET
+- SQL Server
+
+
+### Azure Service Models
+
+Azure provides services across all major cloud models.
+
+| Cloud Model | Azure Services |
+|-------------|----------------|
+| IaaS | Azure Virtual Machines, Virtual Network, Managed Disks |
+| CaaS | Azure Kubernetes Service (AKS), Azure Container Apps, Azure Container Instances |
+| PaaS | Azure App Service, Azure SQL Database, Azure Database for PostgreSQL |
+| FaaS | Azure Functions |
+| SaaS | Microsoft 365 |
+
+
+### Why Azure?
+
+Azure allows developers to choose the level of abstraction that best fits their application.
+
+For example:
+
+- Need full control over the operating system? → Use **Azure Virtual Machines (IaaS)**.
+- Want to deploy a web application without managing servers? → Use **Azure App Service (PaaS)**.
+- Running Docker containers? → Use **Azure Kubernetes Service (CaaS)**.
+- Need event-driven code? → Use **Azure Functions (FaaS)**.
+- Just need productivity software? → Use **Microsoft 365 (SaaS)**.
+
+This flexibility is one of Azure's biggest strengths, allowing organizations to balance control, scalability, maintenance effort, and development speed according to their needs.
 
 
 ### Key Services
 
 
+**App Service** — fully managed platform to deploy web apps (Java, .NET, Node.js, Python, Docker). You bring the code; Azure manages the OS, runtime, scaling.
 
-**App Service** — fully managed platform to deploy web apps (Java, .NET, Node.js,
-Python, Docker). You bring the code; Azure manages the OS, runtime, scaling.
 Key features:
-  - Deployment slots — deploy to staging, test, then swap to production
-
-```text
-  with zero downtime (traffic is redirected atomically)
-• Scale up (bigger VM) or scale out (more instances) via settings
-• Built-in CI/CD integration with GitHub Actions
-```
+- Deployment slots — deploy to staging, test, then swap to production with zero downtime (traffic is redirected atomically)
+- Scale up (bigger VM) or scale out (more instances) via settings
+- Built-in CI/CD integration with GitHub Actions
 
 
-**Azure Functions** — serverless compute. Write a function that responds to a
-trigger; Azure handles the infrastructure and scales to zero when idle.
-**Triggers**: HTTP, Timer (cron), Blob Storage, Service Bus, Cosmos DB change feed.
 
+**Azure Functions** — serverless compute. Write a function that responds to a trigger; Azure handles the infrastructure and scales to zero when idle.
 
-```tsx
-// HTTP-triggered function (C#)
-[FunctionName("GetUser")]
-public async Task<IActionResult> Run(
-    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "users/{id}")] HttpRequest req,
-    string id,
-    ILogger log)
-{
-    var user = await _repo.FindByIdAsync(id);
-    return user != null ? new OkObjectResult(user) : new NotFoundResult();
+- Triggers: HTTP, Timer (cron), Blob Storage, Service Bus, Cosmos DB change feed.
+
+```java
+@FunctionName("GetUser")
+public HttpResponseMessage run(
+    @HttpTrigger(
+        name = "request",
+        methods = { HttpMethod.GET },
+        route = "users/{id}",
+        authLevel = AuthorizationLevel.FUNCTION
+    )
+    HttpRequestMessage<Optional<String>> request,
+    @BindingName("id") String id,
+    final ExecutionContext context
+) {
+
+    User user = userRepository.findById(id);
+
+    if (user == null) {
+        return request
+            .createResponseBuilder(HttpStatus.NOT_FOUND)
+            .build();
+    }
+
+    return request
+        .createResponseBuilder(HttpStatus.OK)
+        .body(user)
+        .build();
 }
 ```
 
 
-**Azure Key Vault** — store and retrieve secrets, connection strings, certificates,
-and API keys without embedding them in code or environment variables. Apps
-retrieve secrets at runtime using Managed Identity (no credentials needed).
+**Azure Key Vault** — store and retrieve secrets, connection strings, certificates, and API keys without embedding them in code or environment variables. Apps retrieve secrets at runtime using Managed Identity (no credentials needed).
 
 
-**Managed Identity** — lets an Azure resource (App Service, VM, Function) identify
-itself to other Azure services (Key Vault, Azure SQL, Blob Storage) WITHOUT
-any stored credentials. The platform handles the token exchange invisibly.
+**Managed Identity** — lets an Azure resource (App Service, VM, Function) identify itself to other Azure services (Key Vault, Azure SQL, Blob Storage) WITHOUT any stored credentials. The platform handles the token exchange invisibly.
 
 
 ```java
@@ -5403,24 +5862,195 @@ any stored credentials. The platform handles the token exchange invisibly.
 private String dbPassword;
 ```
 
-**AZURE ACTIVE DIRECTORY (AAD / Entra ID)** — identity provider for authentication
-and SSO (Single Sign-On) in enterprise environments. Supports OAuth2/OIDC,
-SAML, and multi-factor authentication.
+**AZURE ACTIVE DIRECTORY (AAD / Entra ID)** — identity provider for authentication and SSO (Single Sign-On) in enterprise environments. Supports OAuth2/OIDC, SAML, and multi-factor authentication.
 
 
-**Azure Service Bus** — enterprise message broker (queues and topics with
-subscriptions). Use for reliable async communication between services.
+**Azure Service Bus** — enterprise message broker (queues and topics with subscriptions). Use for reliable async communication between services.
 
 
-## 4.02 Google Cloud Platform (GCP)
-
+## 4.03 Google Cloud Platform (GCP)
 
 
 ### Overview
 
-GCP is Google's cloud platform. It excels in data analytics, machine learning,
-and container-based workloads (it invented Kubernetes). Cloud Run and BigQuery
-are among the most loved services in the developer community.
+**Google Cloud Platform (GCP)** is Google's cloud computing platform. Like Azure and AWS, it allows organizations to build, deploy, and scale applications without owning physical infrastructure.
+
+GCP is known for its strengths in:
+- Data analytics
+- Artificial Intelligence (AI) and Machine Learning (ML)
+- Kubernetes and container orchestration
+- Global networking
+- Big data processing
+
+Many of Google's own products, such as **Google Search**, **YouTube**, and **Gmail**, run on the same global infrastructure that powers GCP.
+
+
+
+### Google Cloud Service Models
+
+Like other cloud providers, GCP offers services across all major cloud service models.
+
+| Cloud Model | GCP Services |
+|-------------|--------------|
+| IaaS | Compute Engine, Persistent Disk, VPC |
+| CaaS | Google Kubernetes Engine (GKE), Cloud Run |
+| PaaS | App Engine, Cloud SQL |
+| FaaS | Cloud Functions |
+| SaaS | Google Workspace |
+
+
+### Why GCP?
+
+GCP is often chosen by organizations that:
+- Build cloud-native applications
+- Use Kubernetes and Docker extensively
+- Process large amounts of data
+- Develop AI and machine learning solutions
+- Already rely on Google's ecosystem
+
+Its networking infrastructure is one of its biggest advantages, offering low latency and high-performance connections across Google's global network.
+
+
+### Common GCP Services
+
+#### Compute Engine (IaaS)
+
+Provides virtual machines running on Google's infrastructure.
+
+Use it when you need:
+- Full operating system control
+- Custom software installation
+- Legacy application migration
+
+Comparable to:
+- Azure Virtual Machines
+- Amazon EC2
+
+
+#### Google Kubernetes Engine (GKE) (CaaS)
+
+A fully managed Kubernetes platform for deploying and orchestrating containerized applications.
+
+Google originally created Kubernetes, making GKE one of the most mature managed Kubernetes services available.
+
+Use it for:
+- Docker containers
+- Microservices
+- Highly scalable applications
+
+Comparable to:
+- Azure Kubernetes Service (AKS)
+- Amazon Elastic Kubernetes Service (EKS)
+
+
+#### App Engine (PaaS)
+
+A fully managed platform for deploying web applications without managing servers.
+
+Developers simply upload their application, while Google handles:
+- Infrastructure
+- Operating system
+- Runtime
+- Scaling
+- Load balancing
+
+Ideal for:
+- Web applications
+- REST APIs
+- Backend services
+
+Comparable to:
+- Azure App Service
+- AWS Elastic Beanstalk
+
+
+#### Cloud SQL (PaaS)
+
+A fully managed relational database service supporting:
+- PostgreSQL
+- MySQL
+- SQL Server
+
+Google manages:
+- Backups
+- Updates
+- High availability
+- Scaling
+
+Comparable to:
+- Azure SQL Database
+- Amazon RDS
+
+
+#### Cloud Functions (FaaS)
+
+Google's serverless computing service.
+
+Instead of deploying an entire application, you deploy individual functions that execute in response to events.
+
+Common triggers include:
+- HTTP requests
+- Cloud Storage uploads
+- Pub/Sub messages
+- Database events
+
+Example workflow:
+
+```
+User uploads a file
+        ↓
+Cloud Storage
+        ↓
+Cloud Function executes
+        ↓
+Process file
+        ↓
+Save results
+```
+
+You only pay while the function is executing.
+
+Comparable to:
+- Azure Functions
+- AWS Lambda
+
+
+#### Google Workspace (SaaS)
+
+Google's suite of productivity applications.
+
+Examples include:
+- Gmail
+- Google Docs
+- Google Sheets
+- Google Drive
+- Google Meet
+
+Users simply access these applications through a web browser without managing any infrastructure.
+
+
+### GCP vs Azure vs AWS
+
+| Feature | Google Cloud | Microsoft Azure | AWS |
+|---------|--------------|-----------------|-----|
+| Best known for | AI, Data Analytics, Kubernetes | Enterprise & Microsoft ecosystem | Largest cloud ecosystem |
+| Container platform | Google Kubernetes Engine (GKE) | Azure Kubernetes Service (AKS) | Elastic Kubernetes Service (EKS) |
+| Serverless | Cloud Functions | Azure Functions | AWS Lambda |
+| Web Apps | App Engine | App Service | Elastic Beanstalk |
+| Virtual Machines | Compute Engine | Azure Virtual Machines | Amazon EC2 |
+| Managed SQL | Cloud SQL | Azure SQL Database | Amazon RDS |
+
+
+### When Should You Choose GCP?
+
+GCP is an excellent choice when your application focuses on:
+- Kubernetes and containerized workloads
+- Artificial Intelligence and Machine Learning
+- Data analytics and big data
+- High-performance global networking
+- Modern cloud-native architectures
+
+It is particularly popular among startups, data-driven companies, and organizations building scalable cloud-native applications.
 
 
 ### Key Services
@@ -5428,23 +6058,20 @@ are among the most loved services in the developer community.
 
 
 **Cloud Run** — fully managed serverless platform for containerised applications.
-You give it a Docker image; Cloud Run runs it and scales from zero to thousands
-of instances automatically. Pay per request (no cost when idle).
+You give it a Docker image; Cloud Run runs it and scales from zero to thousands of instances automatically. Pay per request (no cost when idle).
 
+```text
 gcloud run deploy my-service \
 --image gcr.io/my-project/my-app:v1 \
 --region europe-west1 \
 --allow-unauthenticated \
 --port 8080
+```
 
-**Cloud Functions** — event-driven serverless functions. Similar to Azure Functions;
-triggers include HTTP, Pub/Sub, Cloud Storage events.
+**Cloud Functions** — event-driven serverless functions. Similar to Azure Functions; triggers include HTTP, Pub/Sub, Cloud Storage events.
 
 
-**Bigquery** — serverless data warehouse for analytics. Querying petabytes of data
-in seconds using standard SQL. NOT for OLTP (transactional) workloads — it is
-optimised for analytical queries over large datasets, not individual row updates.
-
+**Bigquery** — serverless data warehouse for analytics. Querying petabytes of data in seconds using standard SQL. NOT for OLTP (transactional) workloads — it is optimised for analytical queries over large datasets, not individual row updates.
 
 ```sql
 -- BigQuery SQL example
@@ -5457,23 +6084,19 @@ ORDER BY month;
 
 
 **Cloud Pub/Sub** — managed message bus for event-driven architectures.
-Delivery guarantee: at-least-once (messages may be delivered more than once;
-your consumer must be idempotent). FIFO ordering not guaranteed by default
-(use message ordering with ordering keys if needed).
+Delivery guarantee: at-least-once (messages may be delivered more than once; your consumer must be idempotent). FIFO ordering not guaranteed by default (use message ordering with ordering keys if needed).
 
-**GKE** (Google Kubernetes Engine) — managed Kubernetes service. Google invented
-Kubernetes and runs the control plane for you.
+**GKE** (Google Kubernetes Engine) — managed Kubernetes service. Google invented Kubernetes and runs the control plane for you.
 
 
-## 4.03 Firebase
+## 4.04 Firebase
 
 
 
 ### Overview
 
 Firebase is Google's backend-as-a-service platform aimed at mobile and web apps.
-It provides a real-time database, authentication, hosting, functions, and more —
-letting frontend developers build full-stack apps without managing servers.
+It provides a real-time database, authentication, hosting, functions, and more — letting frontend developers build full-stack apps without managing servers.
 
 
 ### Firestore Data Model
@@ -5481,11 +6104,10 @@ letting frontend developers build full-stack apps without managing servers.
 
 Firestore is a NoSQL document database organised into Collections and Documents:
 
-```tsx
-Collection — like a folder or a table; holds Documents
-Document   — like a row; holds fields (key-value pairs) and can have
-             sub-collections
+**Collection** — like a folder or a table; holds Documents
+**Document** — like a row; holds fields (key-value pairs) and can have sub-collections
 
+```javascript
 // Structure: users/userId/posts/postId
 // Each document has a unique ID (auto-generated or custom)
 
@@ -5509,11 +6131,10 @@ useEffect(() => unsubscribe, []);
 
 
 Firestore Security Rules control access to documents at the database level.
-They run on Google's servers — even if your client-side code is bypassed,
-the rules protect your data.
+They run on Google's servers — even if your client-side code is bypassed, the rules protect your data.
 
 
-```css
+```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -5532,31 +6153,25 @@ service cloud.firestore {
 
 
 
-## 4.04 Docker
+## 4.05 Docker
 
 
 
 ### Overview
 
-Docker packages an application and all its dependencies into a container — a
-lightweight, portable, isolated unit that runs consistently on any machine with
-Docker installed. "Works on my machine" problems disappear because the container
-carries its own runtime environment.
+Docker packages an application and all its dependencies into a container — a lightweight, portable, isolated unit that runs consistently on any machine with Docker installed. "Works on my machine" problems disappear because the container carries its own runtime environment.
 
 Key distinction: Image vs Container
 
-**Image** — a read-only blueprint (like a class). Contains the filesystem,
-environment variables, and startup command.
+**Image** — a read-only blueprint (like a class). Contains the filesystem, environment variables, and startup command.
 
-**Container** - a running instance of an image (like an object). Has its own
-isolated process, network, and filesystem layer on top of the image.
+**Container** - a running instance of an image (like an object). Has its own isolated process, network, and filesystem layer on top of the image.
+
 
 ### Dockerfile and Layer Caching
 
 
-A Dockerfile is a script of instructions for building an image. Each instruction
-creates a LAYER. Docker caches layers — if an instruction has not changed
-since the last build, Docker reuses the cached layer and skips re-running it.
+A Dockerfile is a script of instructions for building an image. Each instruction creates a LAYER. Docker caches layers — if an instruction has not changed since the last build, Docker reuses the cached layer and skips re-running it.
 
 
 ```dockerfile
@@ -5584,80 +6199,61 @@ ENTRYPOINT ["java", "-jar", "app.jar"]   # executed as PID 1
 
 ### CMD vs ENTRYPOINT
 
-**Entrypoint** — the main process of the container; cannot be overridden with
+**Entrypoint** — the main process of the container; cannot be overridden with docker run args (only --entrypoint flag overrides it)
 
-```dockerfile
-             docker run args (only --entrypoint flag overrides it)
-CMD        — default arguments to ENTRYPOINT; can be overridden with docker run args
-```
+**CMD** — default arguments to ENTRYPOINT; can be overridden with docker run args
 
 
 ### Multi-stage Builds
 
 
-Multi-stage builds solve the problem of build tooling (JDK, Maven, node_modules)
-ending up in the final image, making it huge. Build in one stage; copy only the
-compiled artifact into a minimal runtime image.
+Multi-stage builds solve the problem of build tooling (JDK, Maven, node_modules) ending up in the final image, making it huge. Build in one stage; copy only the compiled artifact into a minimal runtime image.
 
-Result: a Spring Boot app built with a JDK image produces a ~600MB image.
-With multi-stage (JDK build → JRE runtime), the final image is ~150MB.
+Result: a Spring Boot app built with a JDK image produces a ~600MB image. With multi-stage (JDK build → JRE runtime), the final image is ~150MB.
 
 
-## 4.05 Kubernetes (K8s)
 
+## 4.06 Kubernetes (K8s)
 
 
 ### Overview
 
-Kubernetes is an open-source system for automating deployment, scaling, and
-management of containerised applications. It was created by Google. Kubernetes
-runs on a cluster of nodes; you describe the desired state and Kubernetes
-continuously works to maintain it.
+Kubernetes is an open-source system for automating deployment, scaling, and management of containerised applications. It was created by Google. Kubernetes runs on a cluster of nodes; you describe the desired state and Kubernetes continuously works to maintain it.
 
 
 ### Core Objects
 
 
 #### POD
-the smallest deployable unit. Wraps one or more containers that share the
-same network namespace and storage. Pods are ephemeral — they can be killed and
-replaced at any time.
+the smallest deployable unit. Wraps one or more containers that share the same network namespace and storage. 
+Pods are ephemeral — they can be killed and replaced at any time.
 
 
-**Deployment** — declares the desired state for a set of Pods (which image, how many
-replicas). The Deployment controller ensures that state is maintained. Handles
-rolling updates and rollbacks.
+**Deployment** — declares the desired state for a set of Pods (which image, how many replicas). The Deployment controller ensures that state is maintained. Handles rolling updates and rollbacks.
 
 
-**Service** — a stable network endpoint for a set of Pods. Pods die and are replaced
-with new IPs; the Service provides a stable IP and DNS name that routes to
-healthy Pods.
+**Service** — a stable network endpoint for a set of Pods. Pods die and are replaced with new IPs; the Service provides a stable IP and DNS name that routes to healthy Pods.
+
 
 #### Types
 
-```text
-ClusterIP   — internal only (default); accessible within the cluster
-NodePort    — exposes on a port of every node; for testing
-LoadBalancer — creates an external cloud load balancer; for production
-```
+**ClusterIP** — internal only (default); accessible within the cluster
 
-**Ingress** — HTTP(S) routing rules at the cluster edge. Routes external traffic to
-internal Services based on hostname or URL path. Requires an Ingress Controller
-(Nginx, Traefik, AWS ALB controller).
+**NodePort** — exposes on a port of every node; for testing
 
+**LoadBalancer** — creates an external cloud load balancer; for production
 
-**Configmap** — non-sensitive configuration as key-value pairs, injected as env vars
-or mounted as files.
+**Ingress** — HTTP(S) routing rules at the cluster edge. Routes external traffic to internal Services based on hostname or URL path. Requires an Ingress Controller (Nginx, Traefik, AWS ALB controller).
 
+**Configmap** — non-sensitive configuration as key-value pairs, injected as env vars or mounted as files.
 
-**Secret** — like ConfigMap but for sensitive data (base64-encoded in etcd, or
-encrypted with envelope encryption). Always use Secrets for passwords, tokens,
-and keys — never put them in ConfigMaps or image layers.
+**Secret** — like ConfigMap but for sensitive data (base64-encoded in etcd, or encrypted with envelope encryption). Always use Secrets for passwords, tokens, and keys — never put them in ConfigMaps or image layers.
+
 
 ### REQUESTS vs LIMITS
 
 
-```python
+```dockerfile
 resources:
   requests:
     memory: "256Mi"   # what the container is guaranteed to get
@@ -5669,33 +6265,28 @@ resources:
 
 ### LIVENESS vs READINESS PROBES
 
-Liveness probe: is the container ALIVE? If it fails, Kubernetes restarts the
-container. Use for: detecting deadlocks or infinite loops.
+**Liveness probe**: is the container ALIVE? If it fails, Kubernetes restarts the container. 
+Use for: detecting deadlocks or infinite loops.
 
-Readiness probe: is the container READY to serve traffic? If it fails,
-Kubernetes removes the Pod from the Service's endpoints (no traffic is sent).
+
+**Readiness probe**: is the container READY to serve traffic? If it fails, Kubernetes removes the Pod from the Service's endpoints (no traffic is sent).
 Use for: startup time, database connections, dependency warm-up.
 
 
-## 4.06 CI/CD Pipelines
+
+## 4.07 CI/CD Pipelines
 
 
 
 ### Overview
 
-**CI (Continuous Integration)** : developers merge code changes frequently (multiple
-times per day), and each merge triggers an automated pipeline that compiles,
-tests, and validates the code.
+**CI (Continuous Integration)** : developers merge code changes frequently (multiple times per day), and each merge triggers an automated pipeline that compiles, tests, and validates the code.
 
-**CD (Continuous Delivery)** : every passing build can be deployed to production
-with a single click (or fully automatically, which is Continuous Deployment).
+**CD (Continuous Delivery)** : every passing build can be deployed to production with a single click (or fully automatically, which is Continuous Deployment).
 
 
 ### Typical Pipeline Stages
 
-
-
-```kotlin
 Trigger (push to main/PR open)
   → Checkout code
   → Install dependencies / restore cache
@@ -5710,68 +6301,104 @@ Trigger (push to main/PR open)
   → Manual approval gate (for CD → production)
   → Deploy to production
   → Notify team (Slack, email)
-```
+
 
 
 ### Deployment Strategies
 
+**Blue-green** — run two identical production environments (blue = current, green = new version). Switch traffic from blue to green atomically. 
+Rollback: switch back instantly. Requires double the infrastructure.
 
 
-**Blue-green** — run two identical production environments (blue = current, green =
-new version). Switch traffic from blue to green atomically. Rollback: switch back
-instantly. Requires double the infrastructure.
+**Canary** — gradually route a small percentage of traffic (5-10%) to the new version while most users still use the old one. Monitor error rates and latency before increasing the traffic percentage. 
+Rollback: route 0% to canary.
 
 
-**Canary** — gradually route a small percentage of traffic (5-10%) to the new version
-while most users still use the old one. Monitor error rates and latency before
-increasing the traffic percentage. Rollback: route 0% to canary.
+**Rolling Update** — replace old Pods with new ones gradually. Default Kubernetes Deployment strategy. No extra infrastructure needed, but for a brief period both old and new versions serve traffic.
 
 
-**Rolling Update** — replace old Pods with new ones gradually. Default Kubernetes
-Deployment strategy. No extra infrastructure needed, but for a brief period
-both old and new versions serve traffic.
+**Feature Flags** — deploy code but control which users see new features via configuration, without a new deployment. Enables A/B testing, gradual rollouts to specific user segments, and instant "kill switch" if a feature causes problems.
 
 
-**Feature Flags** — deploy code but control which users see new features via
-configuration, without a new deployment. Enables A/B testing, gradual rollouts
-to specific user segments, and instant "kill switch" if a feature causes problems.
-
-
-## 4.07 Git
-
-
+## 4.08 Git
 
 ### Overview
 
-Git is a distributed version control system — every developer has a complete
-copy of the repository. Created by Linus Torvalds for the Linux kernel.
+**Git** is a distributed version control system (VCS) used to track changes in a project's source code over time.
+
+It allows multiple developers to work on the same project simultaneously, keeps a complete history of changes, and makes it easy to collaborate through branches and merges.
+
+Unlike centralized version control systems, every developer has a complete copy of the repository, including its history. This means developers can commit, branch, and inspect history even while offline.
+
+Git was created in 2005 by **Linus Torvalds** to manage the development of the Linux kernel and is now the industry standard for version control.
 
 
-### How Git Stores Data — THE FOUNDATION OF EVERYTHING
+It runs locally on your computer and is responsible for:
+- Tracking changes to files
+- Creating commits
+- Managing branches
+- Merging code
+- Viewing project history
+- Allowing developers to work offline
 
-Git does NOT store diffs — it stores SNAPSHOTS. Each commit is a snapshot of
-all tracked files at that moment. For efficiency, Git does not copy unchanged
-files — it stores a pointer to the previous version.
+Git does **not** require an internet connection or a remote server.
 
-Each Git object is identified by a SHA-1 hash of its content. If two files
-have identical content, they share one hash and one storage object.
+
+### How Git Stores Data
+
+One of Git's key design decisions is that it stores **snapshots** (a complete picture of the project’s state at a specific point in time), not file differences.
+
+When you create a commit, Git records a snapshot of the project's tracked files at that moment.
+
+For example:
+
+```
+Commit A
+
+Main.java
+User.java
+README.md
+```
+
+After modifying only `Main.java`:
+
+```
+Commit B
+
+Main.java  ← updated
+User.java
+README.md
+```
+
+Although each commit represents the entire project, Git is highly efficient. Unchanged files are **not duplicated**; Git simply reuses the existing version internally.
+
+This allows Git to provide a complete history of the project while keeping repositories relatively small.
+
+
+
+### Git Objects and SHA-1 Hashes
+
+Git identifies every stored object (such as a file or commit) using a **SHA-1 hash**, which is generated from the object's contents.
+
+This means:
+- If the content changes, the hash changes.
+- If two files have exactly the same content, they share the same hash and Git stores only one copy internally.
+
+This content-based storage helps Git efficiently track changes and verify the integrity of the repository.
+
 
 #### Object types
 
-```text
-blob     — stores file content
-tree     — stores directory listing (mapping filenames to blobs or other trees)
-commit   — stores a tree pointer + parent commit pointer + author + message
-tag      — named pointer to a commit
-```
+blob — stores file content
+tree — stores directory listing (mapping filenames to blobs or other trees)
+commit — stores a tree pointer + parent commit pointer + author + message
+tag — named pointer to a commit
+
 A BRANCH is just a file containing one SHA-1 hash — the tip commit.
-HEAD is a pointer to the current branch (or a specific commit in detached HEAD
-state). Moving between branches is just updating these pointers.
+HEAD is a pointer to the current branch (or a specific commit in detached HEAD state). Moving between branches is just updating these pointers.
 
 
 ### Essential Commands
-
-
 
 ```bash
 git init                        # create a new repository
@@ -5799,32 +6426,190 @@ git revert <hash>               # create a new commit that undoes a commit (safe
 git cherry-pick <hash>          # apply a specific commit to the current branch
 ```
 
-### MERGE vs REBASE
+### Merge vs Rebase
+
+Both **merge** and **rebase** are used to incorporate changes from one branch into another.
+
+The difference is **how Git combines the commit history**.
+
+#### Merge
+
+A **merge** combines two branches while preserving their original histories.
+
+Suppose `main` has progressed while you're working on a feature.
+
+```
+main
+
+A ── B ── C
+
+feature
+
+      \
+       D ── E
+```
+
+When you merge `feature` into `main`:
+
+```
+A ── B ── C ───────── M
+      \             /
+       D ───────── E
+```
+
+Git creates a new **merge commit (`M`)** that joins the two histories.
+
+Advantages:
+- Preserves the real history.
+- Safe for shared branches.
+- Easy to see when branches were merged.
+
+Disadvantages:
+- History can become cluttered with many merge commits.
 
 
-**Merge** — creates a new "merge commit" that joins two branch histories. Preserves
-the true history of when and how features were developed. History can be noisy.
+#### Rebase
+
+A **rebase** rewrites your branch so it appears as though you started working from the latest version of `main`.
+
+Starting point:
+
+```
+main
+
+A ── B ── C
+
+feature
+
+      \
+       D ── E
+```
+
+After rebasing `feature` onto `main`:
+
+```
+A ── B ── C ── D' ── E'
+```
+
+Git **replays** your commits (`D` and `E`) on top of `C`.
+
+Notice that the commits become **D'** and **E'**.
+
+They contain the same code changes, but they are **new commits with new hashes**.
+
+Advantages:
+- Clean, linear history.
+- Easier to read `git log`.
+- Makes it look like the feature was developed from the latest version of `main`.
+
+Disadvantages:
+- Rewrites commit history.
+- Creates new commit hashes.
+- Can cause problems if the original commits were already shared with other developers.
 
 
-**Rebase** — moves or replays your commits on top of another branch. Creates a linear
-history (cleaner log). Changes commit hashes — never rebase commits that have
-been pushed to a shared branch.
+#### Why Shouldn't You Rebase Shared Branches?
 
-Convention: rebase local feature branches onto main for a clean history before
-merging; never rebase public/shared branches.
+Suppose you push commits `D` and `E` to GitHub.
+
+Your teammate pulls them.
+
+If you later rebase:
+
+```
+D → D'
+E → E'
+```
+
+Git sees these as completely different commits because their hashes changed.
+
+Now your teammate has:
+
+```
+D
+E
+```
+
+while you have:
+
+```
+D'
+E'
+```
+
+Git thinks both sets of commits are different, leading to duplicate commits or merge conflicts.
+
+For this reason:
+
+> **Never rebase commits that have already been pushed to a shared branch.**
 
 
-## 4.08 GitHub
+#### When Should You Use Each?
+
+Use Merge when:
+- Working on shared branches.
+- You want to preserve the actual history.
+- You don't mind merge commits.
+
+Use Rebase when:
+- Cleaning up your own local feature branch.
+- Updating your branch with the latest changes from `main`.
+- You want a clean, linear commit history.
+
+
+## Common Workflow
+
+```
+main
+   ↑
+git pull
+
+feature
+   ↑
+git rebase main
+
+feature (updated)
+   ↓
+Create Pull Request
+
+main
+   ↓
+git merge feature
+```
+
+A common convention is:
+- Rebase your **local feature branch** onto the latest `main`.
+- Once the Pull Request is approved, merge it into `main`.
+- Never rebase branches that other developers are already using.
+
+
+
+## 4.09 GitHub
 
 
 
 ### Overview
 
-GitHub is the world's largest code hosting platform. Beyond hosting Git
-repositories, it provides collaboration tools: Pull Requests, Issues, Actions
-(CI/CD), Projects (kanban), Packages (artifact registry), and Codespaces
-(cloud dev environment).
+GitHub is a cloud-based platform for hosting Git repositories.
 
+It builds on top of Git by adding collaboration features such as:
+- Remote repository hosting
+- Pull Requests (PRs)
+- Code reviews
+- Issue tracking
+- Team collaboration
+- CI/CD integration (GitHub Actions)
+- Project management
+
+GitHub stores your Git repository online so multiple developers can work on the same project.
+
+Example Git commands that interact with GitHub:
+
+```bash
+git push origin main
+git pull origin main
+git clone https://github.com/user/repository.git
+```
 
 ### Pull Requests
 
@@ -5839,46 +6624,58 @@ PR best practices:
   - Check CI passes before requesting review.
   - Address all reviewer comments; don't dismiss without resolution.
 
-Branch protection rules: require PR reviews, passing CI checks, and branch
-up-to-date with base before merging. Prevents direct pushes to main.
+Branch protection rules: require PR reviews, passing CI checks, and branch up-to-date with base before merging. Prevents direct pushes to main.
 
 
 ### Github Actions
 
 
-GitHub Actions is GitHub's built-in CI/CD system. Workflows are defined in
-.github/workflows/*.yml and triggered by GitHub events (push, PR, schedule,
-manual dispatch).
+GitHub Actions is GitHub's built-in CI/CD system. Workflows are defined in .github/workflows/*.yml and triggered by GitHub events (push, PR, schedule, manual dispatch).
 
-See YAML section (4.11) for a full GitHub Actions workflow example
-Marketplace has thousands of pre-built actions (setup-java, setup-node,
-docker/login-action, aws-actions, etc.) that you reuse with the uses: directive.
+See YAML section (4.12) for a full GitHub Actions workflow example Marketplace has thousands of pre-built actions (setup-java, setup-node, docker/login-action, aws-actions, etc.) that you reuse with the uses: directive.
 
 
-## 4.09 Bitbucket
+
+## 4.10 Bitbucket
 
 
 
 ### Overview
 
-Bitbucket is Atlassian's Git code hosting platform. It integrates natively with
-Jira (Atlassian's issue tracker) and Confluence (wikis). Popular in organisations
-already using the Atlassian ecosystem.
+Bitbucket is Atlassian's Git code hosting platform. It integrates natively with Jira (Atlassian's issue tracker) and Confluence (wikis). Popular in organisations already using the Atlassian ecosystem.
+
+
+#### GitHub vs Bitbucket (Comparison)
+
+Both **GitHub** and **Bitbucket** are cloud platforms used to host Git repositories and enable collaboration, but they differ in focus, ecosystem, and typical usage.
+
+| Feature | GitHub | Bitbucket |
+|----------|--------|-----------|
+| Ownership | Microsoft | Atlassian |
+| Main focus | Open-source & developer community | Enterprise teams & private repos |
+| CI/CD | GitHub Actions | Bitbucket Pipelines |
+| Project management | GitHub Issues / Projects | Strong Jira integration |
+| Popularity | Very high (largest platform) | Lower, but strong in enterprises |
+| Ecosystem | Huge open-source ecosystem | Strong Atlassian ecosystem |
+| Repo visibility | Many public repos | Mostly private repos |
+
+- **GitHub** → community & open-source first
+
+- **Bitbucket** → enterprise & Jira-integrated workflows
 
 
 ### Bitbucket Pipelines
 
 
-Bitbucket Pipelines is the built-in CI/CD system, configured with
-bitbucket-pipelines.yml at the repo root.
+Bitbucket Pipelines is the built-in CI/CD system, configured with bitbucket-pipelines.yml at the repo root.
 
 image: maven:3.9-eclipse-temurin-17   # Docker image to run pipeline steps
 
 pipelines:
 
-```text
+```bash
 default:                            # runs on any branch without a specific rule
-```
+
 - step:
 name: Build and Test
 caches:
@@ -5895,36 +6692,71 @@ script:
 - pipe: atlassian/aws-elasticbeanstalk-deploy:0.6.6
 variables:
 
-```text
 AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
 APPLICATION_NAME: "my-app"
 ENVIRONMENT_NAME: "my-app-prod"
 ```
+
+
 Bitbucket-specific features:
-  - Pull Request pipelines — run on the merged result of a PR before merging
-  - Deployment environments — track which version is deployed where (staging, prod)
-  - Branch permissions — similar to GitHub branch protection rules
-  - Smart Mirroring — sync repositories across multiple regions for global teams
+- **Pull Request pipelines** — run on the merged result of a PR before merging
+- **Deployment environments** — track which version is deployed where (staging, prod)
+- **Branch permissions** — similar to GitHub branch protection rules
+- **Smart Mirroring** — sync repositories across multiple regions for global teams
 
 
-## 4.10 Maven
+
+## 4.11 Maven
+
+### Overview 
+
+Maven is a build automation and project management tool for Java projects, maintained by the Apache Software Foundation. 
+
+It standardises how Java projects are built by managing:
+- compilation
+- testing
+- packaging
+- dependency management
+- deployment
+
+Instead of manually running multiple commands and managing JAR files yourself, Maven uses a **declarative configuration (`pom.xml`)** and a predefined lifecycle to automate the entire build process in a consistent way.
 
 
-Maven is a build automation and project management tool for Java projects,
-maintained by the Apache Software Foundation. It answers the question: how do
-you compile, test, package, and deploy a Java application in a repeatable,
-standardised way? Before build tools like Maven existed, developers had to
-manually manage where JAR files lived, remember the exact javac commands,
-and share zip archives of dependencies. Maven replaced all of that with a
-declarative model: you describe WHAT your project is and WHAT it depends on,
-and Maven figures out HOW to build it.
+### How Maven Compiles Your Code
+
+When you run:
+
+```bash
+mvn compile
+```
+
+Maven does not compile the code itself. Instead, it delegates the work to the Java compiler (**`javac`**) under the hood.
+
+The process is:
+
+```
+Java source files (.java)
+        ↓
+Maven compile phase
+        ↓
+Java Compiler (javac)
+        ↓
+Bytecode files (.class)
+        ↓
+Stored in target/classes/
+```
+
+So Maven acts as an **orchestrator** that triggers the correct tools in the correct order, rather than replacing the compiler.
+
+The important idea is:
+
+> Maven defines *what should happen* (compile), and Java tools like `javac` perform the actual work.
+
 
 ### THE POM FILE — Project Object Model
 
-Every Maven project is defined by a pom.xml file at its root. POM stands for
-Project Object Model. It is an XML file that acts as the single source of
-truth for your project's identity, dependencies, plugins, and build behaviour.
+Every Maven project is defined by a pom.xml file at its root. POM stands for Project Object Model. It is an XML file that acts as the single source of truth for your project's identity, dependencies, plugins, and build behaviour(how a project is compiled, tested, and packaged).
 
 A minimal pom.xml looks like this:
 
@@ -5980,56 +6812,40 @@ A minimal pom.xml looks like this:
 </project>
 ```
 
-The three coordinates — groupId, artifactId, version — are called GAV
-coordinates (or simply "coordinates"). They uniquely identify any artifact
-in the Maven ecosystem. When you declare a dependency, Maven uses these to
-look up the artifact in a repository.
+The three coordinates — groupId, artifactId, version — are called GAV coordinates (or simply "coordinates"). They uniquely identify any artifact in the Maven ecosystem. When you declare a dependency, Maven uses these to look up the artifact in a repository.
 
 ### DEPENDENCY SCOPES
 
 Scope controls when a dependency is available on the classpath:
 
-• compile  — (default) available in main code, tests, and bundled in the
-             final artifact. Use for everything your app needs at runtime.
+- **compile** — (default) available in main code, tests, and bundled in the final artifact. Use for everything your app needs at runtime.
 
-• test     — only available when compiling and running tests. JUnit, Mockito,
-             AssertJ all belong here. They are NOT included in the JAR/WAR
-             you ship to production.
+- **test** — only available when compiling and running tests. JUnit, Mockito, AssertJ all belong here. They are NOT included in the JAR/WAR you ship to production.
 
-• provided — available at compile time but NOT bundled, because the runtime
-             environment provides it. Lombok (annotation processor), Servlet
-             API (provided by Tomcat), and Jakarta EE APIs are common examples.
+- **provided** — available at compile time but NOT bundled, because the runtime environment provides it. Lombok (annotation processor), Servlet API (provided by Tomcat), and Jakarta EE APIs are common examples.
 
-• runtime  — NOT needed at compile time, but needed at runtime. JDBC drivers
-             are the classic example: you compile against java.sql.* (standard
-             interfaces), but at runtime you need the specific driver JAR.
+- **runtime** — NOT needed at compile time, but needed at runtime. JDBC drivers are the classic example: you compile against java.sql.* (standard interfaces), but at runtime you need the specific driver JAR.
 
-• import   — only valid in <dependencyManagement>; used to import a BOM
-             (Bill of Materials) to align dependency versions without
-             declaring a parent POM.
+- **import** — only valid in <dependencyManagement>; used to import a BOM (Bill of Materials) to align dependency versions without declaring a parent POM.
+
 
 ### HOW MAVEN RESOLVES DEPENDENCIES — THE LOCAL REPOSITORY
 
-When you run a Maven build for the first time, Maven checks your local
-repository (by default ~/.m2/repository/) for each dependency. If the JAR is
-not there, Maven downloads it from a remote repository (by default Maven
-Central at search.maven.org) and caches it locally. Every subsequent build
-uses the local cache, so you only download once.
+When you run a Maven build for the first time, Maven checks your local repository (by default ~/.m2/repository/) for each dependency. If the JAR is not there, Maven downloads it from a remote repository (by default Maven Central at search.maven.org) and caches it locally. Every subsequent build uses the local cache, so you only download once.
 
 The directory structure in the local repo mirrors the GAV coordinates:
+
+```text
   ~/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.2.0/
     spring-boot-starter-web-3.2.0.jar
     spring-boot-starter-web-3.2.0.pom   ← Maven reads this to get transitive deps
+```
 
-This is how transitive dependencies work: Maven reads the POM of every
-dependency, finds THEIR dependencies, and downloads those too. If spring-
-boot-starter-web depends on jackson-databind, you don't need to declare
-jackson-databind yourself — Maven resolves the whole tree.
+This is how transitive dependencies work: Maven reads the POM of every dependency, finds THEIR dependencies, and downloads those too. If spring- boot-starter-web depends on jackson-databind, you don't need to declare jackson-databind yourself — Maven resolves the whole tree.
 
 ### THE BUILD LIFECYCLE
 
-Maven's default build lifecycle is a fixed, ordered sequence of phases. When
-you invoke a phase, all preceding phases run first:
+Maven's default build lifecycle is a fixed, ordered sequence of phases. When you invoke a phase, all preceding phases run first:
 
   validate      → verify the POM is valid and all info is available
   compile       → compile src/main/java into target/classes/
@@ -6059,9 +6875,7 @@ mvn dependency:resolve  # force Maven to download all deps without building
 
 ### PARENT POM AND INHERITANCE
 
-A child POM can inherit from a parent POM. The most common parent is the
-Spring Boot parent, which pre-configures dozens of plugin versions, default
-properties, and dependency versions so you don't have to manage them yourself.
+A child POM can inherit from a parent POM. The most common parent is the Spring Boot parent, which pre-configures dozens of plugin versions, default properties, and dependency versions so you don't have to manage them yourself.
 
 ```xml
 <parent>
@@ -6084,9 +6898,7 @@ properties, and dependency versions so you don't have to manage them yourself.
 
 ### DEPENDENCY MANAGEMENT AND BOMS
 
-A Bill of Materials (BOM) is a special POM that declares the versions of a
-set of related dependencies, without actually pulling them in. You import a
-BOM to get consistent, tested version combinations.
+A Bill of Materials (BOM) is a special POM that declares the versions of a set of related dependencies, without actually pulling them in. You import a BOM to get consistent, tested version combinations.
 
 ```xml
 <dependencyManagement>
@@ -6114,11 +6926,9 @@ BOM to get consistent, tested version combinations.
 
 ### MULTI-MODULE PROJECTS
 
-Large projects split into modules: separate Maven projects each with their
-own pom.xml, coordinated by a root "aggregator" POM. This is the standard
-layout for microservice mono-repos or layered architectures.
+Large projects split into modules: separate Maven projects each with their own pom.xml, coordinated by a root "aggregator" POM. This is the standard layout for microservice mono-repos or layered architectures.
 
-```
+```text
 my-system/
   pom.xml              ← aggregator (packaging=pom)
   domain/
@@ -6148,6 +6958,7 @@ Root aggregator pom.xml:
 ```
 
 Running `mvn install` from the root builds all modules in the correct order.
+
 One module can depend on another:
 
 ```xml
@@ -6200,11 +7011,11 @@ The Spring Boot Maven plugin is the most common one in the Spring ecosystem:
 
 ### MAVEN vs GRADLE
 
-Maven uses XML (pom.xml) and a strict, opinionated lifecycle. Gradle uses
-Groovy or Kotlin DSL (build.gradle / build.gradle.kts) and is more flexible
-and faster (incremental builds, build cache). Spring Boot projects work with
-both. In interviews, knowing Maven is expected for Java/Spring roles; Gradle
-is more common in Android (where it is mandatory) and newer Spring projects.
+Maven uses XML (pom.xml) and a strict, opinionated lifecycle. 
+Gradle uses Groovy or Kotlin DSL (build.gradle / build.gradle.kts) and is more flexible
+and faster (incremental builds, build cache). 
+
+Spring Boot projects work with both. In interviews, knowing Maven is expected for Java/Spring roles; Gradle is more common in Android (where it is mandatory) and newer Spring projects.
 
 Key Maven conventions to memorise:
 
@@ -6217,33 +7028,18 @@ Key Maven conventions to memorise:
 ```
 
 
-## 4.11 YAML
+## 4.12 YAML
 
+### Overview
 
-YAML (YAML Ain't Markup Language — a recursive acronym) is a human-readable
-data serialisation format. It is not a programming language and has no
-executable logic. Its only job is to represent structured data (strings,
-numbers, booleans, lists, maps) in a format that humans can read and write
-comfortably. YAML is the dominant configuration format in modern software:
-Kubernetes manifests, Docker Compose files, CI/CD pipelines (GitHub Actions,
-GitLab CI), Spring Boot's application.yml, and Ansible playbooks are all YAML.
+YAML (YAML Ain't Markup Language — a recursive acronym) is a human-readable data serialisation format. It is not a programming language and has no executable logic. Its only job is to represent structured data (strings, numbers, booleans, lists, maps) in a format that humans can read and write comfortably. YAML is the dominant configuration format in modern software: Kubernetes manifests, Docker Compose files, CI/CD pipelines (GitHub Actions, GitLab CI), Spring Boot's application.yml, and Ansible playbooks are all YAML.
 
 ### YAML vs JSON vs XML
 
 All three formats represent the same kinds of data. The differences are:
 
-JSON — machine-friendly, no comments, strict quoting rules, verbose brackets.
-       Best for APIs and data exchange between programs.
+**JSON** — machine-friendly, no comments, strict quoting rules, verbose brackets. Best for APIs and data exchange between programs.
 
-XML  — very verbose, supports attributes and namespaces, required for SOAP and
-       many enterprise standards.
-
-YAML — human-friendly, uses indentation instead of brackets, supports comments
-       (#), optional quotes. Best for configuration files that humans edit.
-
-The same data in all three:
-
-JSON:
 ```json
 {
   "server": {
@@ -6255,19 +7051,9 @@ JSON:
 }
 ```
 
-YAML:
-```yaml
-server:
-  port: 8080
-  host: localhost
-features:
-  - auth
-  - logging
-debug: true
-# This comment is valid YAML; JSON has no comment syntax
-```
 
-XML:
+**XML** — very verbose, supports attributes and namespaces, required for SOAP and many enterprise standards.
+
 ```xml
 <config>
   <server>
@@ -6282,37 +7068,51 @@ XML:
 </config>
 ```
 
-YAML is clearly the most readable for humans. This is why it won in the
-configuration space.
+
+**YAML** — human-friendly, uses indentation instead of brackets, supports comments (#), optional quotes. Best for configuration files that humans edit.
+
+```yaml
+server:
+  port: 8080
+  host: localhost
+features:
+  - auth
+  - logging
+debug: true
+# This comment is valid YAML; JSON has no comment syntax
+```
+
+
+YAML is clearly the most readable for humans. This is why it won in the configuration space.
+
 
 ### CORE SYNTAX RULES
 
-1. INDENTATION IS STRUCTURE. YAML uses spaces (NEVER tabs) to define nesting.
-   Two-space indentation is the universal convention.
+1. **INDENTATION IS STRUCTURE**. YAML uses spaces (NEVER tabs) to define nesting. Two-space indentation is the universal convention.
 
-2. KEY-VALUE PAIRS (mappings):
-   key: value
-   Colons must be followed by a space. "key:value" is NOT valid.
+2. **KEY-VALUE PAIRS (mappings)**: 
+    key: value
+    Colons must be followed by a space. "key:value" is NOT valid.
 
-3. LISTS (sequences):
+3. **LISTS (sequences)**:
    items:
      - first
      - second
      - third
 
-4. SCALARS (values):
+4. **SCALARS (values)**:
    - Strings: can be unquoted if they don't contain special chars
    - Numbers: 42, 3.14 (no quotes)
    - Booleans: true / false (also yes/no, on/off — avoid these ambiguous forms)
    - Null: null or ~
    - Dates: 2024-01-15 (ISO 8601)
 
-5. COMMENTS: # everything after this is ignored
+5. **COMMENTS**: # everything after this is ignored
 
-6. MULTILINE STRINGS:
+6. **MULTILINE STRINGS**:
    Two operators:
-   • | (literal block) — preserves newlines exactly
-   • > (folded block)  — folds newlines into spaces (good for long sentences)
+   - | (literal block) — preserves newlines exactly
+   - > (folded block)  — folds newlines into spaces (good for long sentences)
 
 ```yaml
 # Literal block: newlines preserved
@@ -6328,13 +7128,76 @@ description: >
   but will be read as one paragraph.
 ```
 
-### SPRING BOOT — application.yml
+### SPRING BOOT — application.yml vs application.properties
 
-Spring Boot supports both application.properties and application.yml. YAML
-is preferred when there is nesting, because it avoids repetitive prefixes.
+Both `.properties` and `.yml` (YAML) files are used in Spring Boot to configure applications externally, without changing the source code. They typically define settings such as server ports, database connections, and environment-specific configuration.
+
+
+#### .properties
+
+The `.properties` file uses a **flat key-value structure**.
+
+Example:
+```properties
+server.port=8080
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=root
+spring.datasource.password=secret
+```
+
+Characteristics:
+- Simple key = value format
+- Everything is flat (no nesting)
+- Easy to read for small configurations
+- Can become repetitive for complex setups
+
+
+#### .yml (YAML)
+
+The `.yml` file uses a **hierarchical, indentation-based structure**.
+
+Example:
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mydb
+    username: root
+    password: secret
+```
+
+Characteristics:
+- Supports nested structure
+- More readable for complex configurations
+- Reduces repetition
+- Sensitive to indentation (spaces matter)
+
+
+#### Key Differences
+
+| Feature | .properties | .yml |
+|----------|------------|------|
+| Structure | Flat | Hierarchical |
+| Syntax | key=value | indentation-based |
+| Readability | Good for small configs | Better for complex configs |
+| Repetition | High | Low |
+| Error risk | Low | Higher (indentation mistakes) |
+
+
+- **.properties** → simple applications or small configurations  
+- **.yml** → complex applications with multiple environments and nested configuration
+
+
+
+
+Spring Boot supports both application.properties and application.yml. YAML is preferred when there is nesting, because it avoids repetitive prefixes.
 
 Properties format (repetitive):
-```
+
+```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/mydb
 spring.datasource.username=root
 spring.datasource.password=secret
@@ -6443,8 +7306,7 @@ networks:
 
 ### KUBERNETES MANIFESTS
 
-Kubernetes uses YAML for every resource: Deployments, Services, ConfigMaps,
-Secrets, Ingresses. Each manifest has four required top-level fields:
+Kubernetes uses YAML for every resource: Deployments, Services, ConfigMaps, Secrets, Ingresses. Each manifest has four required top-level fields:
 
 ```yaml
 # Deployment — manages a set of identical Pod replicas
@@ -6556,26 +7418,19 @@ jobs:
 
 ### COMMON PITFALLS
 
-1. TABS vs SPACES: YAML strictly forbids tab characters for indentation.
-   Editors set to use tabs will produce a ParseException. Always configure
-   your editor to use spaces for .yml/.yaml files.
+1. **TABS vs SPACES**: YAML strictly forbids tab characters for indentation.
+   Editors set to use tabs will produce a ParseException. Always configure your editor to use spaces for .yml/.yaml files.
 
-2. INCONSISTENT INDENTATION: Every level must be indented by the same number
-   of spaces (2 is standard). Mixing 2-space and 4-space breaks parsing.
+2. **INCONSISTENT INDENTATION**: Every level must be indented by the same number of spaces (2 is standard). Mixing 2-space and 4-space breaks parsing.
 
-3. UNQUOTED SPECIAL VALUES:
-   • "yes", "no", "true", "false", "null", "~" are reserved. If a value
-     looks like one of these but should be a string, quote it: "yes"
-   • Colons in values must be quoted: message: "Error: file not found"
-   • Values starting with { or [ look like JSON and may confuse parsers.
-     Quote them: tag: "[feature]"
+3. **UNQUOTED SPECIAL VALUES**:
+   - "yes", "no", "true", "false", "null", "~" are reserved. If a value looks like one of these but should be a string, quote it: "yes"
+   - Colons in values must be quoted: message: "Error: file not found"
+   - Values starting with { or [ look like JSON and may confuse parsers. Quote them: tag: "[feature]"
 
-4. THE NORWAY PROBLEM: Country codes "NO" and "SE" were historically parsed
-   as booleans (no=false, se is fine). Modern YAML 1.2 fixed this, but some
-   parsers still use YAML 1.1 rules. Quote country codes as strings: "NO"
+4. **THE NORWAY PROBLEM**: Country codes "NO" and "SE" were historically parsed as booleans (no=false, se is fine). Modern YAML 1.2 fixed this, but some parsers still use YAML 1.1 rules. Quote country codes as strings: "NO"
 
-5. ANCHORS AND ALIASES (advanced but useful):
-   YAML allows you to define a block once and reuse it:
+5. **ANCHORS AND ALIASES (advanced but useful)**: YAML allows you to define a block once and reuse it:
    ```yaml
    defaults: &defaults       # & defines the anchor named "defaults"
      retries: 3
@@ -6593,12 +7448,10 @@ jobs:
    This avoids repeating configuration across environments.
 
 Key YAML facts for interviews:
-• YAML is a superset of JSON — all valid JSON is valid YAML
-• Indentation = structure (spaces only, never tabs)
-• --- separates multiple documents in one file (used in Kubernetes and
-  Spring profiles to combine configs)
-• Environment variable substitution ($VAR or ${VAR}) is NOT part of YAML
-  itself — it is handled by the consuming tool (Spring Boot, Docker, etc.)
+- YAML is a superset of JSON — all valid JSON is valid YAML
+- Indentation = structure (spaces only, never tabs)
+- --- separates multiple documents in one file (used in Kubernetes and Spring profiles to combine configs)
+- Environment variable substitution ($VAR or ${VAR}) is NOT part of YAML itself — it is handled by the consuming tool (Spring Boot, Docker, etc.)
 
 
 ---
@@ -6606,69 +7459,653 @@ Key YAML facts for interviews:
 # Part 5 — Databases
 
 
+## 5.01 SQL — Querying & Optimization
 
-## 5.01 MySQL
+
+### Overview
+
+SQL (Structured Query Language) is the standard language for relational databases.
+The same concepts — SELECT, JOINs, aggregations, subqueries, window functions — work across MySQL, PostgreSQL, SQL Server, and Oracle with minor syntax differences.
+
+Every SQL query is built by combining clauses. The database always executes them in a fixed logical order, regardless of how you write them:
+
+FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
+
+
+### SELECT — Choosing Columns
+
+SELECT defines which columns (or expressions) the query returns.
+
+```sql
+-- All columns
+SELECT * FROM employees;
+
+-- Specific columns
+SELECT name, salary FROM employees;
+
+-- With an alias (rename the column in the result)
+SELECT name AS employee_name, salary * 12 AS annual_salary
+FROM employees;
+
+-- Calculated expression
+SELECT name, salary, salary * 0.2 AS tax FROM employees;
+```
+
+**DISTINCT** removes duplicate rows from the result:
+
+```sql
+SELECT DISTINCT department FROM employees;
+-- Returns each department name only once, even if many employees share it.
+```
+
+
+### FROM — Source Table
+
+FROM specifies which table (or tables) the query reads from.
+You can give a table a short alias to reduce typing:
+
+```sql
+SELECT e.name, e.salary
+FROM employees e;   -- "e" is now an alias for employees
+```
+
+
+### WHERE — Filtering Rows
+
+WHERE filters rows before any grouping or aggregation.
+Only rows where the condition is TRUE are kept.
+
+```sql
+SELECT name, salary FROM employees WHERE salary > 50000;
+```
+
+#### Comparison Operators
+
+```sql
+WHERE salary = 50000      -- equal
+WHERE salary != 50000     -- not equal (also written <>)
+WHERE salary > 50000      -- greater than
+WHERE salary >= 50000     -- greater than or equal
+WHERE salary < 50000      -- less than
+WHERE salary <= 50000     -- less than or equal
+```
+
+#### BETWEEN
+
+```sql
+WHERE salary BETWEEN 40000 AND 70000
+-- Equivalent to: WHERE salary >= 40000 AND salary <= 70000
+-- Both limits are inclusive.
+```
+
+#### IN — match a list of values
+
+```sql
+WHERE department IN ('Engineering', 'Design', 'Product')
+-- Equivalent to multiple OR conditions. Much cleaner.
+
+WHERE department NOT IN ('HR', 'Legal')
+```
+
+#### LIKE — pattern matching on strings
+
+```sql
+WHERE name LIKE 'B%'        -- starts with B (% = any sequence of characters)
+WHERE name LIKE '%santos'   -- ends with santos
+WHERE name LIKE '%beat%'    -- contains "beat" anywhere
+WHERE name LIKE 'B_a%'      -- B, then any one character, then a, then anything
+                             -- _ matches exactly one character
+```
+
+#### IS NULL / IS NOT NULL
+
+```sql
+WHERE manager_id IS NULL       -- find rows where the value is missing
+WHERE email IS NOT NULL        -- only rows that have an email
+-- Never use = NULL. In SQL, NULL = NULL is not TRUE — it is UNKNOWN.
+```
+
+#### AND / OR / NOT
+
+```sql
+WHERE department = 'Engineering' AND salary > 60000
+WHERE department = 'Engineering' OR department = 'Design'
+WHERE NOT department = 'HR'
+```
+
+
+### ORDER BY — Sorting Results
+
+ORDER BY sorts the final result. Applied after all other clauses.
+
+```sql
+SELECT name, salary FROM employees ORDER BY salary;           -- ascending (default)
+SELECT name, salary FROM employees ORDER BY salary DESC;      -- descending
+SELECT name, salary FROM employees ORDER BY department ASC, salary DESC;
+-- Sort by department A→Z, then by salary high→low within each department.
+```
+
+
+### LIMIT / OFFSET — Restricting Rows Returned
+
+```sql
+SELECT name FROM employees ORDER BY salary DESC LIMIT 10;
+-- Return only the top 10 highest-paid employees.
+
+SELECT name FROM employees ORDER BY salary DESC LIMIT 10 OFFSET 20;
+-- Skip the first 20 rows, return the next 10. Used for pagination (page 3 of 10-per-page).
+```
+
+OFFSET becomes slow on large tables because the database must scan and discard all preceding rows. For large datasets, prefer keyset/cursor pagination instead:
+
+```sql
+-- Instead of OFFSET, remember the last seen value and filter on it:
+SELECT * FROM posts
+WHERE created_at < '2024-03-15T10:30:00'
+ORDER BY created_at DESC
+LIMIT 20;
+-- The index on created_at lets the database jump directly to the right position.
+```
+
+
+### Aggregate Functions — Computing Summary Values
+
+Aggregate functions collapse many rows into a single value.
+They are always used with GROUP BY (or alone to aggregate the entire table).
+
+#### COUNT
+
+```sql
+SELECT COUNT(*) FROM employees;
+-- Counts all rows, including rows with NULLs.
+
+SELECT COUNT(email) FROM employees;
+-- Counts only rows where email is NOT NULL.
+
+SELECT COUNT(DISTINCT department) FROM employees;
+-- Counts how many unique departments exist.
+```
+
+#### SUM
+
+```sql
+SELECT SUM(salary) FROM employees;
+-- Total of all salary values. Ignores NULLs.
+
+SELECT department, SUM(salary) AS total_payroll
+FROM employees
+GROUP BY department;
+-- Total salary per department.
+```
+
+#### AVG
+
+```sql
+SELECT AVG(salary) FROM employees;
+-- Arithmetic mean of all salary values. Ignores NULLs.
+
+SELECT department, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department;
+```
+
+#### MIN and MAX
+
+```sql
+SELECT MIN(salary) FROM employees;   -- lowest value
+SELECT MAX(salary) FROM employees;   -- highest value
+
+SELECT department, MIN(salary) AS lowest, MAX(salary) AS highest
+FROM employees
+GROUP BY department;
+```
+
+#### Combining aggregates
+
+```sql
+SELECT
+    department,
+    COUNT(*)        AS headcount,
+    AVG(salary)     AS avg_salary,
+    MIN(salary)     AS min_salary,
+    MAX(salary)     AS max_salary,
+    SUM(salary)     AS total_payroll
+FROM employees
+GROUP BY department
+ORDER BY total_payroll DESC;
+```
+
+
+### GROUP BY — Grouping Rows
+
+GROUP BY groups rows that share the same value in one or more columns, then applies aggregate functions to each group.
+
+```sql
+SELECT department, COUNT(*) AS headcount
+FROM employees
+GROUP BY department;
+-- One row per department. COUNT(*) counts how many employees are in each.
+```
+
+Rules:
+- Every column in SELECT that is NOT inside an aggregate function MUST appear in GROUP BY.
+- You can group by multiple columns:
+
+```sql
+SELECT department, job_title, AVG(salary)
+FROM employees
+GROUP BY department, job_title;
+-- One row per unique (department, job_title) combination.
+```
+
+
+### HAVING — Filtering Groups
+
+HAVING is like WHERE, but it filters after grouping — it can use aggregate functions.
+WHERE filters individual rows before grouping; HAVING filters groups after grouping.
+
+```sql
+SELECT department, COUNT(*) AS headcount
+FROM employees
+GROUP BY department
+HAVING COUNT(*) > 10;
+-- Only show departments with more than 10 employees.
+
+SELECT department, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department
+HAVING AVG(salary) > 60000;
+-- Only departments where the average salary exceeds 60,000.
+```
+
+
+### JOINs — Combining Tables
+
+A JOIN combines rows from two or more tables based on a related column.
+
+#### INNER JOIN — only matching rows
+
+```sql
+SELECT o.id, o.amount, c.name AS customer
+FROM orders o
+INNER JOIN customers c ON o.customer_id = c.id;
+-- Only returns orders that have a matching customer.
+-- Orders with no customer (orphaned rows) are excluded.
+```
+
+#### LEFT JOIN — all rows from the left table
+
+```sql
+SELECT c.name, COUNT(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON c.id = o.customer_id
+GROUP BY c.id, c.name;
+-- Returns ALL customers, even those with no orders.
+-- For customers with no orders, o.id will be NULL → COUNT(o.id) returns 0.
+```
+
+#### RIGHT JOIN — all rows from the right table
+
+```sql
+SELECT c.name, o.amount
+FROM orders o
+RIGHT JOIN customers c ON o.customer_id = c.id;
+-- All customers appear, even if they have no orders.
+-- Equivalent to flipping the tables in a LEFT JOIN — rarely used.
+```
+
+#### FULL OUTER JOIN — all rows from both tables
+
+```sql
+SELECT c.name, o.amount
+FROM customers c
+FULL OUTER JOIN orders o ON c.id = o.customer_id;
+-- Customers with no orders → NULL on the orders side.
+-- Orders with no customer → NULL on the customers side.
+-- MySQL doesn't support FULL OUTER JOIN natively; use UNION of LEFT and RIGHT JOIN.
+```
+
+#### CROSS JOIN — every combination
+
+```sql
+SELECT colours.name, sizes.name
+FROM colours CROSS JOIN sizes;
+-- Returns every colour paired with every size — the cartesian product.
+-- 5 colours × 3 sizes = 15 rows.
+```
+
+#### Joining more than two tables
+
+```sql
+SELECT o.id, c.name, p.name AS product, oi.quantity
+FROM orders o
+INNER JOIN customers c  ON o.customer_id = c.id
+INNER JOIN order_items oi ON oi.order_id = o.id
+INNER JOIN products p   ON oi.product_id = p.id
+WHERE o.status = 'completed';
+```
+
+
+### Subqueries — Queries Inside Queries
+
+A subquery is a SELECT statement nested inside another query.
+
+#### Subquery in WHERE
+
+```sql
+-- Find employees earning more than the company average
+SELECT name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+```
+
+#### Subquery with IN
+
+```sql
+-- Find customers who placed at least one order in 2024
+SELECT name FROM customers
+WHERE id IN (
+    SELECT DISTINCT customer_id FROM orders
+    WHERE YEAR(created_at) = 2024
+);
+```
+
+#### Correlated subquery — references the outer query
+
+```sql
+-- Find each employee's salary compared to their department's average
+SELECT name, salary,
+    (SELECT AVG(salary) FROM employees e2 WHERE e2.department = e1.department) AS dept_avg
+FROM employees e1;
+-- The subquery runs once per outer row, using the current row's department.
+```
+
+#### Subquery in FROM (derived table)
+
+```sql
+SELECT dept, avg_salary
+FROM (
+    SELECT department AS dept, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department
+) AS dept_averages
+WHERE avg_salary > 55000;
+```
+
+
+### CTEs — Common Table Expressions
+
+A CTE (defined with WITH) is a named temporary result set that can be referenced
+in the main query. It makes complex queries readable by breaking them into steps.
+
+```sql
+WITH active_customers AS (
+    SELECT id, name
+    FROM customers
+    WHERE last_order_date > CURRENT_DATE - INTERVAL 90 DAY
+),
+big_spenders AS (
+    SELECT customer_id, SUM(amount) AS total
+    FROM orders
+    GROUP BY customer_id
+    HAVING SUM(amount) > 1000
+)
+SELECT ac.name, bs.total
+FROM active_customers ac
+JOIN big_spenders bs ON ac.id = bs.customer_id
+ORDER BY bs.total DESC;
+```
+
+You can define multiple CTEs separated by commas. Later CTEs can reference earlier ones.
+
+#### Recursive CTEs — hierarchical data
+
+```sql
+WITH RECURSIVE org_chart AS (
+    -- Base case: start from the top (CEO has no manager)
+    SELECT id, name, manager_id, 0 AS level
+    FROM employees WHERE manager_id IS NULL
+
+    UNION ALL
+
+    -- Recursive step: find employees whose manager is in the previous result
+    SELECT e.id, e.name, e.manager_id, oc.level + 1
+    FROM employees e
+    INNER JOIN org_chart oc ON e.manager_id = oc.id
+)
+SELECT level, name FROM org_chart ORDER BY level;
+```
+
+
+### Window Functions — Row-Level Aggregation
+
+Window functions compute a value for each row based on a related set of rows (the "window"), WITHOUT collapsing them like GROUP BY.
+Each row keeps its identity but also sees an aggregated perspective.
+
+```sql
+SELECT
+    name,
+    department,
+    salary,
+    AVG(salary) OVER (PARTITION BY department) AS dept_avg,
+    salary - AVG(salary) OVER (PARTITION BY department) AS diff_from_avg,
+    RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rank_in_dept,
+    SUM(salary) OVER (PARTITION BY department ORDER BY salary) AS running_total,
+    LAG(salary, 1) OVER (PARTITION BY department ORDER BY salary) AS prev_salary,
+    LEAD(salary, 1) OVER (PARTITION BY department ORDER BY salary) AS next_salary,
+    ROW_NUMBER() OVER (ORDER BY salary DESC) AS global_rank
+FROM employees;
+```
+
+**OVER()** defines the window. 
+
+**PARTITION BY** divides rows into groups.
+
+**ORDER BY** inside OVER determines row order within each partition.
+
+
+#### Ranking functions
+
+```sql
+RANK()        -- 1, 2, 2, 4   (gaps after ties)
+DENSE_RANK()  -- 1, 2, 2, 3   (no gaps)
+ROW_NUMBER()  -- 1, 2, 3, 4   (always unique, arbitrary tiebreaker)
+NTILE(4)      -- divides rows into 4 equal buckets (quartiles)
+```
+
+#### Navigation functions
+
+```sql
+LAG(salary, 1)   -- value from the previous row
+LEAD(salary, 1)  -- value from the next row
+FIRST_VALUE(salary) OVER (...)  -- first value in the window
+LAST_VALUE(salary) OVER (...)   -- last value in the window
+```
+
+
+### String Functions
+
+```sql
+UPPER(name)              -- 'beatriz' → 'BEATRIZ'
+LOWER(name)              -- 'BEATRIZ' → 'beatriz'
+LENGTH(name)             -- number of characters
+TRIM(name)               -- remove leading and trailing spaces
+CONCAT(first, ' ', last) -- join strings: 'Beatriz' + ' ' + 'Santos' → 'Beatriz Santos'
+SUBSTRING(name, 1, 3)    -- extract characters: 'Beatriz' → 'Bea'
+REPLACE(name, 'a', '@')  -- replace all occurrences
+LEFT(name, 4)            -- first 4 characters
+RIGHT(name, 4)           -- last 4 characters
+```
+
+
+### Date Functions
+
+```sql
+NOW()                           -- current date and time
+CURDATE()                       -- current date only
+YEAR(created_at)                -- extract the year
+MONTH(created_at)               -- extract the month (1–12)
+DAY(created_at)                 -- extract the day of month
+DATEDIFF(end_date, start_date)  -- difference in days
+DATE_ADD(created_at, INTERVAL 30 DAY)   -- add 30 days
+DATE_FORMAT(created_at, '%Y-%m-%d')     -- format as string
+```
+
+
+### CASE — Conditional Logic in Queries
+
+CASE is SQL's if-else, usable anywhere an expression is valid.
+
+```sql
+SELECT name, salary,
+    CASE
+        WHEN salary >= 80000 THEN 'Senior'
+        WHEN salary >= 50000 THEN 'Mid'
+        ELSE 'Junior'
+    END AS level
+FROM employees;
+```
+
+```sql
+-- Counting by condition (pivot pattern)
+SELECT
+    COUNT(CASE WHEN status = 'completed' THEN 1 END) AS completed,
+    COUNT(CASE WHEN status = 'pending'   THEN 1 END) AS pending,
+    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) AS cancelled
+FROM orders;
+```
+
+
+### INSERT, UPDATE, DELETE
+
+```sql
+-- INSERT — add new rows
+INSERT INTO employees (name, department, salary)
+VALUES ('Beatriz', 'Engineering', 75000);
+
+-- INSERT multiple rows at once
+INSERT INTO employees (name, department, salary) VALUES
+    ('João', 'Design', 60000),
+    ('Ana', 'Product', 70000);
+
+-- UPDATE — change existing rows
+UPDATE employees
+SET salary = 80000
+WHERE name = 'Beatriz';
+
+-- UPDATE multiple columns
+UPDATE employees
+SET salary = salary * 1.1, department = 'Senior Engineering'
+WHERE department = 'Engineering' AND salary > 70000;
+
+-- DELETE — remove rows
+DELETE FROM employees WHERE id = 42;
+
+-- Always test your WHERE clause with a SELECT first before deleting.
+SELECT * FROM employees WHERE id = 42;
+```
+
+
+### Indexes
+
+An index is a data structure (usually a B-tree) the database builds on one or more
+columns. It allows finding rows in O(log n) instead of scanning the entire table O(n).
+
+```sql
+-- Create an index on a single column
+CREATE INDEX idx_employees_department ON employees (department);
+
+-- Unique index — enforces uniqueness + speeds up lookups
+CREATE UNIQUE INDEX idx_employees_email ON employees (email);
+
+-- Composite index — useful when you frequently filter by both columns together
+CREATE INDEX idx_orders_customer_status ON orders (customer_id, status);
+```
+
+When to add an index:
+- Columns used in WHERE, JOIN ON, or ORDER BY
+- Columns with high cardinality (many unique values — email, id, timestamp)
+
+When NOT to add an index:
+- Columns with very low cardinality (e.g. a boolean column)
+- Tables with very few rows
+- Columns written to very frequently (indexes slow down INSERT/UPDATE/DELETE)
+
+
+### Query Execution Order
+
+SQL clauses execute in this logical order, which explains many common errors:
+
+```text
+1. FROM        — identify the source tables
+2. JOIN        — combine tables
+3. WHERE       — filter individual rows
+4. GROUP BY    — group rows into buckets
+5. HAVING      — filter groups (can use aggregate functions)
+6. SELECT      — choose columns and expressions
+7. DISTINCT    — remove duplicates
+8. ORDER BY    — sort the result
+9. LIMIT       — restrict the number of rows returned
+```
+
+This is why you CANNOT use a SELECT alias in a WHERE clause (WHERE runs before SELECT), but you CAN use it in ORDER BY (ORDER BY runs after SELECT).
+
+
+## 5.02 MySQL
 
 
 
 ### Overview
 
-MySQL is the world's most widely deployed open-source relational database.
-It uses structured tables with rows and columns, enforces relationships through
-foreign keys, and guarantees data integrity through ACID transactions. MySQL's
-storage engine InnoDB (default since MySQL 5.5) is what makes this possible.
+MySQL is the world's most widely deployed open-source relational database. It stores data in **structured tables (rows and columns)** and is queried using **SQL (Structured Query Language)**.
+
+It enforces relationships between data using concepts like **primary keys and foreign keys**, ensuring consistency and integrity across tables.
+
+MySQL supports **ACID transactions** (Atomicity, Consistency, Isolation, Durability), which guarantee that database operations are reliable even in case of failures.
+
+Its default storage engine, **InnoDB**, provides support for transactions, foreign keys, and crash recovery.
 
 
 ### ACID Properties
 
 
-
-**Atomicity** — a transaction is all-or-nothing. If you transfer €100 between
-accounts, both the debit and the credit happen together, or neither does.
-No partial updates.
+**Atomicity** — a transaction is all-or-nothing. If you transfer €100 between accounts, both the debit and the credit happen together, or neither does. No partial updates.
 
 
-**Consistency** — a transaction brings the database from one valid state to another.
-All constraints (NOT NULL, FOREIGN KEY, UNIQUE, CHECK) are enforced. A
-transaction that would violate a constraint is rolled back entirely.
+**Consistency** — a transaction brings the database from one valid state to another. All constraints (NOT NULL, FOREIGN KEY, UNIQUE, CHECK) are enforced. A transaction that would violate a constraint is rolled back entirely.
 
 
-**Isolation** — concurrent transactions do not interfere with each other. Each
-transaction sees a snapshot of the database, as if it were running alone.
-Isolation levels trade off between data accuracy and concurrency:
+**Isolation** — concurrent transactions do not interfere with each other. Each transaction sees a snapshot of the database, as if it were running alone. Isolation levels trade off between data accuracy and concurrency:
+
 
 **Read Uncommitted** — can read another transaction's uncommitted changes (dirty read)
 
-**Read Committed**   — only reads committed data (most databases' default)
 
-**Repeatable Read**  — same row always returns same value within a transaction (MySQL default)
-
-**Serializable**     — fully isolated, as if transactions ran one at a time (slowest)
+**Read Committed** — only reads committed data (most databases' default)
 
 
-**Durability** — once a transaction commits, it is permanent. Even if the server
-crashes, the data survives. InnoDB achieves this with a Write-Ahead Log (WAL):
-changes are written to the log before the data files, so they can be replayed
-on recovery.
+**Repeatable Read** — same row always returns same value within a transaction (MySQL default)
+
+
+**Serializable** — fully isolated, as if transactions ran one at a time (slowest)
+
+
+**Durability** — once a transaction commits, it is permanent. Even if the server crashes, the data survives. InnoDB achieves this with a Write-Ahead Log (WAL): changes are written to the log before the data files, so they can be replayed on recovery.
+
 
 
 ### Indexes and How They Work
 
 
-An index is a separate data structure (InnoDB uses a B-tree) that maps column
-values to row locations, so the database can find rows without scanning the
-entire table (full table scan).
+An index is a separate data structure (InnoDB uses a B-tree) that maps column values to row locations, so the database can find rows without scanning the entire table (full table scan).
 
-Think of it like a book index: without it, you read every page to find a topic.
-With it, you jump directly to the right page.
+Think of it like a book index: without it, you read every page to find a topic. With it, you jump directly to the right page.
 
-B-tree indexes (default):
-  - Efficient for: equality (=), range (<, >, BETWEEN), ORDER BY, and prefix
+**B-tree indexes (default)**:
+- Efficient for: equality (=), range (<, >, BETWEEN), ORDER BY, and prefix matches on strings (LIKE 'prefix%')
+- NOT efficient for: LIKE '%suffix' (leading wildcard), functions on columns
 
 ```sql
-  matches on strings (LIKE 'prefix%')
-• NOT efficient for: LIKE '%suffix' (leading wildcard), functions on columns
-
 -- Simple index
 CREATE INDEX idx_email ON users(email);
 
@@ -6688,9 +8125,8 @@ EXPLAIN SELECT * FROM users WHERE role = 'admin' AND created_at > '2024-01-01';
 -- rows: estimated rows examined (lower is better)
 ```
 
-Covering index: an index that contains ALL the columns a query needs means MySQL
-never has to read the actual table row — the index itself is the answer.
 
+**Covering index**: an index that contains ALL the columns a query needs means MySQL never has to read the actual table row — the index itself is the answer.
 
 ```sql
 CREATE INDEX idx_cover ON orders(user_id, status, created_at);
@@ -6701,10 +8137,7 @@ SELECT status, created_at FROM orders WHERE user_id = 5;
 
 **Character Set** — utf8mb4
 
-Always use utf8mb4 (not utf8) in MySQL. MySQL's "utf8" is a broken 3-byte
-variant that cannot store 4-byte Unicode characters (emoji, some East Asian
-characters). utf8mb4 is the real UTF-8 standard.
-
+Always use utf8mb4 (not utf8) in MySQL. MySQL's "utf8" is a broken 3-byte variant that cannot store 4-byte Unicode characters (emoji, some East Asian characters). utf8mb4 is the real UTF-8 standard.
 
 ```sql
 CREATE TABLE users (
@@ -6717,367 +8150,38 @@ spring.datasource.url=jdbc:mysql://localhost:3306/mydb?characterEncoding=utf8mb4
 
 
 
-## 5.02 MongoDB
+## 5.03 PostgreSQL
 
 
 
 ### Overview
 
-MongoDB is a document-oriented NoSQL database. Instead of rows in tables, data
-is stored as JSON-like BSON documents within collections. Documents in the same
-collection can have different fields (schema-flexible). This flexibility is
-powerful for rapidly evolving data models but requires discipline — without
-schema validation, inconsistent documents accumulate.
+PostgreSQL is an advanced open-source relational database management system (RDBMS). Like MySQL, it uses **SQL (Structured Query Language)** to store and query structured data in tables with rows and columns.
 
-### EMBED vs REFERENCE
+However, PostgreSQL is often considered more powerful and extensible, earning the reputation of being **“the most feature-rich open-source database”**.
 
-The most important design decision in MongoDB: should related data be embedded
-inside a document, or stored separately and referenced by ID?
+Compared to MySQL, PostgreSQL provides:
+- A richer set of **data types** (e.g. JSONB, arrays, UUIDs, geometric types)
+- More powerful **SQL capabilities** such as CTEs (WITH queries) and window functions
+- A more advanced **query planner and optimizer**
+- A highly **extensible architecture** with extensions like PostGIS (geospatial data) and pgvector (AI embeddings)
+- Better adherence to the **SQL standard**
 
-EMBED when:
-  - The data is always accessed together (a blog post and its author's name)
-  - The nested data is owned by the parent and has no independent existence
-  - The embedded array has a bounded, small size
+Because of these features, PostgreSQL is often preferred for complex applications, analytics, and systems that require flexibility and advanced querying capabilities.
 
+It also fully supports **ACID transactions**, relational integrity (primary/foreign keys), and complex querying capabilities.
 
-```json
-// Post document with embedded author info
-{
-    "_id": ObjectId("..."),
-    "title": "My First Post",
-    "content": "...",
-    "author": { "id": "u1", "name": "Beatriz" },  // embedded
-    "tags": ["tech", "java"]                        // embedded array
-}
-```
-
-REFERENCE when:
-  - Data is shared by multiple documents (a user referenced by many posts)
-  - The referenced data changes frequently (keeping it in sync when embedded is costly)
-  - The array could grow unboundedly
-
-
-```json
-// Post document with reference to user
-{
-    "_id": ObjectId("..."),
-    "title": "My First Post",
-    "authorId": ObjectId("u1")   // reference — join with $lookup
-}
-```
-
-
-### Aggregation Pipeline
-
-
-The aggregation pipeline processes documents through a series of stages, each
-transforming the result for the next stage. It is MongoDB's answer to SQL's
-SELECT + JOIN + GROUP BY + HAVING.
-
-
-```sql
-db.orders.aggregate([
-    { $match: { status: "completed" } },             // WHERE
-    { $group: {
-        _id: "$customerId",                           // GROUP BY customerId
-        totalSpent: { $sum: "$amount" },             // SUM(amount)
-        orderCount: { $count: {} }
-    }},
-    { $sort: { totalSpent: -1 } },                   // ORDER BY totalSpent DESC
-    { $limit: 10 },                                  // LIMIT 10
-    { $lookup: {                                     // JOIN with customers collection
-        from: "customers",
-        localField: "_id",
-        foreignField: "_id",
-        as: "customer"
-    }},
-    { $unwind: "$customer" },                        // flatten the joined array
-    { $project: { "customer.name": 1, totalSpent: 1, orderCount: 1 } }
-]);
-```
-
-
-### Indexes in Mongodb
-
-
-
-```css
-db.users.createIndex({ email: 1 });                  // single field
-db.users.createIndex({ email: 1 }, { unique: true }); // unique
-db.orders.createIndex({ userId: 1, createdAt: -1 }); // compound (1=asc, -1=desc)
-
-// TTL index — automatically deletes documents after a time period
-db.sessions.createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 });
-// Sessions expire 1 hour after createdAt — great for session management
-
-// Text index — full-text search
-db.posts.createIndex({ title: "text", content: "text" });
-db.posts.find({ $text: { $search: "java spring" } });
-```
-
-
-
-## 5.03 SQL — Querying & Optimization
-
-
-
-### Overview
-
-SQL (Structured Query Language) is the standard language for relational
-databases. The same SQL concepts — JOINs, subqueries, aggregations, window
-functions — work across MySQL, PostgreSQL, SQL Server, and Oracle.
-
-
-### Joins
-
-
-A JOIN combines rows from two tables based on a condition.
-
-
-**Inner Join**  — only rows with a match in BOTH tables
-
-**Left Join**   — all rows from the left table + matched rows from the right (NULL if no match)
-
-**Right Join**  — all rows from the right table + matched rows from the left
-
-**Full Outer**  — all rows from both tables (MySQL doesn't support directly; use UNION)
-
-**Cross Join**  — cartesian product — every combination of rows (use with caution)
-
-
-```sql
--- Orders with customer info (INNER JOIN)
-SELECT o.id, o.amount, c.name AS customer
-FROM orders o
-INNER JOIN customers c ON o.customer_id = c.id
-WHERE o.status = 'completed';
-
--- All customers, including those with no orders (LEFT JOIN)
-SELECT c.name, COUNT(o.id) AS order_count
-FROM customers c
-LEFT JOIN orders o ON c.id = o.customer_id
-GROUP BY c.id, c.name;
-```
-
-
-### Window Functions
-
-
-Window functions compute a value over a set of rows ("window") related to the
-current row, WITHOUT collapsing the result like GROUP BY. Each row keeps its
-identity while also seeing the aggregated result.
-
-
-#### Select
-
-
-```sql
-    employee_id,
-    name,
-    department,
-    salary,
-    -- Rank within each department by salary (ties get the same rank)
-    RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dept_rank,
-    -- Running total of salary within each department
-    SUM(salary) OVER (PARTITION BY department ORDER BY salary) AS running_total,
-    -- Previous row's salary within the department
-    LAG(salary, 1) OVER (PARTITION BY department ORDER BY salary) AS prev_salary,
-    -- Row number (no ties — each row gets a unique number)
-    ROW_NUMBER() OVER (ORDER BY salary DESC) AS global_row_num
-FROM employees;
-```
-
-### RANK vs DENSE_RANK vs ROW_NUMBER:
-
-**Rank()**       — gaps in ranking (1, 2, 2, 4 — gap after tie)
-
-**Dense_rank()** — no gaps (1, 2, 2, 3)
-
-**Row_number()** — always unique (1, 2, 3, 4 — arbitrary tiebreaker)
-
-### CTEs (COMMON TABLE EXPRESSIONS)
-
-A CTE is a named, reusable temporary result set defined with WITH. It improves
-readability by breaking complex queries into named steps.
-
-
-```sql
-WITH active_customers AS (
-    SELECT id, name, email
-    FROM customers
-    WHERE last_order_date > CURRENT_DATE - INTERVAL '90 days'
-),
-big_orders AS (
-    SELECT customer_id, SUM(amount) AS total
-    FROM orders
-    WHERE created_at > CURRENT_DATE - INTERVAL '90 days'
-    GROUP BY customer_id
-)
-SELECT ac.name, ac.email, bo.total
-FROM active_customers ac
-JOIN big_orders bo ON ac.id = bo.customer_id
-WHERE bo.total > 1000
-ORDER BY bo.total DESC;
-```
-
-Recursive CTEs allow you to query hierarchical data (org charts, category trees):
-
-
-```sql
-WITH RECURSIVE org_chart AS (
-    -- Base case: the CEO (no manager)
-    SELECT id, name, manager_id, 0 AS level
-    FROM employees WHERE manager_id IS NULL
-
-    UNION ALL
-
-    -- Recursive case: employees whose manager is in the previous result
-    SELECT e.id, e.name, e.manager_id, oc.level + 1
-    FROM employees e
-    INNER JOIN org_chart oc ON e.manager_id = oc.id
-)
-SELECT level, name FROM org_chart ORDER BY level;
-```
-
-
-### Pagination — OFFSET vs KEYSET
-
-OFFSET pagination:
-SELECT * FROM posts ORDER BY created_at DESC LIMIT 20 OFFSET 200;
-Problem: the database must scan and discard the first 200 rows every time.
-On page 10,000 this means scanning 200,000 rows just to skip them.
-KEYSET (cursor) pagination — much more efficient:
-
-```sql
-SELECT * FROM posts
-WHERE created_at < '2024-03-15T10:30:00'    -- last seen value
-ORDER BY created_at DESC
-LIMIT 20;
--- The index on created_at lets the database jump directly to the right position.
--- O(log n) instead of O(n). The trade-off: no random page jumps.
-```
-
-
-
-## 5.04 Data Modelling
-
-
-
-### Overview
-
-Data modelling is the process of designing how data is structured, stored, and
-related in a database. Good data models prevent anomalies, support queries
-efficiently, and remain maintainable as the system evolves.
-
-
-### Normalisation
-
-
-Normalisation eliminates redundancy and prevents update anomalies. Each normal
-form builds on the previous.
-
-**1NF (First Normal Form)**:
-  - Each column holds an atomic (indivisible) value
-  - No repeating groups (each cell has one value, not a list)
-
-**2NF (Second Normal Form)**:
-  - Is in 1NF
-  - Every non-key column depends on the WHOLE primary key (no partial dependencies)
-  - Only matters if the table has a composite primary key
-
-**3NF (Third Normal Form)**:
-  - Is in 2NF
-  - Every non-key column depends ONLY on the primary key (no transitive dependencies)
-  - Example violation: orders table with city, zip_code, and country — city depends on
-zip_code (not on order_id). Fix: separate address table.
-In practice, design to 3NF, then selectively denormalise for performance where
-needed (and document why).
-
-
-### Common Patterns
-
-
-
-**Soft Delete** — mark records as deleted instead of removing them. Enables recovery,
-audit trails, and referential integrity:
-
-
-```sql
-ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP NULL;
--- "Delete" a user
-UPDATE users SET deleted_at = NOW() WHERE id = 123;
--- Query only active users
-SELECT * FROM users WHERE deleted_at IS NULL;
-```
-
-
-#### Audit Columns
-standard fields every table should have
-
-
-```text
-created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-created_by  BIGINT REFERENCES users(id)    -- who created it
-updated_by  BIGINT REFERENCES users(id)    -- who last modified it
-```
-
-
-**Price Snapshot Pattern** — when an order is placed, the price of the product might change later. Store the price AT THE TIME OF PURCHASE in the order line, not
-just a reference to the current product price:
-
-
-```sql
-CREATE TABLE order_items (
-    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
-    order_id     BIGINT NOT NULL,
-    product_id   BIGINT NOT NULL,            -- reference to the product
-    product_name VARCHAR(255) NOT NULL,      -- snapshot: name at purchase time
-    unit_price   DECIMAL(10,2) NOT NULL,     -- snapshot: price at purchase time
-    quantity     INT NOT NULL
-);
-```
-
-
-#### Many-to-many
-always use a junction table
-
-
-```sql
-CREATE TABLE student_courses (
-    student_id BIGINT REFERENCES students(id),
-    course_id  BIGINT REFERENCES courses(id),
-    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (student_id, course_id)
-);
-```
-
-
-## 5.05 PostgreSQL
-
-
-
-### Overview
-
-PostgreSQL is the most advanced open-source relational database management system.
-Frequently described as "the most feature-rich open-source database", it supports
-advanced data types (arrays, JSONB, hstore, geometric types), full-text search,
-window functions, CTEs, foreign data wrappers, and a powerful extension ecosystem
-(PostGIS for geospatial, pgvector for AI embeddings, pg_trgm for fuzzy search).
 
 ### JSONB vs JSON
 
 PostgreSQL has two JSON types — almost always prefer JSONB:
 
+**json**: stores JSON as text, preserving exact whitespace and key order. Re-parses on every access. Not indexable. Rarely useful.
+
+**jsonb**: stores JSON in optimised binary format — indexable, much faster to query and filter. Key order is not preserved (deduplicates keys). Always use this.
+
 
 ```sql
-json:  stores JSON as text, preserving exact whitespace and key order.
-       Re-parses on every access. Not indexable. Rarely useful.
-
-jsonb: stores JSON in optimised binary format — indexable, much faster to
-       query and filter. Key order is not preserved (deduplicates keys).
-       Always use this.
-
 CREATE TABLE events (
     id      BIGSERIAL PRIMARY KEY,
     type    TEXT NOT NULL,
@@ -7115,8 +8219,7 @@ CREATE INDEX idx_events_payload ON events USING GIN (payload);
 ### Native Arrays
 
 
-PostgreSQL supports native arrays — useful when data is simple and does not
-need its own table (tags, roles, phone numbers):
+PostgreSQL supports native arrays — useful when data is simple and does not need its own table (tags, roles, phone numbers):
 
 
 ```sql
@@ -7146,8 +8249,6 @@ SELECT title, unnest(tags) AS tag FROM articles;
 
 ### Upsert with on Conflict
 
-
-
 ```sql
 -- Update if email already exists, insert if it doesn't
 INSERT INTO users (email, name, login_count)
@@ -7168,9 +8269,7 @@ ON CONFLICT DO NOTHING;
 ```
 
 
-#### Returning Clause
-get the inserted/updated row back without a second query
-
+**Returning Clause** - get the inserted/updated row back without a second query
 
 ```sql
 -- Get the generated ID after INSERT
@@ -7185,35 +8284,22 @@ RETURNING id, last_login;
 
 ### Advanced Index Types
 
-
 PostgreSQL offers more index types than most databases:
 
-B-TREE (default): balanced tree. Good for equality and range queries on
-comparable types (numbers, dates, text).
-**GIN** (Generalised Inverted Index) : for composite values — arrays, JSONB,
-full-text search. Stores each element of the collection separately, so
-"does this array contain 'x'?" is fast. Slow to build, fast to query.
-**GiST** (Generalised Search Tree) : extensible index for geometric types, ranges,
-full-text search, and other non-scalar data. Used by PostGIS for spatial queries.
-**BRIN** (Block Range INdex) : only stores min/max per block of pages — tiny index.
+**B-TREE** (default): balanced tree. Good for equality and range queries on comparable types (numbers, dates, text).
 
-```text
-Extremely fast to build and very small. Best for large, naturally ordered tables
-(time-series data where rows are inserted in time order). Not good for random access.
+**GIN (Generalised Inverted Index)** : for composite values — arrays, JSONB, full-text search. Stores each element of the collection separately, so "does this array contain 'x'?" is fast. Slow to build, fast to query.
 
--- Partial index — only index rows matching a condition
-CREATE INDEX idx_active_users ON users(email) WHERE active = true;
--- Smaller index, queries for active users use it, inactive users are ignored
+**GiST (Generalised Search Tree)** : extensible index for geometric types, ranges, full-text search, and other non-scalar data. Used by PostGIS for spatial queries.
 
--- Functional index — index on an expression
-CREATE INDEX idx_email_lower ON users(lower(email));
--- Enables case-insensitive searches: WHERE lower(email) = lower($1)
-```
+**BRIN (Block Range INdex)** : only stores min/max per block of pages — tiny index. Extremely fast to build and very small. Best for large, naturally ordered tables (time-series data where rows are inserted in time order). Not good for random access.
+- Partial index — only index rows matching a condition CREATE INDEX idx_active_users ON users(email) WHERE active = true;
+- Smaller index, queries for active users use it, inactive users are ignored
+- Functional index — index on an expression CREATE INDEX idx_email_lower ON users(lower(email));
+- Enables case-insensitive searches: WHERE lower(email) = lower($1)
 
 
 ### Full-text Search
-
-
 
 ```sql
 -- tsvector: optimised representation for full-text search
@@ -7234,12 +8320,7 @@ ORDER BY ts_rank(search_vector, to_tsquery('english', 'database')) DESC;
 
 #### Explain Analyze — QUERY DIAGNOSIS
 
-EXPLAIN ANALYZE shows you exactly how PostgreSQL executes a query, with actual
-timings. Use it to diagnose slow queries.
-
-
-**Explain Analyze**
-
+EXPLAIN ANALYZE shows you exactly how PostgreSQL executes a query, with actual timings. Use it to diagnose slow queries.
 
 ```sql
 SELECT u.name, COUNT(o.id) AS orders
@@ -7260,23 +8341,20 @@ HAVING COUNT(o.id) > 5;
 
 #### Key terms to understand
 
-```text
 Seq Scan       — full table scan. May be fine on small tables, problematic on large ones.
 Index Scan     — uses B-tree index for point lookups
 Bitmap Heap Scan — uses index to get row IDs, then reads pages in bulk (for many rows)
 Hash Join      — builds a hash table from one side, probes with the other
-
 actual time    — REAL milliseconds (vs estimated cost); this is what matters
 rows=N         — actual vs estimated row count (large discrepancy = stale statistics)
 
 -- Update statistics if estimates are very wrong
 ANALYZE users;          -- update statistics for one table
 VACUUM ANALYZE users;   -- reclaim dead rows AND update statistics
-```
+
+
 
 ### Extensions
-
-
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -7307,10 +8385,7 @@ WHERE ST_DWithin(location, ST_MakePoint(-9.14, 38.71)::geography, 5000);
 
 ### Lateral Join
 
-
-LATERAL lets a subquery reference columns from the left-hand side — like a
-correlated subquery but usable as a table:
-
+LATERAL lets a subquery reference columns from the left-hand side — like a correlated subquery but usable as a table:
 
 ```sql
 -- For each user, get their 3 most recent orders (without LATERAL, this is complex)
@@ -7325,247 +8400,644 @@ JOIN LATERAL (
 ) recent ON true;
 ```
 
-## 5.06 GraphQL
+
+
+## 5.04 NoSQL
+
+
+### Overview
+
+**NoSQL** (Not Only SQL) is a broad category of database systems that store and retrieve data using models other than the traditional relational table-row model.
+
+NoSQL databases were built to address limitations of relational databases at scale:
+- Horizontal scaling across many cheap servers
+- Flexible or schema-less data models
+- High write throughput for large volumes of data
+- Support for unstructured or semi-structured data
+
+NoSQL does not mean "no SQL at all" — it means SQL is not the primary interface, and the relational model is not enforced.
+
+
+### Types of NoSQL Databases
+
+There are four main types of NoSQL databases. Each is optimised for a different data access pattern.
+
+
+#### Document Databases
+
+Store data as self-contained documents, typically JSON or BSON.
+
+Each document can have a different structure — there is no enforced schema.
+
+```json
+{
+  "id": "u_001",
+  "name": "Beatriz Santos",
+  "email": "beatriz@example.com",
+  "address": {
+    "city": "Lisbon",
+    "country": "Portugal"
+  },
+  "tags": ["engineer", "backend"]
+}
+```
+
+Related data is embedded directly inside the document rather than split across tables and joined.
+
+Best for: content management, user profiles, product catalogues, e-commerce.
+
+Examples: **MongoDB**, **Firestore**, **CouchDB**, **Amazon DocumentDB**
+
+
+#### Key-Value Stores
+
+The simplest NoSQL model. Each entry is a key paired with a value. The value is opaque — the database doesn't care about its structure.
+
+```text
+user:1001        →  { "name": "Beatriz", "role": "admin" }
+session:xyz      →  "eyJhbGciOiJIUzI1NiJ9..."
+counter:visits   →  94231
+```
+
+Extremely fast reads and writes. Ideal for caching, session storage, and feature flags.
+
+Examples: **Redis**, **DynamoDB** (also document), **Memcached**
+
+
+#### Column-Family (Wide-Column) Databases
+
+Data is stored in rows and columns, but columns are grouped into **column families** and each row can have a completely different set of columns. Optimised for high-volume writes and reads distributed across many nodes.
+
+Unlike a relational table where all rows share the same columns, each row here only stores the columns it actually has data for — sparse storage.
+
+Best for: time-series data, IoT sensor data, analytics pipelines, event logging, write-heavy workloads.
+
+Examples: **Apache Cassandra**, **Apache HBase**, **Google Bigtable**
+
+
+#### Graph Databases
+
+Store data as **nodes** (entities) and **edges** (relationships between them). Both nodes and edges can have properties.
+
+```text
+(Beatriz)-[:WORKS_AT]->(Company A)
+(Beatriz)-[:KNOWS]->(João)
+(João)-[:WORKS_AT]->(Company A)
+```
+
+Optimised for traversing relationships — queries like "find all friends of friends who work at the same company" are natural and fast, whereas the same query in SQL requires multiple expensive JOINs.
+
+Best for: social networks, recommendation engines, fraud detection, knowledge graphs, access control systems.
+
+Examples: **Neo4j**, **Amazon Neptune**, **ArangoDB**
+
+
+### NoSQL vs SQL
+
+| | SQL (Relational) | NoSQL |
+|---|---|---|
+| Schema | Fixed, enforced at write | Flexible or schema-less |
+| Scaling | Vertical (scale up) | Horizontal (scale out) |
+| Transactions | Full ACID | Varies (often BASE) |
+| Joins | Native | Manual or embedded data |
+| Query language | SQL (standardised) | Database-specific |
+| Best for | Complex queries, integrity | High volume, varied data |
+
+
+### ACID vs BASE
+
+Relational databases guarantee **ACID** properties for transactions:
+- **A**tomicity — all or nothing
+- **C**onsistency — data is always valid
+- **I**solation — concurrent transactions don't interfere
+- **D**urability — committed data survives crashes
+
+Many NoSQL databases follow **BASE** instead:
+- **B**asically Available — the system is always available but may return stale data
+- **S**oft state — state may change over time even without new input
+- **E**ventually consistent — the system will converge to a consistent state given enough time
+
+BASE trades strict consistency for availability and partition tolerance, following the trade-off described by the CAP theorem.
+
+
+### The CAP Theorem
+
+In any distributed system you can only guarantee two of three properties simultaneously:
+
+- **C**onsistency — every read returns the most recent write
+- **A**vailability — every request gets a response (not an error)
+- **P**artition Tolerance — the system continues operating despite network failures between nodes
+
+Since network partitions are unavoidable in distributed systems, the practical choice is between:
+- **CP** — consistent but may refuse requests during a partition (e.g. HBase, Zookeeper)
+- **AP** — always available but may return stale data during a partition (e.g. Cassandra, DynamoDB)
+
+Most NoSQL databases are designed as **AP systems** — they prioritise availability and reach consistency eventually. This is why reading from a NoSQL database immediately after a write might return old data in certain configurations.
+
+
+### When to Use NoSQL
+
+**Use NoSQL when:**
+- Data is hierarchical or document-shaped, avoiding many JOINs
+- You need to scale writes horizontally across many servers
+- The schema needs to evolve frequently (e.g. product attributes vary per category)
+- Write throughput is extremely high (IoT, logging, analytics, real-time feeds)
+- You are building graph or relationship-heavy features
+
+**Use SQL when:**
+- Data is highly relational with many entities referencing each other
+- You need strong ACID transactions (financial systems, inventory management)
+- Complex ad-hoc queries are common
+- Data integrity and referential constraints are critical
+
+
+### Embedding vs Referencing in Document Databases
+
+Document databases require you to decide how to model relationships at schema design time.
+
+**Embedding** — store related data inside the parent document:
+- One query returns everything — no JOIN needed
+- Atomic updates on a single document
+- Risk: data duplication if the same sub-document is shared across many parents; large documents become slow to load
+
+**Referencing** — store only an identifier pointing to another document (like a foreign key):
+- Avoids duplication
+- Keeps documents small
+- Requires multiple queries or a $lookup aggregation stage
+- Better when related data changes independently or is very large
+
+The key difference from SQL: there is no automatic JOIN — you must plan data access patterns at design time and choose accordingly.
+
+
+
+
+## 5.05 MongoDB
+
+
+### Overview
+
+MongoDB is a document-oriented NoSQL database. Instead of rows in tables, data is stored as JSON-like BSON documents within collections. Documents in the same collection can have different fields — schema-flexible by default. The primary query interface is JavaScript-like method chaining in the MongoDB shell or driver.
+
+Core concepts:
+- **Database** — contains collections (like a SQL database contains tables)
+- **Collection** — a group of documents (like a SQL table, but schema-free)
+- **Document** — a single record stored as BSON (like a SQL row, but nested)
+- **_id** — every document has a unique `_id` field (auto-generated as ObjectId if omitted)
+
+
+### find() — Querying Documents
+
+`find()` returns all documents that match a filter. With no filter it returns everything.
+
+```javascript
+// Return all documents in the collection
+db.users.find()
+
+// Find with a filter — users from Lisbon
+db.users.find({ city: "Lisbon" })
+
+// Find one document — stops after the first match
+db.users.findOne({ email: "beatriz@example.com" })
+```
+
+
+### Comparison Operators
+
+Filter documents based on field values using operators prefixed with `$`.
+
+```javascript
+// $eq — equal (same as writing the value directly)
+db.products.find({ price: { $eq: 29.99 } })
+db.products.find({ price: 29.99 })              // shorthand, identical result
+
+// $ne — not equal
+db.users.find({ status: { $ne: "inactive" } })
+
+// $gt, $gte — greater than, greater than or equal
+db.products.find({ price: { $gt: 100 } })
+db.products.find({ price: { $gte: 100 } })
+
+// $lt, $lte — less than, less than or equal
+db.products.find({ stock: { $lt: 10 } })        // items running low
+
+// Combine: price between 50 and 200
+db.products.find({ price: { $gte: 50, $lte: 200 } })
+```
+
+
+### $in and $nin — Match a List of Values
+
+```javascript
+// $in — field matches any value in the array
+db.users.find({ country: { $in: ["Portugal", "Spain", "France"] } })
+
+// $nin — field does NOT match any value in the array
+db.orders.find({ status: { $nin: ["cancelled", "refunded"] } })
+```
+
+
+### $and and $or — Logical Operators
+
+```javascript
+// $and — both conditions must be true
+db.products.find({
+    $and: [
+        { price: { $lt: 100 } },
+        { category: "electronics" }
+    ]
+})
+
+// Shorthand: multiple fields in the same filter object imply AND
+db.products.find({ price: { $lt: 100 }, category: "electronics" })
+
+// $or — at least one condition must be true
+db.users.find({
+    $or: [
+        { country: "Portugal" },
+        { country: "Brazil" }
+    ]
+})
+
+// Combining $and and $or
+db.orders.find({
+    status: "pending",
+    $or: [
+        { amount: { $gt: 500 } },
+        { priority: "high" }
+    ]
+})
+```
+
+
+### $exists and $type — Field Presence and Type
+
+```javascript
+// $exists — documents where the field exists (true) or is missing (false)
+db.users.find({ phone: { $exists: true } })
+db.users.find({ phone: { $exists: false } })    // users with no phone field
+
+// $type — documents where the field is a specific BSON type
+db.products.find({ price: { $type: "double" } })
+db.users.find({ age: { $type: "int" } })
+```
+
+
+### Querying Nested Fields and Arrays
+
+```javascript
+// Dot notation — query a nested field
+db.users.find({ "address.city": "Lisbon" })
+db.orders.find({ "shipping.status": "delivered" })
+
+// Array contains a value — MongoDB checks if the array includes the value
+db.posts.find({ tags: "mongodb" })              // posts where tags array contains "mongodb"
+
+// $all — array must contain ALL listed values
+db.posts.find({ tags: { $all: ["mongodb", "nosql"] } })
+
+// $size — array has exactly N elements
+db.orders.find({ items: { $size: 3 } })         // orders with exactly 3 items
+
+// $elemMatch — at least one array element matches multiple conditions
+db.orders.find({
+    items: { $elemMatch: { product: "Laptop", quantity: { $gte: 2 } } }
+})
+```
+
+
+### Projection — Selecting Which Fields to Return
+
+The second argument to `find()` controls which fields appear in the result.
+`1` means include, `0` means exclude. You cannot mix 1s and 0s (except for `_id`).
+
+```javascript
+// Include only name and email (plus _id by default)
+db.users.find({}, { name: 1, email: 1 })
+
+// Exclude _id from the result
+db.users.find({}, { name: 1, email: 1, _id: 0 })
+
+// Exclude a field — return everything except password
+db.users.find({}, { password: 0 })
+```
+
+
+### sort() — Ordering Results
+
+`1` = ascending (A→Z, 0→9), `-1` = descending (Z→A, 9→0).
+
+```javascript
+// Sort by price ascending (cheapest first)
+db.products.find().sort({ price: 1 })
+
+// Sort by price descending (most expensive first)
+db.products.find().sort({ price: -1 })
+
+// Sort by multiple fields — first by category A→Z, then by price high→low
+db.products.find().sort({ category: 1, price: -1 })
+```
+
+
+### limit() and skip() — Pagination
+
+```javascript
+// Return only the first 10 documents
+db.products.find().limit(10)
+
+// Skip the first 20, return the next 10 — page 3 of 10-per-page
+db.products.find().sort({ createdAt: -1 }).skip(20).limit(10)
+```
+
+`skip()` becomes slow on large collections (must scan and discard skipped docs).
+For large datasets, use range-based pagination instead:
+
+```javascript
+// Cursor-based: remember the last _id and filter from there
+db.products.find({ _id: { $gt: lastSeenId } }).limit(10)
+```
+
+
+### Counting Documents
+
+```javascript
+// Count all documents in the collection
+db.users.countDocuments()
+
+// Count documents matching a filter
+db.orders.countDocuments({ status: "completed" })
+
+// estimatedDocumentCount() — faster but uses metadata, not actual count
+db.users.estimatedDocumentCount()
+```
+
+
+### insertOne() and insertMany()
+
+```javascript
+// Insert a single document
+db.users.insertOne({
+    name: "Beatriz Santos",
+    email: "beatriz@example.com",
+    city: "Lisbon",
+    createdAt: new Date()
+})
+// MongoDB auto-generates _id if not provided.
+
+// Insert multiple documents at once
+db.products.insertMany([
+    { name: "Laptop", price: 999, stock: 15 },
+    { name: "Mouse",  price: 29,  stock: 120 },
+    { name: "Desk",   price: 350, stock: 8 }
+])
+```
+
+
+### updateOne() and updateMany()
+
+Update operators modify specific fields without replacing the whole document.
+
+```javascript
+// $set — set a field value (creates the field if it doesn't exist)
+db.users.updateOne(
+    { email: "beatriz@example.com" },       // filter: which document to update
+    { $set: { city: "Porto", updatedAt: new Date() } }
+)
+
+// $unset — remove a field entirely
+db.users.updateOne(
+    { _id: userId },
+    { $unset: { temporaryToken: "" } }
+)
+
+// $inc — increment a numeric field by a value
+db.products.updateOne(
+    { name: "Laptop" },
+    { $inc: { stock: -1 } }                 // decrease stock by 1 after a sale
+)
+
+// $push — add an element to an array
+db.posts.updateOne(
+    { _id: postId },
+    { $push: { comments: { user: "João", text: "Great post!" } } }
+)
+
+// $addToSet — add to array only if the value is not already present
+db.users.updateOne(
+    { _id: userId },
+    { $addToSet: { tags: "premium" } }      // won't add "premium" twice
+
+)
+
+// $pull — remove elements from an array that match a condition
+db.users.updateOne(
+    { _id: userId },
+    { $pull: { tags: "trial" } }            // remove "trial" from the tags array
+)
+
+// Update many documents at once
+db.orders.updateMany(
+    { status: "pending", createdAt: { $lt: cutoffDate } },
+    { $set: { status: "expired" } }
+)
+
+// upsert: true — insert if no document matches the filter
+db.settings.updateOne(
+    { userId: userId },
+    { $set: { theme: "dark" } },
+    { upsert: true }
+)
+```
+
+
+### deleteOne() and deleteMany()
+
+```javascript
+// Delete the first document matching the filter
+db.sessions.deleteOne({ token: "abc123" })
+
+// Delete all documents matching the filter
+db.logs.deleteMany({ createdAt: { $lt: cutoffDate } })
+
+// Delete all documents in the collection (keep the collection itself)
+db.tempCache.deleteMany({})
+```
+
+
+### EMBED vs REFERENCE
+
+The most important design decision in MongoDB: should related data be embedded inside a document, or stored separately and referenced by ID?
+
+**Embed when:**
+- Data is always accessed together (a blog post and its author's name)
+- The nested data is owned by the parent and has no independent existence
+- The embedded array has a small, bounded size
+
+```json
+{
+    "_id": "post_001",
+    "title": "My First Post",
+    "author": { "id": "u1", "name": "Beatriz" },
+    "tags": ["tech", "java"]
+}
+```
+
+**Reference when:**
+- Data is shared by multiple documents (a user referenced by many posts)
+- The referenced data changes frequently
+- The array could grow unboundedly
+
+```json
+{
+    "_id": "post_001",
+    "title": "My First Post",
+    "authorId": "u1"
+}
+```
+
+
+### Aggregation Pipeline
+
+The aggregation pipeline processes documents through sequential stages, each transforming the result for the next. It is MongoDB's equivalent of SQL's SELECT + JOIN + GROUP BY + HAVING.
+
+```javascript
+db.orders.aggregate([
+    { $match: { status: "completed" } },            // WHERE
+    { $group: {
+        _id: "$customerId",                          // GROUP BY customerId
+        totalSpent: { $sum: "$amount" },             // SUM(amount)
+        orderCount: { $count: {} }
+    }},
+    { $sort: { totalSpent: -1 } },                  // ORDER BY totalSpent DESC
+    { $limit: 10 },                                 // LIMIT 10
+    { $lookup: {                                    // JOIN customers collection
+        from: "customers",
+        localField: "_id",
+        foreignField: "_id",
+        as: "customer"
+    }},
+    { $unwind: "$customer" },                       // flatten the joined array
+    { $project: { "customer.name": 1, totalSpent: 1, orderCount: 1 } }
+])
+```
+
+Common pipeline stages:
+
+| Stage | Purpose | SQL equivalent |
+|---|---|---|
+| $match | Filter documents | WHERE / HAVING |
+| $group | Group and aggregate | GROUP BY |
+| $sort | Order results | ORDER BY |
+| $limit | Restrict result count | LIMIT |
+| $skip | Skip N documents | OFFSET |
+| $project | Include/exclude/reshape fields | SELECT |
+| $lookup | Join another collection | JOIN |
+| $unwind | Flatten an array field into separate docs | — |
+| $addFields | Add computed fields | SELECT expr AS name |
+| $count | Count remaining documents | COUNT(*) |
+
+
+### Indexes in MongoDB
+
+```javascript
+// Single field index
+db.users.createIndex({ email: 1 })
+
+// Unique index — prevents duplicate values
+db.users.createIndex({ email: 1 }, { unique: true })
+
+// Compound index — useful when filtering by both fields together
+db.orders.createIndex({ userId: 1, createdAt: -1 })
+
+// TTL index — automatically deletes documents after N seconds
+db.sessions.createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 })
+
+// Text index — enables full-text search
+db.posts.createIndex({ title: "text", content: "text" })
+db.posts.find({ $text: { $search: "mongodb nosql" } })
+
+// View existing indexes on a collection
+db.users.getIndexes()
+
+// Drop an index
+db.users.dropIndex("email_1")
+```
+
+
+## 5.06 Data Modelling
 
 
 
 ### Overview
 
-GraphQL is a query language for APIs developed by Facebook in 2012, open-sourced
-in 2015. It is not a database query language — it is an API communication
-protocol. Where REST has many endpoints (one URL per resource), GraphQL has a
-single endpoint. Clients specify exactly what data they need, and the server
-returns precisely that — no more, no less.
+Data modelling is the process of designing how data is structured, stored, and related in a database. Good data models prevent anomalies, support queries efficiently, and remain maintainable as the system evolves.
 
 
-### The Problems Graphql Solves
+### Normalisation
+
+Normalisation eliminates redundancy and prevents update anomalies. Each normal form builds on the previous.
+
+**1NF (First Normal Form)**:
+  - Each column holds an atomic (indivisible) value
+  - No repeating groups (each cell has one value, not a list)
+
+**2NF (Second Normal Form)**:
+  - Is in 1NF
+  - Every non-key column depends on the WHOLE primary key (no partial dependencies)
+  - Only matters if the table has a composite primary key
+
+**3NF (Third Normal Form)**:
+  - Is in 2NF
+  - Every non-key column depends ONLY on the primary key (no transitive dependencies)
+  - Example violation: orders table with city, zip_code, and country — city depends on zip_code (not on order_id). Fix: separate address table. In practice, design to 3NF, then selectively denormalise for performance where needed (and document why).
 
 
 
-**Over-fetching (rest)**: GET /api/users/42 returns 20 fields — the mobile client
-only needs name and avatar. You download 20x more data than necessary.
+### Common Patterns
+
+**Soft Delete** — mark records as deleted instead of removing them. Enables recovery, audit trails, and referential integrity:
+
+```sql
+ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP NULL;
+-- "Delete" a user
+UPDATE users SET deleted_at = NOW() WHERE id = 123;
+-- Query only active users
+SELECT * FROM users WHERE deleted_at IS NULL;
+```
 
 
-**Under-fetching (rest)**: A single endpoint doesn't have enough data, and the
-client must make multiple requests to assemble a view:
-GET /api/users/42
-GET /api/users/42/posts
-GET /api/users/42/followers
-— three round trips, each with latency.
-GraphQL solution — one request for exactly what you need:
+**Audit Columns** - standard fields every table should have
 
 ```text
-query {
-    user(id: "42") {
-        name
-        avatar
-        posts(limit: 5) { title }
-        followers { count }
-    }
-}
+created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+created_by  BIGINT REFERENCES users(id)    -- who created it
+updated_by  BIGINT REFERENCES users(id)    -- who last modified it
 ```
 
 
-### The Schema — CONTRACT BETWEEN CLIENT AND SERVER
+**Price Snapshot Pattern** — when an order is placed, the price of the product might change later. Store the price AT THE TIME OF PURCHASE in the order line, not just a reference to the current product price:
 
-Every GraphQL API is defined by a schema written in SDL (Schema Definition
-Language). The schema declares all available types, queries, mutations, and
-subscriptions — it is the contract between client and server.
-
-
-```typescript
-scalar DateTime
-scalar URL
-
-type User {
-    id:        ID!           # ID — unique identifier (serialised as String, but semantic ID)
-    name:      String!       # ! means non-null — guaranteed to be present
-    email:     String!
-    bio:       String        # nullable — may be absent
-    createdAt: DateTime!
-    posts:     [Post!]!      # non-null list of non-null Posts
-    avatar:    URL
-}
-
-type Post {
-    id:        ID!
-    title:     String!
-    content:   String!
-    published: Boolean!
-    author:    User!         # relation to User
-    tags:      [String!]!
-}
-
-enum Role { ADMIN EDITOR VIEWER }
-
-input CreateUserInput {
-    name:     String!
-    email:    String!
-    password: String!
-    role:     Role = VIEWER   # default value
-}
-
-interface Node { id: ID! }   # interface — all implementors must have id
-
-union SearchResult = User | Post   # a field can be one of several types
-```
-
-The schema has three special root types that define available operations:
-
-
-```text
-type Query {                  # read operations (equivalent to GET in REST)
-    user(id: ID!): User
-    users(limit: Int = 20, offset: Int = 0, role: Role): [User!]!
-    search(query: String!): [SearchResult!]!
-}
-
-type Mutation {               # write operations (equivalent to POST/PUT/DELETE)
-    createUser(input: CreateUserInput!): User!
-    updateUser(id: ID!, input: UpdateUserInput!): User!
-    deleteUser(id: ID!): Boolean!
-}
-
-type Subscription {           # real-time (WebSocket-based)
-    newPost(authorId: ID): Post!
-    userStatusChanged: User!
-}
+```sql
+CREATE TABLE order_items (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id     BIGINT NOT NULL,
+    product_id   BIGINT NOT NULL,            -- reference to the product
+    product_name VARCHAR(255) NOT NULL,      -- snapshot: name at purchase time
+    unit_price   DECIMAL(10,2) NOT NULL,     -- snapshot: price at purchase time
+    quantity     INT NOT NULL
+);
 ```
 
 
-### Writing Queries, Mutations, and Subscriptions
+**Many-to-many** - always use a junction table
 
-
-
-```python
-# Basic query — request exactly the fields you need
-query {
-    user(id: "42") {
-        name
-        email
-        posts(limit: 3) {
-            title
-            published
-        }
-    }
-}
-
-# Named query with variables — best practice for logging/debugging
-query GetUserWithPosts($userId: ID!, $postLimit: Int = 5) {
-    user(id: $userId) {
-        name
-        posts(limit: $postLimit) { title }
-    }
-}
-# Variables passed separately as JSON:
-{ "userId": "42", "postLimit": 3 }
-
-# Fragments — reusable field selections
-fragment UserBasicInfo on User {
-    id
-    name
-    email
-}
-
-query {
-    user(id: "1") { ...UserBasicInfo }
-}
-
-# Inline fragments for union types
-query {
-    search(query: "beatriz") {
-        ... on User { name email }      # fields specific to User
-        ... on Post { title content }   # fields specific to Post
-    }
-}
-
-# Mutation
-mutation CreateNewUser($input: CreateUserInput!) {
-    createUser(input: $input) {
-        id
-        name
-        createdAt
-    }
-}
-# Variables:
-{ "input": { "name": "Beatriz", "email": "b@example.com", "password": "secure" } }
-
-# Multiple mutations in one request — execute in SEQUENCE (not in parallel)
-mutation {
-    createPost(input: { title: "Hello" }) { id }
-    publishPost(id: "123") { published }
-}
-```
-
-
-### Resolvers** — HOW GRAPHQL ACTUALLY FETCHES DATA
-
-For each field in the schema, there is a RESOLVER — a function that knows how
-to fetch that field's value. Resolvers receive four arguments:
-
-```javascript
-parent  — the resolved value of the parent type
-args    — the arguments passed to this field in the query
-context — shared object (database connection, auth info, services)
-info    — information about the query (fields requested, etc.)
-
-const resolvers = {
-    Query: {
-        user: async (parent, { id }, context) => {
-            return context.db.users.findById(id);
-        },
-    },
-
-    User: {
-        posts: async (parent, { limit }, context) => {
-            // parent is the User object resolved above
-            return context.db.posts.findByAuthorId(parent.id, limit);
-        },
-    },
-};
-```
-
-### THE N+1 PROBLEM AND DATALOADER
-
-The most critical GraphQL performance issue. When loading 100 posts, each with
-an author, the User.author resolver is called 100 times — 100 database queries!
-
-DataLoader solves this with batching:
-  1. Collects all IDs requested within a single event loop tick
-  2. Makes ONE batch query: SELECT * FROM users WHERE id IN (1, 2, 3, ...)
-  3. Caches results — if the same user appears in multiple posts, only queried once
-
-
-```javascript
-const userLoader = new DataLoader(async (userIds) => {
-    const users = await db.users.findByIds(userIds);
-    // CRITICAL: return in the same order as the input IDs!
-    return userIds.map(id => users.find(u => u.id === id));
-});
-
-// In resolver — uses loader instead of direct DB call
-User: {
-    author: (parent, args, context) =>
-        context.loaders.user.load(parent.authorId),  // batched automatically
-}
-// 100 posts → 1 query for users + 1 query for posts. Not 101!
-```
-
-### REST vs GRAPHQL — WHEN TO USE WHICH
-
-
-```python
-Use GraphQL when:
-- Multiple clients (web, mobile, third-party) need different data shapes
-- You have deeply nested, relational data
-- You want to avoid over-fetching / under-fetching
-- Rapid product iteration where data requirements change often
-
-Use REST when:
-- Public API for third parties (more familiar, better HTTP caching)
-- Simple CRUD with predictable, uniform data
-- File uploads (GraphQL handles these awkwardly)
-- Strong HTTP caching requirements (GET + URL = cacheable; GraphQL POST is not)
+```sql
+CREATE TABLE student_courses (
+    student_id BIGINT REFERENCES students(id),
+    course_id  BIGINT REFERENCES courses(id),
+    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (student_id, course_id)
+);
 ```
 
 
@@ -8634,7 +10106,6 @@ those mistakes from causing incidents, or to detect and recover from them quickl
 
 # Part 8 — Quick Interview Questions
 
-
 ## 8.01 Java
 
 ### Interview Questions
@@ -8906,7 +10377,27 @@ Authentication verifies identity (who are you?). Authorisation determines permis
 Versioning ensures clients aren't broken by API changes. Strategies: URI versioning (/v1/users), query parameter (?version=1), request header (Accept: application/vnd.api.v1+json), or content negotiation. URI versioning is most common and easiest to consume.
 
 
-## 8.12 Microservices
+## 8.12 GraphQL
+
+### Interview Questions
+
+**Q: What is GraphQL and how does it differ from REST?**
+GraphQL is a query language where the client specifies exactly what data it needs — no over-fetching (extra fields) or under-fetching (needing multiple requests for related data). A single /graphql endpoint handles all operations. The schema defines types and relationships; resolvers fetch the data.
+
+**Q: What is the difference between Query, Mutation, and Subscription?**
+Query: read-only data fetching (equivalent to GET). Mutation: data modification — create, update, delete (equivalent to POST/PUT/DELETE). Subscription: long-lived connections for real-time updates — the server pushes data when specified events occur, typically via WebSocket.
+
+**Q: What is the N+1 problem in GraphQL and how is it solved?**
+When resolving a list of N items and fetching related data for each, a naive implementation makes 1 query for the list plus N queries for related items. DataLoader solves this by batching and deduplicating database calls within a single request tick, reducing 1+N queries to just 1+1.
+
+**Q: What is a GraphQL schema?**
+The schema is the contract between client and server — it defines types (type User { id: ID! name: String! }), queries (type Query { user(id: ID!): User }), mutations, subscriptions, and custom scalars. The schema is strongly typed and introspectable, enabling tools like GraphiQL and schema-based code generation.
+
+**Q: What are the pros and cons of GraphQL vs REST?**
+GraphQL pros: precise data fetching, single endpoint, strong typing, self-documenting, great for complex UIs. REST pros: simpler HTTP-level caching (by URL), familiar to all clients, no special library needed, easier to rate-limit per endpoint. GraphQL cons: complex caching, all requests are POST (bypasses HTTP caching), harder to secure per-operation.
+
+
+## 8.13 Microservices
 
 ### Interview Questions
 
@@ -8929,7 +10420,7 @@ Sagas manage distributed transactions across multiple services. Instead of a 2-p
 An API Gateway is the single entry point for all clients. It handles: routing requests to the correct microservice, authentication and authorisation, rate limiting, SSL termination, request aggregation, and response transformation. Examples: Kong, AWS API Gateway, Spring Cloud Gateway.
 
 
-## 8.13 Authentication & Authorization
+## 8.14 Authentication & Authorization
 
 ### Interview Questions
 
@@ -8952,7 +10443,7 @@ Users and services should only have the minimum permissions required to perform 
 Cross-Origin Resource Sharing lets browsers make requests to a different origin. The browser sends a preflight OPTIONS request asking if the origin is allowed. The server responds with Access-Control-Allow-Origin and related headers. Only after the response permits the origin does the browser send the real request.
 
 
-## 8.14 API Integration
+## 8.15 API Integration
 
 ### Interview Questions
 
@@ -8972,7 +10463,7 @@ Pagination prevents returning thousands of records in one response. Strategies: 
 Never commit to source control — use .gitignore and environment variables. Store in secrets managers (AWS Secrets Manager, Vault, Kubernetes Secrets). Rotate regularly. Scope keys to minimum required permissions. Use short-lived tokens where possible rather than long-lived API keys.
 
 
-## 8.15 WebSockets
+## 8.16 WebSockets
 
 ### Interview Questions
 
@@ -8992,7 +10483,7 @@ WebSocket connections are stateful and long-lived, making horizontal scaling har
 Choose WebSockets for true bidirectional communication where the client also sends messages frequently. Choose SSE for server-to-client streaming only (notifications, live feeds) — SSE is simpler, uses plain HTTP (no special handshake), supports automatic reconnection natively, and works naturally through HTTP/2 multiplexing.
 
 
-## 8.16 SOAP
+## 8.17 SOAP
 
 ### Interview Questions
 
@@ -9009,7 +10500,7 @@ SOAP is a protocol with strict standards (WSDL, WS-Security, WS-AtomicTransactio
 WS-Security is a SOAP extension providing message-level security: authentication (username/password or X.509 certificates in the header), digital signing (ensures message integrity), and encryption (ensures confidentiality). Unlike transport-level TLS, message-level security survives intermediary processing.
 
 
-## 8.17 JSON
+## 8.18 JSON
 
 ### Interview Questions
 
@@ -9026,7 +10517,7 @@ JSON Schema is a vocabulary for validating the structure and types of JSON docum
 Never concatenate user input into JSON strings — use proper serialisation libraries to avoid JSON injection. Watch for prototype pollution when using insecure deep-merge patterns with untrusted JSON in JavaScript. Always validate JSON against a schema on untrusted input at API boundaries.
 
 
-## 8.18 XML
+## 8.19 XML
 
 ### Interview Questions
 
@@ -9043,7 +10534,34 @@ XPath is a query language for navigating XML documents using path expressions (e
 XSLT (XSL Transformations) transforms XML into another format — another XML document, HTML, or plain text — using a stylesheet written in XML. Still used for document pipelines, report generation, and transforming legacy XML feeds from enterprise systems.
 
 
-## 8.19 React
+## 8.20 Network Protocols
+
+
+**Q: What is the difference between TCP and UDP?**
+TCP (Transmission Control Protocol) is connection-oriented — it guarantees delivery, ordering, and error-checking via a three-way handshake. UDP (User Datagram Protocol) is connectionless — it sends packets without guaranteeing delivery or order, making it faster and suited for video streaming, DNS, and games.
+
+**Q: What happens during the HTTP request-response cycle?**
+The client opens a TCP connection to the server (or reuses one with keep-alive), sends an HTTP request with method, headers, and optional body, and waits. The server processes the request, returns a status code (2xx, 3xx, 4xx, 5xx), headers, and an optional body. HTTPS adds a TLS handshake before the first request to negotiate keys and authenticate the server.
+
+**Q: What is HTTPS and how does TLS work?**
+HTTPS is HTTP over TLS (Transport Layer Security). During the TLS handshake: the client sends supported cipher suites, the server responds with its certificate (containing a public key), the client verifies the certificate against a trusted CA, they exchange keys, and then all traffic is encrypted with a symmetric key derived from that exchange.
+
+**Q: What is HTTP/2 and how does it differ from HTTP/1.1?**
+HTTP/2 multiplexes multiple requests over a single TCP connection (no head-of-line blocking per request), compresses headers (HPACK), and supports server push. HTTP/1.1 opens a new connection per request (or serialises over keep-alive), which wastes round trips. HTTP/3 replaces TCP with QUIC (UDP-based) for even lower latency.
+
+**Q: What is DNS and how does a domain resolve to an IP?**
+DNS (Domain Name System) translates domain names to IP addresses. Resolution order: browser cache → OS cache → local resolver → recursive DNS resolver → root nameserver → TLD nameserver → authoritative nameserver, which returns the A/AAAA record. Results are cached per TTL.
+
+**Q: What is the difference between a REST API call and a WebSocket connection?**
+REST is request-response over HTTP — the client initiates each exchange, the connection closes (or is returned to pool) after the response. WebSockets upgrade an HTTP connection to a persistent, full-duplex channel — either side can send messages at any time. REST suits stateless CRUD; WebSockets suit real-time push (chat, live scores, collaborative editing).
+
+**Q: What are common HTTP status codes and what do they mean?**
+- 200 OK — request succeeded; 201 Created — resource created; 204 No Content — success with no body
+- 301 Moved Permanently — redirect, update bookmark; 304 Not Modified — cached response valid
+- 400 Bad Request — malformed input; 401 Unauthorized — authentication required; 403 Forbidden — authenticated but lacks permission; 404 Not Found; 409 Conflict; 422 Unprocessable Entity
+- 500 Internal Server Error; 502 Bad Gateway; 503 Service Unavailable; 504 Gateway Timeout
+
+## 8.21 React
 
 ### Interview Questions
 
@@ -9069,7 +10587,7 @@ useMemo memoises the result of an expensive computation, recomputing only when d
 React Fiber is the reconciliation engine introduced in React 16. It renders work in increments (units of work called fibers), allowing high-priority updates (user input) to interrupt low-priority renders. This enables concurrent features like useTransition and Suspense without blocking the main thread.
 
 
-## 8.20 Angular
+## 8.22 Angular
 
 ### Interview Questions
 
@@ -9092,7 +10610,7 @@ Pipes transform values in templates: {{ date | date:'shortDate' }}, {{ price | c
 RxJS provides Observable-based reactive programming. Angular uses it throughout: HttpClient returns Observables, Router exposes navigation events as Observables, and forms expose value changes as Observables. Operators (map, filter, switchMap, combineLatest) let you compose asynchronous streams declaratively.
 
 
-## 8.21 Three.js
+## 8.23 Three.js
 
 ### Interview Questions
 
@@ -9112,7 +10630,7 @@ The render loop calls renderer.render(scene, camera) on every frame. requestAnim
 Geometry defines the shape — vertex positions, faces, and UVs (BoxGeometry, SphereGeometry, or custom BufferGeometry). Material defines the surface appearance — how it reacts to light, its colour, texture, and transparency (MeshBasicMaterial ignores light; MeshStandardMaterial uses PBR). A Mesh combines geometry and material.
 
 
-## 8.22 Next.js
+## 8.24 Next.js
 
 ### Interview Questions
 
@@ -9132,7 +10650,7 @@ Server Components run only on the server — they can fetch data directly (datab
 Middleware runs before a request is processed, at the edge (CDN network layer). It can redirect, rewrite, add headers, or return responses. Common uses: authentication checks (redirect to login before serving a page), A/B testing, and geolocation-based routing. Written in middleware.ts at the project root.
 
 
-## 8.23 React Native
+## 8.25 React Native
 
 ### Interview Questions
 
@@ -9152,7 +10670,7 @@ Metro is React Native's JavaScript bundler — it resolves imports, bundles JS, 
 Platform.OS ('ios' | 'android') for conditional logic in code. Platform.select({ios: ..., android: ...}) for object-based switching. File-name suffixes (.ios.tsx, .android.tsx) for component-level platform splits. StyleSheet.create with Platform.OS for platform-specific styles.
 
 
-## 8.24 Flutter
+## 8.26 Flutter
 
 ### Interview Questions
 
@@ -9175,7 +10693,7 @@ Hot reload injects updated source code into the running app while preserving sta
 pubspec.yaml is Flutter's package manifest — it declares dependencies, dev dependencies, assets (images, fonts), and Flutter SDK constraints. Equivalent to package.json in Node.js. Run flutter pub get after changes to download packages.
 
 
-## 8.25 Kotlin
+## 8.27 Kotlin
 
 ### Interview Questions
 
@@ -9198,7 +10716,7 @@ A sealed class restricts subclasses to the same file or package — the compiler
 Extension functions add methods to existing classes without modifying their source or subclassing. fun String.capitalise() = this.replaceFirstChar { it.uppercase() }. They're syntactic sugar — compiled to static functions at bytecode level. Widely used in Android via Kotlin KTX extensions.
 
 
-## 8.26 Swift
+## 8.28 Swift
 
 ### Interview Questions
 
@@ -9221,7 +10739,7 @@ SwiftUI is Apple's declarative UI framework (Swift-only, iOS 13+). Views are str
 Generics parameterise functions and types over types unknown at definition time. func swap<T>(_ a: inout T, _ b: inout T). Protocols with associated types (associatedtype) enable generic protocol conformance. Swift generics are monomorphised at compile time — no type erasure like in Java.
 
 
-## 8.27 Vite
+## 8.29 Vite
 
 ### Interview Questions
 
@@ -9241,7 +10759,7 @@ Vite plugins extend the build pipeline using a Rollup-compatible API. They can t
 Vite supports special import suffixes: ?raw imports the file content as a string (useful for reading text files, markdown, GLSL shaders). ?url returns the asset's URL. ?worker imports a Web Worker. These suffixes let you import non-JS assets in a type-safe way without needing Webpack loaders.
 
 
-## 8.28 Tailwind CSS
+## 8.30 Tailwind CSS
 
 ### Interview Questions
 
@@ -9261,7 +10779,7 @@ Tailwind scans files specified in content (HTML, JSX, TSX, etc.) for class names
 JIT mode (now the default) generates styles on demand as you write classes. This enables arbitrary values (w-[137px], bg-[#1a2b3c]), all variants without configuration, faster build times, and a smaller dev bundle. Previously, arbitrary values required explicitly extending the config file.
 
 
-## 8.29 SCSS
+## 8.31 SCSS
 
 ### Interview Questions
 
@@ -9281,7 +10799,7 @@ A mixin is a reusable block of CSS that can accept arguments: @mixin flex-center
 @use imports a file as a namespace (sass.math.round()), preventing global variable conflicts. @forward re-exports a file's members to consumers. These replaced the older @import which polluted the global namespace and loaded files multiple times.
 
 
-## 8.30 SPA
+## 8.32 SPA
 
 ### Interview Questions
 
@@ -9301,7 +10819,7 @@ Search engine crawlers historically couldn't execute JavaScript, so SPAs rendere
 localStorage persists until explicitly cleared — available across tabs and sessions, same origin only. sessionStorage persists for the tab's lifetime — cleared when the tab closes. Cookies are sent with every HTTP request, can have expiry, httpOnly (inaccessible from JS), Secure (HTTPS only), and SameSite flags. Cookies are the only option for cross-request server-side state.
 
 
-## 8.31 Responsive UI
+## 8.33 Responsive UI
 
 ### Interview Questions
 
@@ -9321,7 +10839,7 @@ Media queries apply CSS conditionally based on device characteristics: viewport 
 Container queries (@container) apply styles based on the size of a parent container rather than the viewport. This enables truly component-based responsive design — a card component responds to its container's width regardless of where in the page it's placed. Supported in all modern browsers since 2023.
 
 
-## 8.32 Cross-Platform Development
+## 8.34 Cross-Platform Development
 
 ### Interview Questions
 
@@ -9338,7 +10856,33 @@ Flutter renders all UI using its own graphics engine (Skia/Impeller) instead of 
 Platform API differences (push notifications, biometrics, file system access), platform-specific UI conventions, native module gaps, performance tuning for different hardware, testing on many physical devices, and handling OS-specific bugs. Good abstractions and platform-specific code paths (Platform.OS, #if os(iOS)) mitigate these.
 
 
-## 8.33 Microsoft Azure
+## 8.35 Cloud
+
+### Interview Questions
+
+**Q: What is cloud computing and what are its main advantages?**
+Cloud computing is the delivery of computing services (servers, storage, databases, networking, software) over the internet instead of owning and maintaining physical hardware. Main advantages: pay-per-use pricing, on-demand scaling, no hardware maintenance, high availability across global data centres, and faster provisioning of resources.
+
+**Q: What is the difference between IaaS, PaaS, FaaS, and SaaS?**
+IaaS (Infrastructure as a Service) gives you virtual machines — you manage the OS, runtime, and applications (e.g. Azure VMs, EC2). PaaS (Platform as a Service) manages the OS and runtime for you — you just deploy the application (e.g. App Service, Heroku). FaaS (Function as a Service / Serverless) runs individual functions triggered by events — you pay only during execution (e.g. Azure Functions, AWS Lambda). SaaS (Software as a Service) delivers a complete application you just use (e.g. Gmail, Slack). As you move up the stack, you manage less and the provider manages more.
+
+**Q: What is CaaS (Containers as a Service) and how does it differ from IaaS?**
+CaaS provides managed infrastructure specifically for running containers — you supply Docker images and the provider handles the underlying cluster, networking, and scaling (e.g. GKE, AKS, ECS). With IaaS you rent a raw VM and must install and manage Docker and Kubernetes yourself. CaaS sits in the middle: more control than PaaS, less operational burden than IaaS.
+
+**Q: What is serverless computing and when would you choose it?**
+Serverless (FaaS) means you deploy individual functions that execute only when triggered (HTTP request, queue message, timer, file upload). The provider manages all infrastructure — there are no servers to provision or idle capacity to pay for. Choose serverless for event-driven, short-lived tasks with unpredictable traffic. Avoid it for long-running workloads or when cold start latency is unacceptable.
+
+**Q: What is the shared responsibility model in cloud security?**
+The cloud provider is responsible for security of the cloud (physical data centres, hypervisor, network infrastructure). The customer is responsible for security in the cloud (what you deploy: data, access controls, OS patches on VMs, application code). The boundary shifts depending on the service model — in SaaS the provider covers almost everything; in IaaS you own most of the stack above the hardware.
+
+**Q: What is the difference between regions and availability zones?**
+A region is a geographic area containing one or more data centres (e.g. West Europe, US East). An availability zone (AZ) is an isolated physical location within a region with independent power, cooling, and networking. Deploying across multiple AZs protects against a single data centre failure. Deploying across multiple regions protects against regional outages and provides lower latency for global users.
+
+**Q: What is auto-scaling and how does it work?**
+Auto-scaling automatically adjusts the number of compute instances based on current demand. Horizontal scale-out adds more instances when load increases; scale-in removes them when load drops. Triggers are typically metrics (CPU usage, request queue depth, memory). This ensures cost efficiency (no idle over-provisioning) and handles traffic spikes without manual intervention.
+
+
+## 8.36 Microsoft Azure
 
 ### Interview Questions
 
@@ -9358,7 +10902,7 @@ Service Bus is an enterprise message queue/topic broker for reliable, ordered, a
 Blob Storage stores unstructured binary or text data (files, images, backups) organised in containers. Table Storage is a NoSQL key-value store for structured schemaless data accessed by partition and row key. For most structured data scenarios, Cosmos DB is now preferred over Table Storage.
 
 
-## 8.34 Google Cloud Platform
+## 8.37 Google Cloud Platform
 
 ### Interview Questions
 
@@ -9375,7 +10919,7 @@ BigQuery is Google's serverless, fully managed data warehouse for analytics at p
 Identity and Access Management controls who (principal) can do what (role) on which resource. Roles bundle permissions: primitive (Owner/Editor/Viewer — too broad), predefined (roles/storage.objectViewer — service-specific), or custom. Always grant the narrowest role at the lowest scope (resource > project > organisation) following least privilege.
 
 
-## 8.35 Firebase
+## 8.38 Firebase
 
 ### Interview Questions
 
@@ -9392,7 +10936,7 @@ Security rules are server-side rules controlling read/write access to documents.
 Firebase Auth handles sign-in flows and issues JWTs. The signed-in user's UID (request.auth.uid) is available in Firestore security rules, allowing per-user data isolation (allow read, write: if request.auth.uid == resource.data.userId). Auth state syncs in real-time; the SDK provides an onAuthStateChanged listener.
 
 
-## 8.36 Docker
+## 8.39 Docker
 
 ### Interview Questions
 
@@ -9415,7 +10959,7 @@ Containers are ephemeral — their filesystem is lost on removal. Volumes mount 
 Docker Compose defines and runs multi-container applications via a docker-compose.yml file. Services, networks, and volumes are declared declaratively. docker compose up starts the whole stack. Used in local development to run app + database + cache + message broker together — not typically used in production.
 
 
-## 8.37 Kubernetes
+## 8.40 Kubernetes
 
 ### Interview Questions
 
@@ -9435,7 +10979,7 @@ ConfigMap stores non-sensitive configuration data (env vars, config files) decou
 Liveness probe detects if a container is alive — if it fails, Kubernetes restarts the container. Readiness probe detects if a container is ready to serve traffic — if it fails, Kubernetes removes the Pod from Service endpoints without restarting. Both prevent traffic from reaching broken or still-starting Pods.
 
 
-## 8.38 CI/CD Pipelines
+## 8.41 CI/CD Pipelines
 
 ### Interview Questions
 
@@ -9455,7 +10999,7 @@ The new version is deployed to a small percentage of production traffic (e.g. 5%
 Defining CI/CD pipelines in version-controlled files (Jenkinsfile, .github/workflows/deploy.yml, .gitlab-ci.yml) rather than clicking through a GUI. Benefits: pipelines are reviewed like code, changes are tracked in git history, and the pipeline definition lives alongside the code it builds.
 
 
-## 8.39 Git
+## 8.42 Git
 
 ### Interview Questions
 
@@ -9475,7 +11019,7 @@ git reset moves HEAD (and optionally the branch and working tree) — destructiv
 Git hooks are scripts that run automatically at specific points in the git workflow: pre-commit (run linting before committing), commit-msg (validate commit message format), pre-push (run tests before pushing). Stored in .git/hooks/. Tools like Husky manage hooks across teams via package.json.
 
 
-## 8.40 GitHub
+## 8.43 GitHub
 
 ### Interview Questions
 
@@ -9495,7 +11039,7 @@ Environments (Settings → Environments) add protection rules to deployments: re
 Issues track bugs, feature requests, and tasks — structured work items with labels, assignees, and milestones. Pull Requests propose code changes and have reviews, checks, and merge capabilities. Discussions are open-ended conversations (Q&A, ideas, announcements) without the formality of an issue.
 
 
-## 8.41 Bitbucket
+## 8.44 Bitbucket
 
 ### Interview Questions
 
@@ -9512,7 +11056,7 @@ A workspace is the organisational unit in Bitbucket (equivalent to a GitHub orga
 Branch names, commit messages, and PR titles that include a Jira issue key (PROJECT-123) are automatically linked in Jira. The Jira issue shows development activity (commits, branches, PRs) directly. Smart commits in messages can also update Jira issue status or log time automatically.
 
 
-## 8.42 Maven
+## 8.45 Maven
 
 ### Interview Questions
 
@@ -9532,7 +11076,7 @@ Scope controls when a dependency is on the classpath. compile (default): all pha
 A parent POM allows inheriting configuration across modules — dependency versions, plugin versions, and settings. Multi-module projects have a root POM with packaging=pom listing all <modules>. A BOM (Bill of Materials) is a special parent that manages only dependency versions, imported with scope=import and type=pom.
 
 
-## 8.43 YAML
+## 8.46 YAML
 
 ### Interview Questions
 
@@ -9549,47 +11093,7 @@ Anchors (&anchor-name) mark a value for reuse. Aliases (*anchor-name) reference 
 Indentation with tabs (YAML requires spaces only). Strings that look like other types — yes/no/true/false are parsed as booleans; 1.0 as a float; 2024-01-01 as a date. Quote strings when the content is ambiguous. Duplicate keys (last value wins, silently). Trailing spaces causing unexpected errors.
 
 
-## 8.44 MySQL
-
-### Interview Questions
-
-**Q: What is the difference between MyISAM and InnoDB?**
-InnoDB is the default MySQL storage engine — it supports transactions (ACID), foreign key constraints, row-level locking, and crash recovery. MyISAM lacks transactions and foreign keys, uses table-level locking, but can be faster for read-heavy workloads without concurrent writes. Always use InnoDB for new projects.
-
-**Q: What is an index and how does it improve query performance?**
-An index is a data structure (typically a B-tree) allowing MySQL to find rows without scanning the full table. Without an index on a WHERE column, MySQL performs a full table scan — O(n). With an index, the lookup is O(log n). Indexes speed up reads but slow down writes since the index must be updated on INSERT/UPDATE/DELETE.
-
-**Q: What is the difference between INNER JOIN, LEFT JOIN, and RIGHT JOIN?**
-INNER JOIN returns only rows with matching values in both tables. LEFT JOIN returns all rows from the left table and matched rows from the right (NULLs for non-matches). RIGHT JOIN is the mirror image. FULL OUTER JOIN (not natively in MySQL — use UNION) returns all rows from both tables.
-
-**Q: What is normalisation and what are the first three normal forms?**
-Normalisation organises data to reduce redundancy. 1NF: each column holds atomic values, no repeating groups. 2NF: 1NF plus no partial dependencies (non-key columns depend on the full primary key). 3NF: 2NF plus no transitive dependencies (non-key columns don't depend on other non-key columns).
-
-**Q: What is a transaction and what does ACID mean?**
-A transaction is a unit of work that either fully completes or fully rolls back. ACID: Atomicity (all or nothing), Consistency (database remains valid before and after), Isolation (concurrent transactions appear sequential), Durability (committed data survives crashes).
-
-
-## 8.45 MongoDB
-
-### Interview Questions
-
-**Q: What is MongoDB and how does it differ from relational databases?**
-MongoDB is a document-oriented NoSQL database. Data is stored as BSON documents (JSON-like) in collections with no fixed schema. Unlike SQL tables (rigid schema, normalised rows, JOINs), MongoDB documents embed related data — no JOINs needed but data may be duplicated. It scales horizontally via sharding.
-
-**Q: What is the difference between embedding and referencing in MongoDB?**
-Embedding: store related data inside the parent document — good for data always queried together (one query, atomic updates). Referencing: store only the _id of related documents (like a foreign key) — good for large related data, many-to-many relationships, or data that changes independently. Lookups use $lookup in the aggregation pipeline.
-
-**Q: What is a MongoDB index and what types exist?**
-Indexes speed up queries. Types: Single field, Compound (multiple fields), Text (full-text search on strings), Geospatial (2dsphere for location queries), Sparse (only indexes documents that have the field), and TTL (auto-deletes documents after a time period — ideal for sessions or logs).
-
-**Q: What is the aggregation pipeline?**
-The aggregation pipeline processes documents through sequential stages that transform data. Common stages: $match (filter), $group (group and aggregate — sum, count, avg), $sort, $project (reshape documents), $lookup (left outer join to another collection), $unwind (flatten arrays).
-
-**Q: What is MongoDB Atlas?**
-Atlas is MongoDB's managed cloud database service (available on AWS, GCP, Azure). It handles provisioning, backups, monitoring, scaling, and security. Features include Atlas Search (full-text with Lucene), App Services (serverless functions and triggers), and Atlas Vector Search.
-
-
-## 8.46 SQL
+## 8.47 SQL — Querying & Optimization
 
 ### Interview Questions
 
@@ -9609,27 +11113,27 @@ A clustered index determines the physical order of rows in the table — there c
 SQL injection occurs when user input is concatenated directly into SQL queries, allowing attackers to modify the query logic. Prevented by: parameterised queries and prepared statements (? or :name placeholders — input is never interpreted as SQL), ORMs that handle escaping automatically, and input validation at API boundaries.
 
 
-## 8.47 Data Modelling
+## 8.48 MySQL
 
 ### Interview Questions
 
-**Q: What is an Entity-Relationship (ER) diagram?**
-An ER diagram visually represents entities (tables), their attributes (columns), and relationships between them (one-to-one, one-to-many, many-to-many). Used in the conceptual design phase to agree on the data model before implementation. Crow's foot notation shows cardinality (0..* means zero or more).
+**Q: What is the difference between MyISAM and InnoDB?**
+InnoDB is the default MySQL storage engine — it supports transactions (ACID), foreign key constraints, row-level locking, and crash recovery. MyISAM lacks transactions and foreign keys, uses table-level locking, but can be faster for read-heavy workloads without concurrent writes. Always use InnoDB for new projects.
 
-**Q: What is the difference between a primary key, foreign key, and unique key?**
-Primary key: uniquely identifies each row — not null, unique, one per table. Foreign key: a column referencing another table's primary key — enforces referential integrity. Unique key: enforces uniqueness like a PK but can be null and a table can have multiple unique keys.
+**Q: What is an index and how does it improve query performance?**
+An index is a data structure (typically a B-tree) allowing MySQL to find rows without scanning the full table. Without an index on a WHERE column, MySQL performs a full table scan — O(n). With an index, the lookup is O(log n). Indexes speed up reads but slow down writes since the index must be updated on INSERT/UPDATE/DELETE.
 
-**Q: What is denormalisation and when would you use it?**
-Denormalisation intentionally introduces redundancy to improve read performance — by duplicating data or pre-joining tables, you avoid expensive JOINs at query time. Used in read-heavy analytical workloads (data warehouses) and NoSQL document stores. Trade-off: faster reads but harder writes since multiple copies must stay in sync.
+**Q: What is the difference between INNER JOIN, LEFT JOIN, and RIGHT JOIN?**
+INNER JOIN returns only rows with matching values in both tables. LEFT JOIN returns all rows from the left table and matched rows from the right (NULLs for non-matches). RIGHT JOIN is the mirror image. FULL OUTER JOIN (not natively in MySQL — use UNION) returns all rows from both tables.
 
-**Q: What is the difference between OLTP and OLAP database design?**
-OLTP (Online Transaction Processing) optimises for fast, frequent, small read/write transactions — highly normalised, row-oriented. OLAP (Online Analytical Processing) optimises for large analytical queries over historical data — denormalised (star or snowflake schema), column-oriented storage.
+**Q: What is normalisation and what are the first three normal forms?**
+Normalisation organises data to reduce redundancy. 1NF: each column holds atomic values, no repeating groups. 2NF: 1NF plus no partial dependencies (non-key columns depend on the full primary key). 3NF: 2NF plus no transitive dependencies (non-key columns don't depend on other non-key columns).
 
-**Q: What is a star schema?**
-A star schema is a denormalised dimensional model with a central fact table (containing measurable events — sales, orders) surrounded by dimension tables (describing who, what, when, where). Denormalisation makes analytical queries fast and simple. Used in data warehouses (Redshift, BigQuery, Snowflake).
+**Q: What is a transaction and what does ACID mean?**
+A transaction is a unit of work that either fully completes or fully rolls back. ACID: Atomicity (all or nothing), Consistency (database remains valid before and after), Isolation (concurrent transactions appear sequential), Durability (committed data survives crashes).
 
 
-## 8.48 PostgreSQL
+## 8.49 PostgreSQL
 
 ### Interview Questions
 
@@ -9649,27 +11153,74 @@ PostgreSQL uses MVCC (Multi-Version Concurrency Control) — old row versions ar
 Advisory locks are application-level locks that PostgreSQL manages but doesn't enforce on specific tables — your application code decides when to acquire and release them (pg_try_advisory_lock, pg_advisory_unlock). Useful for distributed mutex patterns such as ensuring only one instance of a cron job runs across horizontally scaled servers.
 
 
-## 8.49 GraphQL
+## 8.50 NoSQL
+
+
+**Q: What is NoSQL and when would you choose it over SQL?**
+NoSQL is a category of databases that store data in formats other than relational tables — documents, key-value pairs, column families, or graphs. Choose NoSQL when: the schema is flexible or evolving, you need horizontal scaling across many nodes, you are storing large volumes of unstructured/semi-structured data, or you need very high read/write throughput where SQL JOIN overhead is unacceptable.
+
+**Q: What are the four main types of NoSQL databases? Give an example of each.**
+- **Document** — stores JSON-like documents; schema per document. Example: MongoDB, Firestore.
+- **Key-Value** — maps a key to a value blob; extremely fast lookups. Example: Redis, DynamoDB.
+- **Column-Family** — stores data in column groups, optimised for sparse wide rows. Example: Apache Cassandra, HBase.
+- **Graph** — stores nodes and edges to model relationships. Example: Neo4j, Amazon Neptune.
+
+**Q: What is the difference between ACID and BASE?**
+ACID (SQL default): Atomicity (all-or-nothing), Consistency (data always valid), Isolation (transactions don't interfere), Durability (committed data persists). BASE (NoSQL default): Basically Available (always responds), Soft state (data may change even without input), Eventually Consistent (will converge to consistency, not immediately). BASE trades strict correctness for availability and performance.
+
+**Q: What is the CAP theorem?**
+The CAP theorem states that a distributed data store can guarantee at most two of three properties: Consistency (all nodes see the same data simultaneously), Availability (every request gets a response), Partition tolerance (the system works despite network failures). Since network partitions are inevitable in practice, systems must trade off between CP (consistent but may refuse requests) and AP (always responds but may return stale data).
+
+**Q: What is eventual consistency and when is it acceptable?**
+Eventual consistency means that if no new updates are made to an item, all replicas will eventually converge to the same value — but reads in the meantime may return stale data. It is acceptable for use cases where slight staleness is tolerable: social media feeds, product catalogue views, analytics dashboards. It is not acceptable for financial balances, inventory levels during checkout, or any data that must reflect the latest write.
+
+**Q: When would you embed data vs reference it in a document database like MongoDB?**
+Embed when the data is always accessed together (post + author name), is owned by the parent document, and the nested array has a small bounded size. Reference when the data is shared across many documents (a user referenced by thousands of orders), changes independently, or could grow unboundedly as an array (all comments ever made).
+
+**Q: What are some advantages of Redis (key-value) over a traditional database?**
+Redis stores data in-memory, delivering sub-millisecond read/write latency. It supports rich data structures (strings, hashes, lists, sets, sorted sets), built-in TTL-based expiry (perfect for sessions and cache), pub/sub messaging, and Lua scripting. Use Redis as a cache layer in front of a slower database, for session storage, rate limiting, leaderboards, or job queues — not as a primary durable store for critical data unless persistence is explicitly configured.
+
+## 8.51 MongoDB
 
 ### Interview Questions
 
-**Q: What is GraphQL and how does it differ from REST?**
-GraphQL is a query language where the client specifies exactly what data it needs — no over-fetching (extra fields) or under-fetching (needing multiple requests for related data). A single /graphql endpoint handles all operations. The schema defines types and relationships; resolvers fetch the data.
+**Q: What is MongoDB and how does it differ from relational databases?**
+MongoDB is a document-oriented NoSQL database. Data is stored as BSON documents (JSON-like) in collections with no fixed schema. Unlike SQL tables (rigid schema, normalised rows, JOINs), MongoDB documents embed related data — no JOINs needed but data may be duplicated. It scales horizontally via sharding.
 
-**Q: What is the difference between Query, Mutation, and Subscription?**
-Query: read-only data fetching (equivalent to GET). Mutation: data modification — create, update, delete (equivalent to POST/PUT/DELETE). Subscription: long-lived connections for real-time updates — the server pushes data when specified events occur, typically via WebSocket.
+**Q: What is the difference between embedding and referencing in MongoDB?**
+Embedding: store related data inside the parent document — good for data always queried together (one query, atomic updates). Referencing: store only the _id of related documents (like a foreign key) — good for large related data, many-to-many relationships, or data that changes independently. Lookups use $lookup in the aggregation pipeline.
 
-**Q: What is the N+1 problem in GraphQL and how is it solved?**
-When resolving a list of N items and fetching related data for each, a naive implementation makes 1 query for the list plus N queries for related items. DataLoader solves this by batching and deduplicating database calls within a single request tick, reducing 1+N queries to just 1+1.
+**Q: What is a MongoDB index and what types exist?**
+Indexes speed up queries. Types: Single field, Compound (multiple fields), Text (full-text search on strings), Geospatial (2dsphere for location queries), Sparse (only indexes documents that have the field), and TTL (auto-deletes documents after a time period — ideal for sessions or logs).
 
-**Q: What is a GraphQL schema?**
-The schema is the contract between client and server — it defines types (type User { id: ID! name: String! }), queries (type Query { user(id: ID!): User }), mutations, subscriptions, and custom scalars. The schema is strongly typed and introspectable, enabling tools like GraphiQL and schema-based code generation.
+**Q: What is the aggregation pipeline?**
+The aggregation pipeline processes documents through sequential stages that transform data. Common stages: $match (filter), $group (group and aggregate — sum, count, avg), $sort, $project (reshape documents), $lookup (left outer join to another collection), $unwind (flatten arrays).
 
-**Q: What are the pros and cons of GraphQL vs REST?**
-GraphQL pros: precise data fetching, single endpoint, strong typing, self-documenting, great for complex UIs. REST pros: simpler HTTP-level caching (by URL), familiar to all clients, no special library needed, easier to rate-limit per endpoint. GraphQL cons: complex caching, all requests are POST (bypasses HTTP caching), harder to secure per-operation.
+**Q: What is MongoDB Atlas?**
+Atlas is MongoDB's managed cloud database service (available on AWS, GCP, Azure). It handles provisioning, backups, monitoring, scaling, and security. Features include Atlas Search (full-text with Lucene), App Services (serverless functions and triggers), and Atlas Vector Search.
 
 
-## 8.50 JUnit 5
+## 8.52 Data Modelling
+
+### Interview Questions
+
+**Q: What is an Entity-Relationship (ER) diagram?**
+An ER diagram visually represents entities (tables), their attributes (columns), and relationships between them (one-to-one, one-to-many, many-to-many). Used in the conceptual design phase to agree on the data model before implementation. Crow's foot notation shows cardinality (0..* means zero or more).
+
+**Q: What is the difference between a primary key, foreign key, and unique key?**
+Primary key: uniquely identifies each row — not null, unique, one per table. Foreign key: a column referencing another table's primary key — enforces referential integrity. Unique key: enforces uniqueness like a PK but can be null and a table can have multiple unique keys.
+
+**Q: What is denormalisation and when would you use it?**
+Denormalisation intentionally introduces redundancy to improve read performance — by duplicating data or pre-joining tables, you avoid expensive JOINs at query time. Used in read-heavy analytical workloads (data warehouses) and NoSQL document stores. Trade-off: faster reads but harder writes since multiple copies must stay in sync.
+
+**Q: What is the difference between OLTP and OLAP database design?**
+OLTP (Online Transaction Processing) optimises for fast, frequent, small read/write transactions — highly normalised, row-oriented. OLAP (Online Analytical Processing) optimises for large analytical queries over historical data — denormalised (star or snowflake schema), column-oriented storage.
+
+**Q: What is a star schema?**
+A star schema is a denormalised dimensional model with a central fact table (containing measurable events — sales, orders) surrounded by dimension tables (describing who, what, when, where). Denormalisation makes analytical queries fast and simple. Used in data warehouses (Redshift, BigQuery, Snowflake).
+
+
+## 8.53 JUnit 5
 
 ### Interview Questions
 
@@ -9689,7 +11240,7 @@ Assertions (assertThat, assertEquals, assertThrows) fail the test with an error 
 assertThrows(ExpectedException.class, () -> methodUnderTest()) asserts that the lambda throws exactly that exception type and returns the exception instance for further assertions on the message or cause. assertThrowsExactly requires exact type match, not accepting subclasses.
 
 
-## 8.51 Mockito
+## 8.54 Mockito
 
 ### Interview Questions
 
@@ -9709,7 +11260,7 @@ verify(mock).method(args) asserts the method was called exactly once with those 
 @InjectMocks creates an instance of the class under test and automatically injects @Mock and @Spy fields via constructor, setter, or field injection. Used with @ExtendWith(MockitoExtension.class) to initialise all annotations automatically without calling MockitoAnnotations.openMocks(this) manually.
 
 
-## 8.52 SonarQube
+## 8.55 SonarQube
 
 ### Interview Questions
 
@@ -9729,7 +11280,7 @@ SonarLint is an IDE plugin that provides SonarQube analysis inline as you code �
 SonarQube maps its rules to OWASP Top 10 categories (injection, broken auth, XSS, insecure deserialization, etc.), allowing filtering and reporting by security standard. It can detect many Top 10 vulnerabilities statically — injection patterns, hardcoded credentials, weak cryptography, and insecure random number generation.
 
 
-## 8.53 Unit & Integration Testing
+## 8.56 Unit & Integration Testing
 
 ### Interview Questions
 
@@ -9749,7 +11300,7 @@ TDD is a discipline where you write a failing test first, then write the minimum
 Test coverage measures what percentage of code paths are exercised by tests. 80% is commonly cited as a reasonable target, but coverage is a floor, not a goal — 100% coverage doesn't mean tests are meaningful. Focus on testing critical paths and business logic rather than chasing coverage numbers on trivial getters and setters.
 
 
-## 8.54 Debugging
+## 8.57 Debugging
 
 ### Interview Questions
 
@@ -9769,7 +11320,7 @@ A heap dump is a snapshot of JVM memory — all live objects, their sizes, and r
 Explaining a problem out loud — to a rubber duck, a colleague, or an AI — often reveals the solution. Articulating the problem forces you to structure your thinking, notice your own assumptions, and spot logical errors you overlooked while staring at the code. It's genuinely effective.
 
 
-## 8.55 Code Reviews
+## 8.58 Code Reviews
 
 ### Interview Questions
 
@@ -9789,7 +11340,7 @@ Pair programming is real-time collaboration where two developers share one works
 A good PR description explains what changed and why (not just what — the diff shows that), any important context or alternatives considered, how to test it, and any risks or known limitations. It helps reviewers understand intent quickly and helps future developers understand why code exists.
 
 
-## 8.56 Agile / Scrum
+## 8.59 Agile / Scrum
 
 ### Interview Questions
 
@@ -9809,7 +11360,7 @@ A user story captures a feature from the user's perspective: "As a [user], I wan
 Velocity is the sum of story points completed in a Sprint. Tracked over multiple Sprints, it gives an average used to forecast how much work the team can take on per Sprint. Useful for release planning. Velocity is a planning tool — not a performance metric to compare between teams.
 
 
-## 8.57 SDLC
+## 8.60 SDLC
 
 ### Interview Questions
 
@@ -9829,7 +11380,7 @@ A deployment is making code available in an environment (pushing to production).
 An SRS is a comprehensive document describing the intended behaviour of a software system — functional requirements (what it does), non-functional requirements (performance, security, scalability), constraints, and user needs. In Agile, requirements are typically captured as user stories and epics in a backlog rather than a monolithic SRS.
 
 
-## 8.58 Software Architecture
+## 8.61 Software Architecture
 
 ### Interview Questions
 
@@ -9849,7 +11400,7 @@ In distributed systems, it's often impossible to guarantee that all nodes see th
 A distributed system can only guarantee two of three properties: Consistency (every read reflects the latest write), Availability (every request gets a response), Partition Tolerance (system works despite network partitions). Since partitions are unavoidable in practice, the real choice is between CP (consistent but may be unavailable during partitions) and AP (always available but may serve stale data).
 
 
-## 8.59 Secure Development
+## 8.62 Secure Development
 
 ### Interview Questions
 
@@ -9869,7 +11420,7 @@ CSRF tricks authenticated users into submitting requests they didn't intend to m
 Security should be layered — multiple independent controls so that if one fails, others still protect the system. Application-level (input validation, auth checks), network-level (firewalls, TLS), infrastructure-level (least-privilege IAM, encrypted storage), and monitoring/alerting all work together. No single control should be the only line of defence.
 
 
-## 8.60 Performance Optimization
+## 8.63 Performance Optimization
 
 ### Interview Questions
 
@@ -9889,7 +11440,7 @@ Add indexes on columns used in WHERE, JOIN, and ORDER BY clauses. Use EXPLAIN/EX
 A Content Delivery Network is a globally distributed network of servers that caches static assets (images, CSS, JS, fonts) at edge locations close to users. Instead of serving from a single origin server, files are served from the nearest edge node — reducing latency from 200ms+ to under 20ms for geographically distant users.
 
 
-## 8.61 Production Support
+## 8.64 Production Support
 
 ### Interview Questions
 
