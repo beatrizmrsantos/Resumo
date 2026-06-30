@@ -84,7 +84,7 @@ Code examples are part of the learning — read them as explanatory text.
 - 6.01 JUnit
 - 6.02 Mockito
 - 6.03 SonarQube
-- 6.04 Unit & Integration Testing
+- 6.04 Types of Software Testing
 - 6.05 Debugging
 - 6.06 Code Reviews
 
@@ -153,7 +153,7 @@ Code examples are part of the learning — read them as explanatory text.
 - 8.53 JUnit 5
 - 8.54 Mockito
 - 8.55 SonarQube
-- 8.56 Unit & Integration Testing
+- 8.56 Types of Software Testing
 - 8.57 Debugging
 - 8.58 Code Reviews
 - 8.59 Agile / Scrum
@@ -9054,8 +9054,7 @@ CREATE TABLE student_courses (
 
 ### Overview
 
-JUnit is the standard testing framework for Java. JUnit 5 (also called Jupiter)
-is modular — split into Jupiter (the API for writing tests), Platform (the launcher), and Vintage (compatibility with JUnit 4).
+JUnit is the standard testing framework for Java. JUnit 5 (also called Jupiter) is modular — split into Jupiter (the API for writing tests), Platform (the launcher), and Vintage (compatibility with JUnit 4).
 
 
 ### The Aaa Pattern — HOW TO STRUCTURE TESTS
@@ -9085,7 +9084,6 @@ void should_apply_discount_when_order_exceeds_threshold() {
 
 ### Key Annotations
 
-```text
 @Test              — marks a method as a test
 @BeforeEach        — runs before each test method (setup)
 @AfterEach         — runs after each test method (teardown)
@@ -9095,7 +9093,7 @@ void should_apply_discount_when_order_exceeds_threshold() {
 @DisplayName       — human-readable name for the test in reports
 @Nested            — groups related tests in an inner class (great for readability)
 @Tag               — categorise tests for selective execution
-```
+
 
 ```java
 @Test
@@ -9108,9 +9106,7 @@ void should_throw_when_user_not_found() {
 
 ### Parameterised Tests
 
-
-Instead of duplicating a test with different inputs, parameterise it:
-
+Parameterized tests allow you to run the same test multiple times with different input values. Instead of writing several almost identical test methods, you write one test and provide a set of parameters.
 
 ```java
 @ParameterizedTest
@@ -9141,23 +9137,18 @@ static Stream<String> invalidEmailProvider() {
 ### Spring Boot Testing Annotations
 
 
+@SpringBootTest — loads the FULL application context. Use for true integration tests. Slow but comprehensive.
 
-```java
-@SpringBootTest — loads the FULL application context. Use for true integration
-                   tests. Slow but comprehensive.
+@WebMvcTest(UserController.class) — loads only the web layer (Controller, Filter, Interceptor). Beans like services must be mocked. Fast for testing HTTP endpoints.
 
-@WebMvcTest(UserController.class) — loads only the web layer (Controller,
-                   Filter, Interceptor). Beans like services must be mocked.
-                   Fast for testing HTTP endpoints.
+@DataJpaTest — loads only the JPA layer. Uses an in-memory database by default. Use for testing repository queries.
 
-@DataJpaTest — loads only the JPA layer. Uses an in-memory database by default.
-                Use for testing repository queries.
-
-@ExtendWith(MockitoExtension.class) — pure unit test, no Spring context.
-                Fastest. Use for testing service logic in isolation.
+@ExtendWith(MockitoExtension.class) — pure unit test, no Spring context. Fastest. Use for testing service logic in isolation.
 
 @TestContainers — run tests against real databases in Docker containers.
 
+
+```java
 @WebMvcTest
 class UserControllerTest {
     @Autowired MockMvc mockMvc;
@@ -9178,263 +9169,594 @@ class UserControllerTest {
 
 ## 6.02 Mockito
 
-
-
 ### Overview
 
-Mockito is the most popular Java mocking framework. It lets you replace real
-dependencies with controlled fakes during unit testing, so you can test a class
-in isolation without needing a real database, HTTP client, or email server.
+Mockito is the most popular Java mocking framework. It lets you replace real dependencies with controlled fakes during unit testing, so you can test a class in isolation without needing a real database, HTTP client, or email server.
+
 
 ### MOCK vs SPY
 
-
 **Mock** — a completely fake object. All methods return default values (null, 0, false, empty list) unless you stub them. No real code runs.
 
-**SPY** - wraps a real object. Real methods run by default, but you can stub specific ones. Use when you want most real behaviour but need to intercept certain calls.
-
-
-```c
+```java
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
+
     @Mock
-    UserRepository userRepository;    // fake — no real DB
+    UserRepository userRepository;    // Fake repository
 
     @InjectMocks
-    UserService userService;          // the class under test, with mocks injected
+    UserService userService;          // Class under test
 
     @Captor
     ArgumentCaptor<User> userCaptor;
 
     @Test
     void should_save_user_with_hashed_password() {
-        // Arrange — stub a specific call
+        // Arrange
         User input = new User("Beatriz", "password123");
+
         when(userRepository.save(any(User.class)))
-            .thenAnswer(inv -> inv.getArgument(0));  // return the saved object
+                .thenAnswer(inv -> inv.getArgument(0));
 
         // Act
         userService.register(input);
 
-        // Assert — verify what was actually saved
+        // Assert
         verify(userRepository).save(userCaptor.capture());
+
         User saved = userCaptor.getValue();
         assertThat(saved.getPassword()).doesNotContain("password123");
-        assertThat(saved.getPassword()).startsWith("$2a$");  // bcrypt prefix
-    }
-
-    @Test
-    void should_throw_when_email_already_exists() {
-        when(userRepository.existsByEmail("b@example.com")).thenReturn(true);
-
-        assertThatThrownBy(() -> userService.register(new User("Beatriz", "b@example.com")))
-            .isInstanceOf(DuplicateEmailException.class);
-
-        verify(userRepository, never()).save(any());   // save was NEVER called
+        assertThat(saved.getPassword()).startsWith("$2a$");
     }
 }
 ```
 
 
+**SPY** - wraps a real object. Real methods run by default, but you can stub specific ones. Use when you want most real behaviour but need to intercept certain calls.
+
+```java
+class PriceCalculator {
+
+    public double calculatePrice(double price) {
+        return price + calculateTax(price);
+    }
+
+    public double calculateTax(double price) {
+        return price * 0.20;
+    }
+}
+
+@ExtendWith(MockitoExtension.class)
+class PriceCalculatorTest {
+
+    @Spy
+    PriceCalculator calculator;
+
+    @Test
+    void should_stub_only_tax_calculation() {
+        // Stub only one method
+        doReturn(5.0).when(calculator).calculateTax(100);
+
+        // The real calculatePrice() method is still executed
+        double total = calculator.calculatePrice(100);
+
+        assertEquals(105.0, total);
+
+        // Verify the stubbed method was called
+        verify(calculator).calculateTax(100);
+    }
+}
+```
+
+
+In this example:
+- `calculatePrice()` executes its **real implementation**.
+- `calculateTax()` is **stubbed**, so it returns `5.0` instead of calculating `20%` of the price.
+- The final result is `100 + 5 = 105`, demonstrating that a spy lets you override only part of an object's behavior while keeping the rest unchanged.
+
+
+
 ### Common Mockito Patterns
 
+Mockito provides a set of common patterns for configuring (**stubbing**) and verifying the behavior of mock objects.
 
 
-```c
-// Stubbing
+#### Stubbing
+
+**Stubbing** defines what a mock should return (or throw) when one of its methods is called.
+
+```java
 when(repo.findById(1L)).thenReturn(Optional.of(user));
 when(repo.findById(99L)).thenReturn(Optional.empty());
 when(repo.save(any())).thenThrow(new DataIntegrityViolationException("Duplicate"));
+```
 
-// BDD style (preferred in BDDMockito)
+In this example:
+- Calling `findById(1L)` returns a user.
+- Calling `findById(99L)` returns an empty `Optional`.
+- Calling `save()` throws an exception.
+
+
+Without stubbing, Mockito returns default values:
+- `null` for objects
+- `0` for numbers
+- `false` for booleans
+- empty collections for collection types
+
+
+#### BDD Style
+
+Mockito also supports a **Behavior-Driven Development (BDD)** syntax through `BDDMockito`.
+
+Instead of:
+
+```java
+when(repo.findById(1L)).thenReturn(Optional.of(user));
+verify(repo).save(user);
+```
+
+you can write:
+
+```java
 given(repo.findById(1L)).willReturn(Optional.of(user));
 then(repo).should().save(user);
+```
 
-// Verifying
+Many developers find this syntax more readable because it follows the **Given → When → Then** structure:
+
+- **Given** some initial conditions
+- **When** an action occurs
+- **Then** verify the expected behavior
+
+
+
+#### Verifying Interactions
+
+Mockito can verify that methods were called correctly.
+
+```java
 verify(emailService).sendWelcomeEmail(user);
-verify(emailService, times(2)).sendReminder(any());
-verify(emailService, never()).sendUnsubscribeEmail(any());
-verify(repo).save(argThat(u -> u.getEmail().contains("@")));
+```
 
-// ArgumentCaptor — inspect what arguments were passed
+Verifies the method was called **exactly once**.
+
+
+
+```java
+verify(emailService, times(2)).sendReminder(any());
+```
+
+Verifies it was called **twice**.
+
+
+
+```java
+verify(emailService, never()).sendUnsubscribeEmail(any());
+```
+
+Verifies it was **never called**.
+
+
+You can also verify arguments using matchers:
+
+```java
+verify(repo).save(argThat(u -> u.getEmail().contains("@")));
+```
+
+Here, Mockito checks that the saved user's email contains `"@"`.
+
+
+
+#### ArgumentCaptor
+
+Sometimes you want to inspect the actual object passed to a mocked method.
+
+Instead of simply verifying that a method was called, you can capture its argument.
+
+```java
 ArgumentCaptor<Email> captor = ArgumentCaptor.forClass(Email.class);
+
 verify(emailService).send(captor.capture());
+
 assertThat(captor.getValue().getSubject()).isEqualTo("Welcome!");
 ```
+
+This is useful when:
+
+- the object is created inside the method under test,
+- you cannot access it directly,
+- and you want to verify its contents.
+
+For example, you may want to verify that:
+
+- an email has the correct subject,
+- a DTO contains the expected values,
+- a request object was built correctly before being sent.
+
+`ArgumentCaptor` lets you inspect the exact object that was passed to the mock.
 
 
 
 ## 6.03 SonarQube
 
 
-
 ### Overview
 
-SonarQube is a static code analysis platform that continuously inspects code for
-bugs, security vulnerabilities, code smells, and test coverage. It integrates
-into CI/CD pipelines so every pull request gets an automatic code quality report.
+SonarQube is a static code analysis platform that continuously inspects code for bugs, security vulnerabilities, code smells, and test coverage. It integrates into CI/CD pipelines so every pull request gets an automatic code quality report.
 
 
 ### Issue Types
 
 
-#### BUG
-code that is demonstrably wrong: will produce incorrect behaviour or crash.
+**BUG** - code that is demonstrably wrong: will produce incorrect behaviour or crash. 
 Example: using == to compare strings instead of .equals().
 
 
-**Vulnerability** — code that could be exploited by an attacker: SQL injection,
-XSS, storing passwords in plain text, using insecure algorithms (MD5, DES).
+**Vulnerability** — code that could be exploited by an attacker: SQL injection, XSS, storing passwords in plain text, using insecure algorithms (MD5, DES).
 
 
-**Security Hotspot** — potentially sensitive code that needs manual human review
-but isn't necessarily a vulnerability. 
-
-- Example: disabling CSRF protection — might be intentional (API endpoint) or a mistake (web form). SonarQube marks it for human review without automatically flagging it as a vulnerability.
+**Security Hotspot** — potentially sensitive code that needs manual human review but isn't necessarily a vulnerability. 
+Example: disabling CSRF protection — might be intentional (API endpoint) or a mistake (web form). SonarQube marks it for human review without automatically flagging it as a vulnerability.
 
 
 **Code Smell** — code that is not wrong but is hard to maintain: overly long methods, deeply nested code, duplicate code, dead code, too many parameters. Left alone, code smells accumulate into technical debt that slows down the team.
 
 
+
 ### Quality Gate
 
+A Quality Gate is a set of conditions that code must meet to be considered production-ready. The default SonarWay quality gate checks the NEW code in a PR against these conditions:
+- Coverage on new code: ≥ 80%
+- Duplicated lines on new code: < 3%
+- Maintainability rating: A (no blocker or critical code smells)
+- Reliability rating: A (no bugs)
+- Security rating: A (no vulnerabilities)
 
-A Quality Gate is a set of conditions that code must meet to be considered
-production-ready. The default SonarWay quality gate checks the NEW code in a
-PR against these conditions:
-  - Coverage on new code: ≥ 80%
-  - Duplicated lines on new code: < 3%
-  - Maintainability rating: A (no blocker or critical code smells)
-  - Reliability rating: A (no bugs)
-  - Security rating: A (no vulnerabilities)
-
-If any condition fails, the quality gate status is FAILED and the CI pipeline
-should block the merge.
+If any condition fails, the quality gate status is FAILED and the CI pipeline should block the merge.
 
 
-## 6.04 Unit & Integration Testing
 
+
+## 6.04 Types of Software Testing
 
 
 ### Overview
 
-The testing pyramid describes the ideal distribution of test types: many unit
-tests at the base (fast, cheap), fewer integration tests in the middle, and even
-fewer end-to-end tests at the top (slow, expensive).
+Software testing can be divided into several levels, each focusing on a different scope of the application. The most common are **Unit Tests**, **Integration Tests**, **End-to-End (E2E) Tests**, and **Acceptance Tests**.
 
+A common way to visualize them is the **Testing Pyramid**:
 
-### The Testing Pyramid
-
-
-/\
-/E2E\          ← few: browser automation, full system
-/------\
-/  Integ \       ← moderate: API tests, DB tests, service tests
-/----------\
-/ Unit Tests  \    ← many: test individual functions/classes in isolation
+```text
+      /  \
+     / E2E\          ← few: browser automation, full system
+    /------\
+   /  Integ \       ← moderate: API tests, DB tests, service tests
+  /----------\
+ / Unit Tests \    ← many: test individual functions/classes in isolation
 /--------------\
-#### UNIT TESTS
-  - Test a single class or function in isolation (dependencies are mocked)
-  - Fast: milliseconds per test, thousands per second
-  - Independent: no file system, no database, no network
-  - Tell you WHERE the bug is (exact class and method)
+```
 
-#### INTEGRATION TESTS
-  - Test multiple components working together
-  - Verify that your code works with real databases, real HTTP calls, real queues
-  - Slower than unit tests, but catch contract mismatches and config errors
-  - Testcontainers: spin up real databases in Docker for tests
+The higher you go, the fewer tests you should have because they are generally slower, more expensive, and more brittle.
 
+
+
+### Unit Testing
+
+A **unit test** verifies the behavior of a **single unit of code**, usually a single method or class, in complete isolation.
+
+Dependencies such as databases, APIs, and external services are replaced with **mocks** or **stubs**.
+
+#### Example
+
+```java
+@Test
+void shouldCalculateDiscount() {
+    PriceCalculator calculator = new PriceCalculator();
+
+    double result = calculator.calculateDiscount(100);
+
+    assertEquals(90, result);
+}
+```
+
+#### Characteristics
+
+- Fast (milliseconds)
+- Runs in isolation
+- Uses mocks when needed
+- Easy to debug
+- Should make up the majority of your tests
+
+Typical tools:
+- JUnit
+- Mockito
+- AssertJ
+
+
+
+### Integration Testing
+
+An **integration test** verifies that multiple components work together correctly.
+
+Instead of mocking everything, it tests the interaction between real parts of the application.
+
+Examples include:
+- Service ↔ Repository
+- Repository ↔ Database
+- REST Controller ↔ Service
+- Application ↔ External API
+
+#### Example
 
 ```java
 @SpringBootTest
-@Testcontainers
-class UserRepositoryIT {
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
-        .withDatabaseName("testdb");
+@AutoConfigureMockMvc
+class UserControllerIntegrationTest {
 
-    @DynamicPropertySource
-    static void properties(DynamicPropertyRegistry reg) {
-        reg.add("spring.datasource.url", mysql::getJdbcUrl);
-        reg.add("spring.datasource.username", mysql::getUsername);
-        reg.add("spring.datasource.password", mysql::getPassword);
-    }
-
-    @Autowired UserRepository repo;
+    @Autowired
+    MockMvc mockMvc;
 
     @Test
-    void should_persist_and_retrieve_user() {
-        User saved = repo.save(new User("Beatriz", "b@example.com"));
-        Optional<User> found = repo.findByEmail("b@example.com");
-        assertThat(found).isPresent();
-        assertThat(found.get().getId()).isEqualTo(saved.getId());
+    void shouldReturnUser() throws Exception {
+        mockMvc.perform(get("/users/1"))
+               .andExpect(status().isOk());
     }
 }
 ```
 
-**E2E TESTS**:
-  - Simulate a real user in a real browser (Selenium, Playwright, Cypress)
-  - Slowest (seconds each), most brittle (UI changes break tests)
-  - Cover the critical user journey: sign up, log in, make a purchase
+Or testing a repository against a real test database:
+
+```java
+@DataJpaTest
+class UserRepositoryTest {
+
+    @Autowired
+    UserRepository repository;
+
+    @Test
+    void shouldFindUserByEmail() {
+        repository.save(new User("Alice", "alice@example.com"));
+
+        assertTrue(repository.findByEmail("alice@example.com").isPresent());
+    }
+}
+```
+
+#### Characteristics
+
+- Slower than unit tests
+- Uses real infrastructure (database, Spring context, etc.)
+- Verifies components integrate correctly
+
+
+
+### End-to-End (E2E) Testing
+
+An **End-to-End (E2E) test** verifies the complete application from the user's perspective.
+
+It exercises the entire stack:
+
+```text
+Browser
+   ↓
+Frontend
+   ↓
+Backend
+   ↓
+Database
+```
+
+Example:
+1. Open website
+2. Log in
+3. Add product to cart
+4. Checkout
+5. Verify confirmation page
+
+Typical tools:
+- Selenium
+- Cypress
+- Playwright
+
+#### Characteristics
+
+- Slow
+- Expensive to maintain
+- Tests complete user journeys
+- Finds issues that unit tests cannot
+
+
+
+### 4. Acceptance Testing
+
+Acceptance tests verify that the software satisfies the **business requirements**.
+
+Instead of asking:
+
+> "Does this method work?"
+
+they ask:
+
+> "Does the system solve the user's problem?"
+
+Example:
+
+```text
+Scenario:
+Given a registered customer
+When they place an order
+Then the order should appear in their purchase history
+```
+
+Acceptance tests are often written using **BDD (Behavior-Driven Development)**.
+
+Common tools:
+- Cucumber
+- SpecFlow
+
+
+
+### Smoke Testing
+
+A **smoke test** is a quick check that verifies the application's most important functionality after deployment.
+
+Examples:
+- Application starts
+- Database connection works
+- Login endpoint responds
+- Home page loads
+
+If smoke tests fail, further testing is usually stopped.
+
+
+
+### Regression Testing
+
+Regression testing ensures that **new code hasn't broken existing functionality**.
+
+Whenever a bug is fixed or a feature is added, existing tests are run again.
+
+Regression testing is usually automated as part of the CI/CD pipeline.
+
+
+
+### Performance Testing
+
+Performance testing measures how well an application performs under different workloads.
+
+Examples include:
+- Response time
+- Throughput
+- Resource usage
+- Scalability
+
+Types include:
+- Load testing
+- Stress testing
+- Spike testing
+- Endurance (soak) testing
+
+Common tools:
+- JMeter
+- Gatling
+- k6
+
+
+
+### Security Testing
+
+Security testing looks for vulnerabilities in the application.
+
+Examples:
+- SQL Injection
+- Cross-Site Scripting (XSS)
+- Cross-Site Request Forgery (CSRF)
+- Authentication issues
+- Authorization problems
+
+Common tools:
+- OWASP ZAP
+- Burp Suite
+
+
+
+### Comparison
+
+| Test Type | Scope | Speed | Uses Real Components? |
+|------------|-------|-------|-----------------------|
+| Unit | Single class or method | Very Fast | No |
+| Integration | Multiple components | Medium | Yes |
+| End-to-End (E2E) | Entire application | Slow | Yes |
+| Acceptance | Business requirements | Slow | Yes |
+| Smoke | Critical functionality | Fast | Usually Yes |
+| Regression | Existing functionality | Varies | Depends |
+| Performance | System performance | Slow | Yes |
+| Security | Application security | Slow | Yes |
+
+
+
+### Testing Pyramid
+
+The recommended strategy is to have:
+
+- **Many Unit Tests** (fast and isolated)
+- **Fewer Integration Tests** (verify component interaction)
+- **Very Few End-to-End Tests** (verify critical user journeys)
+
+```text
+               End-to-End
+             ───────────────
+            Few, slow, expensive
+
+            Integration Tests
+         ───────────────────────
+             Moderate number
+
+              Unit Tests
+      ────────────────────────────
+      Many, fast, cheap, reliable
+```
+
+This approach provides fast feedback, good test coverage, and lower maintenance costs.
+
 
 
 ## 6.05 Debugging
 
 
-
 ### Overview
 
-Debugging is the systematic process of finding and fixing the root cause of
-unexpected behaviour. Good debugging is about forming and testing hypotheses
-efficiently, not guessing.
+Debugging is the systematic process of finding and fixing the root cause of unexpected behaviour. Good debugging is about forming and testing hypotheses efficiently, not guessing.
 
 
 ### Reading Stack Traces
 
 
-A stack trace shows the call stack at the moment an exception was thrown.
-Read it from the TOP (the exact exception and immediate cause) downward
-(the call chain that led to it).
+A stack trace shows the call stack at the moment an exception was thrown. 
+Read it from the TOP (the exact exception and immediate cause) downward (the call chain that led to it).
 
 
-```text
+```java
 java.lang.NullPointerException: Cannot invoke "String.length()" because "name" is null
     at com.example.UserService.formatName(UserService.java:42)   ← your code — look here first
     at com.example.UserController.getUser(UserController.java:18)
     at ...Spring framework frames (skip these)...
 ```
 
-Focus on lines from YOUR package first. Spring/framework lines are usually not
-the bug — they correctly call your code, and your code failed.
+Focus on lines from YOUR package first. Spring/framework lines are usually not the bug — they correctly call your code, and your code failed.
 
 For "Caused by:" chains, the LAST "Caused by:" is the original root cause
 
-```text
+
+```java
 IOException: Failed to read config
 ```
+
 Caused by: FileNotFoundException: /etc/app/config.yml (No such file or directory)
 ← This is the real problem — the file does not exist
+
 
 ### Debugger Techniques
 
 **Breakpoints** — pause execution at a specific line to inspect variables.
 
 
-#### Conditional Breakpoints
-only pause when a condition is true
-(i == 500) or (user.getId() == 123)
+**Conditional Breakpoints** - only pause when a condition is true (i == 500) or (user.getId() == 123)
 Invaluable for finding bugs that only occur with specific data in loops.
+
 
 **Step Over** — execute the current line and pause on the next (stays in current method)
 
+
 **Step Into** — enter the method being called (explore deeper)
+
 
 **Step Out**  — complete the current method and pause in the caller
 
 
-**Evaluate Expression** — execute any expression in the current scope while paused.
-Call methods, inspect objects, try different values.
+**Evaluate Expression** — execute any expression in the current scope while paused. Call methods, inspect objects, try different values.
+
 
 
 ### Structured Logging
@@ -9461,7 +9783,7 @@ log.debug("User: " + user.toString());
 log.debug("User: {}", user);
 ```
 
-**Log levels**:
+#### Log levels
 
 **Error** — something failed; requires immediate attention
 
@@ -9474,42 +9796,40 @@ log.debug("User: {}", user);
 **Trace** — very fine-grained — every method call, every SQL query
 
 
-## 6.06 Code Reviews
 
+## 6.06 Code Reviews
 
 
 ### Overview
 
-Code review is the practice of having peers examine code before it is merged.
-Reviews catch bugs, enforce consistency, share knowledge, and mentor developers.
-A good review culture is one of the highest-leverage engineering practices a
-team can adopt.
+Code review is the practice of having peers examine code before it is merged. Reviews catch bugs, enforce consistency, share knowledge, and mentor developers.
+A good review culture is one of the highest-leverage engineering practices a team can adopt.
 
 
 ### Writing Review Comments
 
-
-
 **Blocking Comments** — must be addressed before merging. Use for: bugs, security
 issues, violating team standards, logic errors, missing tests.
 
-**Non-Blocking Comments (nits)** — suggestions or preferences. Mark clearly:
+**Non-Blocking Comments (nits)** — suggestions or preferences. 
+Mark clearly:
 "Nit: could extract this to a method for readability"
 "Nit: prefer Optional.orElseThrow() over .get() here"
 These do not need to be resolved to merge, but the author should acknowledge them.
 
-#### Feedback on Code, Not the Person
-**Bad**: "You should know better than to use raw types"
-**Good**: "Raw types lose type safety — using List<String> here would catch issues at compile time"
+**Feedback on Code, Not the Person**:
+- **Bad**: "You should know better than to use raw types"
+- **Good**: "Raw types lose type safety — using List<String> here would catch issues at compile time"
 
-#### Explain the Why, Not Just the What
-**Bad**: "Don't do this"
-**Good**: "Using Thread.sleep() in tests makes them slow and flaky — consider awaitility or a mock clock"
+**Explain the Why, Not Just the What**:
+- **Bad**: "Don't do this"
+- **Good**: "Using Thread.sleep() in tests makes them slow and flaky — consider awaitility or a mock clock"
 
-**SUGGEST, DON'T DICTATE (when it's a preference)**: "What do you think about extracting this to a helper?" vs "Extract this to a helper"
+**SUGGEST, DON'T DICTATE (when it's a preference)**: 
+- "What do you think about extracting this to a helper?" vs "Extract this to a helper"
+
 
 ### Being Reviewed
-
 
 - Write a clear PR description — context saves the reviewer time
 - Don't take feedback personally — it is about the code
@@ -9527,33 +9847,31 @@ These do not need to be resolved to merge, but the author should acknowledge the
 ## 7.01 Agile / Scrum
 
 
-
 ### Overview
 
-Agile is a philosophy for iterative, incremental software development. Instead
-of planning everything upfront and delivering at the end (Waterfall), you
-deliver value in short cycles, adapting as you learn. Scrum is the most popular
-Agile framework, with well-defined roles, artefacts, and ceremonies.
+Agile is a methodology/philosophy for iterative, incremental software development. Instead of planning everything upfront and delivering at the end (Waterfall), you deliver value in short cycles, adapting as you learn. 
+Scrum is the most popular Agile framework, with well-defined roles, artefacts, and ceremonies.
+
+Waterfall is a linear software development methodology where each phase (requirements, design, implementation, testing, deployment) is completed sequentially, with no overlap or iteration between stages.
 
 
 ### The 4 Values of the Agile Manifesto
 
-
+```text
 Individuals and interactions  OVER  processes and tools
 Working software              OVER  comprehensive documentation
 Customer collaboration        OVER  contract negotiation
 Responding to change          OVER  following a plan
-The right-hand side items still have value — the manifesto values the left-hand
-side MORE. The key insight: agility comes from people collaborating and adapting,
-not from following a rigid process.
+```
+
+The right-hand side items still have value — the manifesto values the left-hand side MORE. 
+
+The key insight: agility comes from people collaborating and adapting, not from following a rigid process.
 
 
 ### Scrum Roles
 
-
-
-**Product Owner (po)** — represents the business and customers. Owns and prioritises the Product Backlog. Decides WHAT gets built and WHY. The single point of decision authority for product scope. Does NOT decide HOW or WHEN (that is the
-team's responsibility).
+**Product Owner (po)** — represents the business and customers. Owns and prioritises the Product Backlog. Decides WHAT gets built and WHY. The single point of decision authority for product scope. Does NOT decide HOW or WHEN (that is the team's responsibility).
 
 
 **Scrum Master (sm)** — a servant leader and process facilitator. Removes impediments, coaches the team on Scrum, protects the team from external interruptions. Does NOT manage the team — that is not the SM's job.
@@ -9564,115 +9882,93 @@ team's responsibility).
 - **Cross-functional**: collectively they have all the skills needed (design, backend, frontend, testing, DevOps).
 
 
+
 ### Artefacts
 
+**Product Backlog** — the ordered list of everything that might be needed in the product. Owned by the PO. The top items are refined, estimated, and ready for the next Sprint. Items lower down are less defined.
 
 
-**Product Backlog** — the ordered list of everything that might be needed in the
-product. Owned by the PO. The top items are refined, estimated, and ready for
-the next Sprint. Items lower down are less defined.
+**Sprint Backlog** — the subset of Product Backlog items selected for the current Sprint, plus the plan to achieve the Sprint Goal. Owned by the Development Team.
 
 
-**Sprint Backlog** — the subset of Product Backlog items selected for the current
-Sprint, plus the plan to achieve the Sprint Goal. Owned by the Development Team.
+**Increment** — the sum of all Product Backlog items completed during a Sprint, plus the value of all previous Sprints. Must be in a potentially shippable state. Each Sprint adds to the previous Increment — the product grows Sprint by Sprint.
 
-
-**Increment** — the sum of all Product Backlog items completed during a Sprint, plus
-the value of all previous Sprints. Must be in a potentially shippable state.
-Each Sprint adds to the previous Increment — the product grows Sprint by Sprint.
 
 
 ### Ceremonies
 
-
-
-**Sprint Planning** — at the start of the Sprint. Team selects items from the Product
-Backlog, creates a Sprint Goal, and breaks items into tasks. Output: Sprint Backlog.
+**Sprint Planning** — at the start of the Sprint. Team selects items from the Product Backlog, creates a Sprint Goal, and breaks items into tasks. 
+Output: Sprint Backlog.
 
 
 **Daily Scrum (stand-up)**
 15-minute daily sync. Each person answers
-  - What did I do yesterday that helped the team reach the Sprint Goal?
-  - What will I do today toward the Sprint Goal?
-  - Are there any impediments blocking my progress?
+- What did I do yesterday that helped the team reach the Sprint Goal?
+- What will I do today toward the Sprint Goal?
+- Are there any impediments blocking my progress?
 
 
-**Sprint Review** — at the end of the Sprint. Team demonstrates the Increment to
-stakeholders. Stakeholders give feedback. The PO updates the backlog based on
-learnings. This is the feedback loop with the real world.
+**Sprint Review** — at the end of the Sprint. Team demonstrates the Increment to stakeholders. Stakeholders give feedback. The PO updates the backlog based on learnings. This is the feedback loop with the real world.
 
 
-**Sprint Retrospective** — team reflects on PROCESS (not product): What went well?
-What could be improved? What will we commit to trying next Sprint? The engine
-of continuous improvement.
+**Sprint Retrospective** — team reflects on PROCESS (not product): What went well? What could be improved? What will we commit to trying next Sprint? The engine of continuous improvement.
 
 
-**Key Metric**: Velocity = how many story points the team completes per Sprint.
-Velocity is a planning tool — it predicts capacity for future Sprints. It is NOT
-a productivity metric and should not be used to compare teams.
+**Key Metric**: Velocity = how many story points the team completes per Sprint. Velocity is a planning tool — it predicts capacity for future Sprints. It is NOT a productivity metric and should not be used to compare teams.
+
+
 
 
 ## 7.02 SDLC
 
 
-
 ### Overview
 
-The Software Development Life Cycle (SDLC) is a structured process for planning,
-creating, testing, and deploying software. Different organisations use different
-models (Waterfall, Agile, DevOps) but all cover the same fundamental phases.
+The Software Development Life Cycle (SDLC) is a structured process for planning, creating, testing, and deploying software. Different organisations use different models (Waterfall, Agile, DevOps) but all cover the same fundamental phases.
 
 
 ### The 7 Phases
 
 
-1. **PLANNING** — define the project scope, feasibility, timeline, budget, and team.
-What are we building? Is it worth building? How long will it take?
+1. **PLANNING** — define the project scope, feasibility, timeline, budget, and team. What are we building? Is it worth building? How long will it take?
+
 2. **REQUIREMENTS ANALYSIS** — gather and document what the system must do.
-FUNCTIONAL requirements: what the system does (user can log in, search products)
-NON-FUNCTIONAL requirements: how the system performs (response < 200ms,
-availability 99.9%, GDPR compliance, supports 10,000 concurrent users)
-3. **SYSTEM DESIGN** — translate requirements into architecture. Decide on: tech stack,
-database schema, API contracts, cloud infrastructure, security model, data flows.
-4. **IMPLEMENTATION (CODING)** — developers write the code following the design.
-In Agile, phases 1-4 repeat every Sprint, at progressively finer granularity.
+- FUNCTIONAL requirements: what the system does (user can log in, search products)
+- NON-FUNCTIONAL requirements: how the system performs (response < 200ms, availability 99.9%, GDPR compliance, supports 10,000 concurrent users)
+
+3. **SYSTEM DESIGN** — translate requirements into architecture. Decide on: tech stack, database schema, API contracts, cloud infrastructure, security model, data flows.
+
+4. **IMPLEMENTATION (CODING)** — developers write the code following the design. In Agile, phases 1-4 repeat every Sprint, at progressively finer granularity.
+
 5. **TESTING** — verify the system meets requirements and contains no critical bugs.
 Unit → integration → system testing → user acceptance testing (UAT).
-6. **DEPLOYMENT** — release the software to production. May involve staged rollouts,
-feature flags, blue-green deployments.
-7. **MAINTENANCE** — fix bugs, apply security patches, monitor performance, add
-enhancements based on user feedback. Often the longest phase.
+
+6. **DEPLOYMENT** — release the software to production. May involve staged rollouts, feature flags, blue-green deployments.
+
+7. **MAINTENANCE** — fix bugs, apply security patches, monitor performance, add enhancements based on user feedback. Often the longest phase.
+
 
 
 ## 7.03 Software Architecture
 
 
-
 ### Overview
 
-Software architecture defines the high-level structure of a system: the
-components it consists of, how they interact, and the principles guiding those
-decisions. Good architecture enables change; bad architecture resists it.
+Software architecture defines the high-level structure of a system: the components it consists of, how they interact, and the principles guiding those decisions. Good architecture enables change; bad architecture resists it.
 
 
 ### SOLID Principles
 
-
 **S — Single Responsibility Principle**
 
-```text
-A class should have only ONE reason to change. If a class handles HTTP
-parsing, business logic, AND database access, changing any of those concerns
-forces changes to the class. Split into Controller, Service, Repository.
-```
+A class should have only ONE reason to change. If a class handles HTTP parsing, business logic, AND database access, changing any of those concerns forces changes to the class. Split into **Controller, Service, Repository**.
+
 
 **O — Open/Closed Principle**
 
-```typescript
-Classes should be open for extension, closed for modification. Add new
-behaviour by adding new code, not by changing existing code (which could
-break what already works). Achieved with interfaces and polymorphism.
+Classes should be open for extension, closed for modification. Add new behaviour by adding new code, not by changing existing code (which could break what already works). Achieved with interfaces and polymorphism.
 
+```java
 // Violation: adding a new shape requires modifying AreaCalculator
 class AreaCalculator {
     double calculate(Object shape) {
@@ -9689,34 +9985,25 @@ class Triangle implements Shape { public double area() { return 0.5 * b * h; } }
 ```
 
 **L — Liskov Substitution Principle**
-Subtypes must be substitutable for their base types without breaking the
-program. If code works with Animal, replacing Animal with Dog (a subclass)
-should not break anything. Violated when a subclass throws an exception or
-returns a different type than the parent promised.
+
+Subtypes must be substitutable for their base types without breaking the program. If code works with Animal, replacing Animal with Dog (a subclass) should not break anything. Violated when a subclass throws an exception or returns a different type than the parent promised.
+
 
 **I — Interface Segregation Principle**
 
-```text
-Clients should not be forced to depend on interfaces they don't use. Split
-large interfaces into smaller, focused ones. A ReadOnlyRepository interface
-(findById, findAll) and a WriteRepository interface (save, delete) are better
-than one large Repository interface when some consumers only read.
-```
+Clients should not be forced to depend on interfaces they don't use. Split large interfaces into smaller, focused ones. A ReadOnlyRepository interface (findById, findAll) and a WriteRepository interface (save, delete) are better than one large Repository interface when some consumers only read.
+
 
 **D — Dependency Inversion Principle**
-High-level modules should not depend on low-level modules. Both should depend
-on abstractions. Your UserService should depend on the UserRepository INTERFACE,
-not on the concrete MySQLUserRepository. This allows swapping implementations
-(for testing, or when migrating databases) without changing the service.
+
+High-level modules should not depend on low-level modules. Both should depend on abstractions. Your UserService should depend on the UserRepository INTERFACE, not on the concrete MySQLUserRepository. This allows swapping implementations (for testing, or when migrating databases) without changing the service.
+
+
 
 ### Design Patterns
 
-
-
-**Singleton** — ensures only one instance of a class exists. Used for: database
-connection pools, configuration objects, logging. In Spring, all beans are
-Singletons by default.
-
+**Singleton** — ensures only one instance of a class exists. In Spring, all beans are Singletons by default.
+Used for: database connection pools, configuration objects, logging. 
 
 ```java
 public class AppConfig {
@@ -9730,21 +10017,16 @@ public class AppConfig {
 ```
 
 
-**Factory** — a method or class that creates objects without exposing the creation
-logic. The caller gets the object it needs without knowing which concrete class
-was instantiated.
+**Factory** — a method or class that creates objects without exposing the creation logic. The caller gets the object it needs without knowing which concrete class was instantiated.
 
-
-```text
+```java
 PaymentGateway gateway = PaymentGatewayFactory.create("STRIPE");
 ```
 
 
-**Builder** — construct complex objects step by step. Avoids constructors with many
-parameters (where you easily confuse the order of arguments).
+**Builder** — construct complex objects step by step. Avoids constructors with many parameters (where you easily confuse the order of arguments).
 
-
-```text
+```java
 User user = User.builder()
     .name("Beatriz")
     .email("b@example.com")
@@ -9753,10 +10035,7 @@ User user = User.builder()
 ```
 
 
-**Observer** — an object (Subject) maintains a list of observers and notifies them
-when its state changes. Foundation of event-driven systems, RxJS, and Spring's
-ApplicationEvent.
-
+**Observer** — an object (Subject) maintains a list of observers and notifies them when its state changes. Foundation of event-driven systems, RxJS, and Spring's ApplicationEvent.
 
 ```java
 // Spring ApplicationEvent
@@ -9769,10 +10048,7 @@ public void onUserRegistered(UserRegisteredEvent event) {
 ```
 
 
-**Decorator** — add behaviour to an object dynamically, by wrapping it in another
-object with the same interface. Java's InputStream/BufferedInputStream is the
-classic example:
-
+**Decorator** — add behaviour to an object dynamically, by wrapping it in another object with the same interface. Java's InputStream/BufferedInputStream is the classic example:
 
 ```java
 InputStream raw    = new FileInputStream("file.txt");     // raw bytes
@@ -9782,10 +10058,7 @@ InputStream zipped   = new GZIPInputStream(buffered);      // adds decompression
 ```
 
 
-**Strategy** — define a family of algorithms, encapsulate each one, and make them
-interchangeable. The client can switch algorithms without changing the code that
-uses them.
-
+**Strategy** — define a family of algorithms, encapsulate each one, and make them interchangeable. The client can switch algorithms without changing the code that uses them.
 
 ```java
 interface SortStrategy { void sort(int[] data); }
@@ -9802,59 +10075,57 @@ class Sorter {
 
 ### System Design Framework for Interviews
 
-
 When asked "Design Twitter" or "Design a URL shortener", follow this framework:
 
 #### 1. CLARIFY REQUIREMENTS (5 min)
 
-```text
-Functional: what features? (post tweet, follow, timeline, search?)
-Non-functional: scale? (1M users vs 500M users changes everything)
-Constraints: read-heavy vs write-heavy? Latency requirements?
-```
+**Functional**: what features? (post tweet, follow, timeline, search?) 
+
+**Non-functional**: scale? (1M users vs 500M users changes everything)
+
+**Constraints**: read-heavy vs write-heavy? Latency requirements?
+
 
 #### 2. ESTIMATE SCALE
+
 DAU (daily active users), requests per second, storage per year
 1M users * 10 actions/day = 10M requests/day = ~116 req/sec
 
 #### 3. HIGH-LEVEL DESIGN
-Draw the major components: clients → load balancer → API servers →
-databases, caches, queues. Identify the core data entities and their
-relationships.
+
+Draw the major components: clients → load balancer → API servers → databases, caches, queues. 
+Identify the core data entities and their relationships.
 
 #### 4. DEEP DIVE INTO CRITICAL COMPONENTS
-Which components are most challenging? Where are the bottlenecks?
-Database choice (SQL vs NoSQL), caching strategy (what to cache, eviction),
-how to handle hot spots.
+
+Which components are most challenging? Where are the bottlenecks? Database choice (SQL vs NoSQL), caching strategy (what to cache, eviction), how to handle hot spots.
+
 #### 5. IDENTIFY AND ADDRESS BOTTLENECKS
-Single points of failure? How do you scale each component?
-What happens at 10x current load?
+
+Single points of failure? How do you scale each component? What happens at 10x current load?
+
 
 
 ## 7.04 Secure Development
 
 
-
 ### Overview
 
-Security is not a feature added at the end — it is a property built in from the
-start. Every developer on the team is responsible for security, not just a
-separate security team.
+Security is not a feature added at the end — it is a property built in from the start. Every developer on the team is responsible for security, not just a separate security team.
 
 
-**Owasp Top 10** — THE MOST CRITICAL WEB VULNERABILITIES
+### Owasp Top 10 — THE MOST CRITICAL WEB VULNERABILITIES
 
-1. BROKEN ACCESS CONTROL — users can access resources or actions they should not.
+1. **BROKEN ACCESS CONTROL** — users can access resources or actions they should not.
 Fix: always authorise on the server, never trust the client. Deny by default.
-2. CRYPTOGRAPHIC FAILURES — sensitive data in plaintext; weak algorithms (MD5,
-SHA-1, DES); unencrypted HTTP. Fix: HTTPS everywhere, bcrypt for passwords,
-encrypt sensitive data at rest.
-3. INJECTION (SQL, NoSQL, LDAP, OS command) — attacker-controlled data is
 
-```sql
-executed as code. Fix: parameterised queries (NEVER concatenate user input
-into SQL strings); input validation; parameterised OS commands.
+2. **CRYPTOGRAPHIC FAILURES** — sensitive data in plaintext; weak algorithms (MD5, SHA-1, DES); unencrypted HTTP. 
+Fix: HTTPS everywhere, bcrypt for passwords, encrypt sensitive data at rest.
 
+3. **INJECTION (SQL, NoSQL, LDAP, OS command)** — attacker-controlled data is executed as code. 
+Fix: parameterised queries (NEVER concatenate user input into SQL strings); input validation; parameterised OS commands.
+
+```java
 // Vulnerable
 String sql = "SELECT * FROM users WHERE id = " + userId;  // userId = "1 OR 1=1"
 
@@ -9863,45 +10134,34 @@ PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE id = ?
 stmt.setLong(1, userId);   // userId is always treated as a value, never as SQL
 ```
 
-4. INSECURE DESIGN — architectural flaws that enable attacks. Fix: threat modelling
+4. **INSECURE DESIGN** — architectural flaws that enable attacks. 
+Fix: threat modelling during design; security design review; rate limiting; account lockout.
 
-```text
-during design; security design review; rate limiting; account lockout.
-```
+5. **SECURITY MISCONFIGURATION** — default credentials, open S3 buckets, stack traces exposed in HTTP responses, unnecessary features enabled. 
+Fix: secure defaults, disable what you don't use, secrets management.
 
-5. SECURITY MISCONFIGURATION — default credentials, open S3 buckets, stack traces
-exposed in HTTP responses, unnecessary features enabled. Fix: secure defaults,
-disable what you don't use, secrets management.
-6. VULNERABLE AND OUTDATED COMPONENTS — using libraries with known CVEs.
-Fix: dependency scanning (OWASP Dependency-Check, Snyk, GitHub Dependabot),
-regular updates.
-7. IDENTIFICATION AND AUTHENTICATION FAILURES — weak passwords, missing MFA,
+6. **VULNERABLE AND OUTDATED COMPONENTS** — using libraries with known CVEs.
+Fix: dependency scanning (OWASP Dependency-Check, Snyk, GitHub Dependabot), regular updates.
 
-```css
-poor session management. Fix: use an established auth library; enforce MFA
-for sensitive actions; set short session timeouts.
-```
+7. **IDENTIFICATION AND AUTHENTICATION FAILURES** — weak passwords, missing MFA, poor session management. 
+Fix: use an established auth library; enforce MFA for sensitive actions; set short session timeouts.
 
-8. SOFTWARE AND DATA INTEGRITY FAILURES — including unsigned code, insecure CI/CD,
-deserialization of untrusted data. Fix: verify signatures, use SLSA framework.
-9. SECURITY LOGGING AND MONITORING FAILURES — not logging failed logins, not
-alerting on anomalies. Fix: log security events, set up alerts, incident response.
-10. SERVER-SIDE REQUEST FORGERY (SSRF) — server makes HTTP requests to attacker-
+8. **SOFTWARE AND DATA INTEGRITY FAILURES** — including unsigned code, insecure CI/CD, deserialization of untrusted data. 
+Fix: verify signatures, use SLSA framework.
 
-```css
-controlled URLs, potentially hitting internal services. Fix: validate and
-allowlist URLs; block requests to private IP ranges.
-```
+9. **SECURITY LOGGING AND MONITORING FAILURES** — not logging failed logins, not alerting on anomalies. 
+Fix: log security events, set up alerts, incident response.
+
+10. **SERVER-SIDE REQUEST FORGERY (SSRF)** — server makes HTTP requests to attacker- controlled URLs, potentially hitting internal services. 
+Fix: validate and allowlist URLs; block requests to private IP ranges.
+
 
 
 ### Content Security Policy
 
+CSP is an HTTP header that tells the browser which sources of scripts, styles, and other resources are trusted. It mitigates XSS attacks:
 
-CSP is an HTTP header that tells the browser which sources of scripts, styles,
-and other resources are trusted. It mitigates XSS attacks:
-
-
-```python
+```http
 Content-Security-Policy:
   default-src 'self';
   script-src 'self' https://cdn.trusted.com;
@@ -9915,12 +10175,11 @@ Content-Security-Policy:
 ## 7.05 Performance Optimization
 
 
-
 ### Overview
 
-"Premature optimisation is the root of all evil." — Donald Knuth.
-Always measure first — you cannot optimise what you do not measure. Then fix
-the measured bottleneck, not what you assume is slow.
+***"Premature optimisation is the root of all evil."*** — Donald Knuth.
+
+Always measure first — you cannot optimise what you do not measure. Then fix the measured bottleneck, not what you assume is slow.
 
 
 ### Measure First
@@ -9928,44 +10187,38 @@ the measured bottleneck, not what you assume is slow.
 
 #### Tools
 
-```text
 JProfiler / VisualVM — CPU and memory profiling for Java
 Chrome DevTools Performance tab — JavaScript profiling in the browser
 EXPLAIN ANALYZE (SQL) — actual query execution plan with real timings
 APM tools (Datadog, New Relic, Dynatrace) — production performance monitoring
-```
+
+
 #### Metrics to watch
 
-```text
 Latency — p50, p95, p99 (percentiles matter; averages hide tail latency)
 Throughput — requests per second
 Error rate — percentage of failed requests
 Resource utilisation — CPU, memory, disk I/O, network
-```
+
 
 ### Caching Strategies
 
-
 Cache types and where to apply them:
 
+**Browser Cache** — HTTP cache headers tell the browser how long it can reuse previously downloaded resources instead of requesting them again from the server. This reduces page load times, saves bandwidth, and decreases server load. 
+For example, versioned static assets (such as `app.abc123.js`) can be cached for a year because their filename changes whenever the content changes, while resources marked with `no-cache` must be revalidated with the server before being used. An `ETag` allows the browser to perform a conditional request, so if the resource hasn't changed, the server simply responds with `304 Not Modified` instead of sending the full file again.
 
-#### Browser Cache
-HTTP cache headers prevent repeated downloads of static assets
-
-```css
+```http
 Cache-Control: public, max-age=31536000  (1 year for content-hashed assets)
 Cache-Control: no-cache                  (always revalidate)
 ETag: "abc123"                           (conditional request; 304 if unchanged)
 ```
 
-**CDN (Content Delivery Network)** — serve static assets and cacheable responses from
-edge servers geographically close to users. Reduces latency and origin load.
+**CDN (Content Delivery Network)** — a CDN is a globally distributed network of servers that caches and serves static assets (such as images, CSS, JavaScript, videos, and downloadable files) from locations geographically close to users. Instead of every request reaching the application's origin server, users are served by a nearby edge server, reducing latency, improving page load times, lowering bandwidth usage, and decreasing the load on the origin infrastructure. Many CDNs can also cache dynamic HTTP responses when appropriate.
 
-**APPLICATION CACHE** (Redis, Memcached) — cache expensive database queries or
-API results in memory:
+**Application Cache (Redis, Memcached)** — an application cache stores frequently accessed or expensive-to-compute data in memory so that the application can retrieve it much faster than querying a database or calling an external API. Typical use cases include caching database query results, user sessions, API responses, and computed values. Because memory access is significantly faster than disk or network operations, application caching greatly improves response times and reduces database load, making it an essential technique for building scalable applications.
 
-
-```text
+```java
 // Spring Boot with Redis
 @Cacheable(value = "users", key = "#id")   // cache the result
 public User findById(Long id) {
@@ -9980,57 +10233,49 @@ public User updateUser(User user) {
 
 #### CACHE EVICTION STRATEGIES
 
-```text
-LRU (Least Recently Used)  — evict the item not accessed for the longest time
-LFU (Least Frequently Used) — evict the item accessed the fewest times
-TTL (Time To Live)          — evict after a fixed duration regardless of access
-```
+**LRU (Least Recently Used)**  — evict the item not accessed for the longest time
+**LFU (Least Frequently Used)** — evict the item accessed the fewest times
+**TTL (Time To Live)**         — evict after a fixed duration regardless of access
+
 
 ### Backend Performance Patterns
 
-
-N+1 QUERY — the most common database performance bug (described in Spring Boot section).
+**N+1 QUERY** — the most common database performance bug (described in Spring Boot section).
 Fix: eager loading with JOIN FETCH or DataLoader (for GraphQL).
 
 
-**Database Connection Pooling** — creating a new database connection for every request
-is expensive (TCP handshake, auth, protocol negotiation = ~20-50ms). HikariCP
-(Spring Boot default) maintains a pool of ready connections:
+**Database Connection Pooling** — creating a new database connection for every request is expensive (TCP handshake, auth, protocol negotiation = ~20-50ms). HikariCP (Spring Boot default) maintains a pool of ready connections:
 
+```properties
 spring.datasource.hikari.maximum-pool-size=20
 spring.datasource.hikari.minimum-idle=5
 spring.datasource.hikari.connection-timeout=30000
+``` 
 
-**Pagination** — never return unbounded result sets. Always apply LIMIT.
-Use keyset pagination for large datasets.
+**Pagination** — used to avoid returning large, unbounded result sets from a database or API by limiting the number of records returned per request using LIMIT and retrieving data in chunks. 
+Instead of fetching everything at once, which can be slow and resource-intensive, you return a fixed number of items (e.g., 20 per page). 
+For large datasets, keyset pagination is preferred over offset-based pagination because it uses a reference point (like the last seen ID) to efficiently fetch the next set of results without the performance degradation caused by skipping large numbers of rows.
 
 
-**Async Processing** — for slow operations (sending email, generating reports, calling
-slow APIs), don't make the user wait. Put the work on a message queue and return
-immediately; process asynchronously.
+**Async Processing** — for slow operations (sending email, generating reports, calling slow APIs), don't make the user wait. Put the work on a message queue and return immediately; process asynchronously.
+
+
 
 
 ## 7.06 Production Support
 
 
-
 ### Overview
 
-Production support means keeping running systems healthy: monitoring for problems,
-responding to incidents, and learning from failures. The three pillars of
-observability — logs, metrics, and traces — are what make this possible.
+Production support means keeping running systems healthy: monitoring for problems, responding to incidents, and learning from failures. The three pillars of observability — logs, metrics, and traces — are what make this possible.
 
 
 ### The Three Pillars of Observability
 
 
-
-**Logs** — structured, timestamped records of discrete events. They answer "what
-happened?". Each log entry should have: timestamp, level (INFO/WARN/ERROR),
-message, correlation ID (to link a request across services), and relevant context
-(userId, orderId, endpoint). Use structured JSON logs in production for easy
-ingestion into Elasticsearch/Loki.
-
+**Logs** — structured, timestamped records of discrete events. They answer "what happened?". 
+Each log entry should have: timestamp, level (INFO/WARN/ERROR), message, correlation ID (to link a request across services), and relevant context (userId, orderId, endpoint). 
+Use structured JSON logs in production for easy ingestion into Elasticsearch/Loki.
 
 ```json
 {
@@ -10047,59 +10292,50 @@ ingestion into Elasticsearch/Loki.
 
 **Metrics** — numeric measurements over time. They answer "how is the system doing?".
 
-**Types**
+Types:
+- Counter — monotonically increasing number (total requests, total errors)
+- Gauge — current value (active connections, queue size, memory usage)
+- Histogram — distribution of values (request latency distribution)
+- Summary — pre-calculated percentiles
 
-```text
-Counter    — monotonically increasing number (total requests, total errors)
-Gauge      — current value (active connections, queue size, memory usage)
-Histogram  — distribution of values (request latency distribution)
-Summary    — pre-calculated percentiles
-```
 KEY METRICS to monitor:
-Error rate, request latency (p50/p95/p99), throughput (req/sec), CPU, memory,
-GC time, DB connection pool saturation, queue depth.
+Error rate, request latency (p50/p95/p99), throughput (req/sec), CPU, memory, GC time, DB connection pool saturation, queue depth.
 
-**Traces** — records of a request's journey across multiple services. They answer
-"where did the time go?". Each trace has multiple spans — one per service called.
-A span records: service name, operation, duration, parent span, tags.
-**Tools**: Jaeger, Zipkin, OpenTelemetry (the standard).
+
+
+**Traces** — records of a request's journey across multiple services. They answer "where did the time go?".
+Instead of looking at isolated logs or aggregated metrics, a trace shows how one action flows across multiple services (e.g., API gateway → backend service → database → external API), including timing and relationships between each step.
+A trace is usually made up of spans, where each span represents one operation (like a function call or service request) and includes details such as start time, duration, and metadata. This helps engineers understand where latency comes from, where failures happen, and how different services depend on each other in complex microservice architectures.
+Each trace has multiple spans — one per service called.
+
+Tools: Jaeger, Zipkin, OpenTelemetry (the standard).
+
 
 
 ### Sli / SLO / SLA / Error Budget
 
 
-**SLI (Service Level Indicator)** — a measured metric: "our p99 response time is
-120ms", "our error rate is 0.05%".
+**SLI (Service Level Indicator)** — a real measured metric that reflects system performance or reliability, such as latency, error rate, or availability (e.g., “p99 latency = 120ms” or “error rate = 0.05%”). It describes *what is actually happening in production*.
 
-**SLO (Service Level Objective)** — a target for an SLI: "p99 latency < 200ms",
-"error rate < 0.1%". Agreed internally by the engineering team. If you miss your
-SLO, you need to prioritise reliability work over new features.
+**SLO (Service Level Objective)** — a target value set for an SLI that defines acceptable performance (e.g., “p99 latency < 200ms”). It is an internal engineering goal used to balance reliability work and feature development.
 
-**SLA (Service Level Agreement)** — a legal contract with consequences (refunds,
-credits) if the SLO is not met. SLAs should be more lenient than SLOs — you
-need a buffer to catch violations before they become SLA breaches.
+**SLA (Service Level Agreement)** — a formal contract with customers that defines service expectations and includes consequences like refunds or credits if not met. It is typically more conservative than SLOs to provide a safety buffer.
 
+**Error Budget** — the allowed amount of failure within an SLO (e.g., 99.9% availability allows ~43.8 minutes of downtime per month). If the error budget is exhausted, teams usually stop or slow feature development to focus on improving system reliability.
 
-**Error Budget** — the allowed amount of unreliability within a time window.
-If your SLO is 99.9% availability per month, your error budget is 43.8 minutes
-of downtime. If the budget is exhausted, you stop shipping new features and
-focus only on reliability until the budget resets.
 
 
 ### Blameless Post-mortems
 
-
 After a significant incident, a post-mortem (or incident review) documents:
-  - Timeline of events: what happened and when
-  - Root cause: the fundamental technical or process failure
-  - Impact: users affected, duration, revenue impact
-  - Detection: how was it discovered? Should an alert have caught it sooner?
-  - Resolution: what fixed it?
-  - Action items: what changes prevent recurrence?
+- Timeline of events: what happened and when
+- Root cause: the fundamental technical or process failure
+- Impact: users affected, duration, revenue impact
+- Detection: how was it discovered? Should an alert have caught it sooner?
+- Resolution: what fixed it?
+- Action items: what changes prevent recurrence?
 
-BLAMELESS means the goal is systemic improvement, not assigning blame to
-individuals. People make mistakes — the system should be designed to prevent
-those mistakes from causing incidents, or to detect and recover from them quickly.
+BLAMELESS means the goal is systemic improvement, not assigning blame to individuals. People make mistakes — the system should be designed to prevent those mistakes from causing incidents, or to detect and recover from them quickly.
 
 
 
@@ -11280,24 +11516,36 @@ SonarLint is an IDE plugin that provides SonarQube analysis inline as you code �
 SonarQube maps its rules to OWASP Top 10 categories (injection, broken auth, XSS, insecure deserialization, etc.), allowing filtering and reporting by security standard. It can detect many Top 10 vulnerabilities statically — injection patterns, hardcoded credentials, weak cryptography, and insecure random number generation.
 
 
-## 8.56 Unit & Integration Testing
+## 8.56 Types of Software Testing
 
 ### Interview Questions
 
-**Q: What is the difference between unit, integration, and end-to-end tests?**
-Unit tests: test a single class or function in isolation with mocked dependencies — fast, numerous, cheap. Integration tests: test how components work together — real database, real service interactions, may use TestContainers. E2E tests: simulate real user flows through the full stack — slowest, highest confidence, most brittle. The test pyramid says: many unit, some integration, few E2E.
+**Q: What is the testing pyramid and what types of tests does it describe?**
+The testing pyramid visualises the ideal test distribution: a wide base of unit tests (many, fast, cheap), a middle layer of integration tests (fewer, slower), and a narrow top of E2E tests (few, slowest, most brittle). The higher you go, the fewer tests you should have because they are more expensive and harder to maintain. The goal is fast feedback with good coverage at low cost.
 
-**Q: What is the test pyramid vs the test trophy?**
-Test pyramid (Fowler): wide base of unit tests, fewer integration, few E2E. Test trophy (Kent C. Dodds): fewer unit tests (they over-mock and couple to implementation details), heavy integration tests that test realistic user workflows, few E2E. The trophy shifts weight to integration tests as they give more confidence with less brittleness.
+**Q: What is a unit test and what are its key characteristics?**
+A unit test verifies a single method or class in complete isolation — all external dependencies (databases, APIs, services) are replaced with mocks or stubs. Key characteristics: very fast (milliseconds), runs in isolation, easy to debug, and should make up the majority of your test suite. Typical tools: JUnit, Mockito, AssertJ.
 
-**Q: What is TestContainers?**
-TestContainers is a library that starts real Docker containers (PostgreSQL, Redis, Kafka, etc.) for tests and tears them down after. This replaces mocked database layers with real integration tests, ensuring queries, transactions, and schema migrations actually work.
+**Q: What is an integration test and what does it verify?**
+An integration test verifies that multiple components work together correctly, using real infrastructure instead of mocks. Examples: Service ↔ Repository, Repository ↔ Database, REST Controller ↔ Service. In Spring Boot you can use `@SpringBootTest` with `MockMvc` to test the full controller-service-repository stack, or `@DataJpaTest` to test a repository against a real in-memory database.
 
-**Q: What is TDD (Test-Driven Development)?**
-TDD is a discipline where you write a failing test first, then write the minimum code to pass it, then refactor. The Red-Green-Refactor cycle ensures that every line of production code is tested by design. Benefits: forces testable design, prevents over-engineering, and produces a comprehensive test suite.
+**Q: What is an E2E (End-to-End) test?**
+An E2E test verifies the complete application from the user's perspective, exercising the entire stack: Browser → Frontend → Backend → Database. A typical test simulates a real user flow — open website, log in, add a product to cart, checkout, verify confirmation. Tools: Selenium, Cypress, Playwright. E2E tests are slow, expensive to maintain, and should only cover critical user journeys.
 
-**Q: What is test coverage and what is a good target?**
-Test coverage measures what percentage of code paths are exercised by tests. 80% is commonly cited as a reasonable target, but coverage is a floor, not a goal — 100% coverage doesn't mean tests are meaningful. Focus on testing critical paths and business logic rather than chasing coverage numbers on trivial getters and setters.
+**Q: What is acceptance testing and what is BDD?**
+Acceptance testing verifies that the software satisfies the business requirements — not "does this method work?" but "does the system solve the user's problem?". BDD (Behavior-Driven Development) is a technique where tests are written as human-readable scenarios (Given/When/Then) that stakeholders can understand. Common tools: Cucumber, SpecFlow.
+
+**Q: What is smoke testing?**
+A smoke test is a quick check that verifies the most critical functionality works after a deployment — for example: application starts, database connection works, login endpoint responds, home page loads. If smoke tests fail, further testing is stopped. The term comes from hardware testing where you power on a device and check it doesn't smoke.
+
+**Q: What is regression testing?**
+Regression testing ensures that new code has not broken existing functionality. After every bug fix or new feature, the existing test suite is re-run to confirm nothing regressed. It is usually automated and runs as part of the CI/CD pipeline, giving confidence that changes in one area have not introduced unexpected failures elsewhere.
+
+**Q: What is performance testing and what are its subtypes?**
+Performance testing measures how well an application behaves under load: response time, throughput, resource usage, scalability. Subtypes: load testing (expected traffic volume), stress testing (beyond capacity to find breaking point), spike testing (sudden traffic surge), endurance/soak testing (sustained load over time to find memory leaks). Common tools: JMeter, Gatling, k6.
+
+**Q: What is security testing and what vulnerabilities does it look for?**
+Security testing identifies vulnerabilities in the application before attackers do. Common targets: SQL Injection, Cross-Site Scripting (XSS), Cross-Site Request Forgery (CSRF), broken authentication, and authorisation flaws. Common tools: OWASP ZAP (automated scanner) and Burp Suite (manual and automated web vulnerability scanner).
 
 
 ## 8.57 Debugging

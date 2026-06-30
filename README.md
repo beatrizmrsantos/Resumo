@@ -1,6 +1,6 @@
 # Resumo — Technical Study Guide
 
-A personal study guide built as a React web app. Plain `.txt` documents are parsed at runtime into a structured, navigable reference site with syntax-highlighted code, a searchable table of contents, and dynamic section navigation.
+A personal study guide built as a React web app. Plain `.md` documents are parsed at runtime into a structured, navigable reference site with syntax-highlighted code, a searchable table of contents, and dynamic section navigation.
 
 ## Stack
 
@@ -14,21 +14,21 @@ A personal study guide built as a React web app. Plain `.txt` documents are pars
 ```
 Resumo/
 ├── docs/
-│   └── tech-study-guide.txt   # source document (plain text)
+│   └── tech-study-guide.md    # source document (markdown)
 └── website/
     ├── src/
     │   ├── content/            # document registry (index.ts)
     │   ├── pages/              # HomePage, DocumentPage
     │   ├── components/         # Sidebar, SectionContent, CodeBlock, DocumentCard
     │   └── utils/
-    │       └── parser.ts       # txt → structured AST (parts → chapters → blocks)
+    │       └── parser.ts       # md → structured AST (parts → chapters → blocks)
     ├── vercel.json
     └── vite.config.ts
 ```
 
 ## How documents are parsed
 
-The parser (`website/src/utils/parser.ts`) reads the raw `.txt` file and produces a tree:
+The parser (`website/src/utils/parser.ts`) reads the raw `.md` file and produces a tree:
 
 ```
 ParsedDocument
@@ -37,11 +37,11 @@ ParsedDocument
               └── Block[]   (paragraphs, headings, code blocks)
 ```
 
-Code blocks are auto-detected from indented content using heuristics (`looksLikeCode`) — no backtick fences required in the source file.
+Code blocks are delimited with standard markdown backtick fences (` ``` `) and the language tag is used for syntax highlighting.
 
 ## Adding a new document
 
-1. Drop a `.txt` file into `docs/`
+1. Drop a `.md` file into `docs/`
 2. Register it in `website/src/content/index.ts`:
 
 ```ts
@@ -53,11 +53,11 @@ export const documents: DocumentMeta[] = [
     icon: '📘',
     color: '#6366f1',
     tags: [],
-    filename: 'my-doc.txt',
+    filename: 'my-doc.md',
   },
 ]
 
-import myDocRaw from '../../../docs/my-doc.txt?raw'
+import myDocRaw from '../../../docs/my-doc.md?raw'
 export const documentContents: Record<string, string> = {
   'my-doc': myDocRaw,
 }
