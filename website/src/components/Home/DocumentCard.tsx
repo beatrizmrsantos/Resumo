@@ -11,9 +11,9 @@ export default function DocumentCard({ doc }: Props) {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Link to={`/doc/${doc.id}`} style={{ display: 'block', textDecoration: 'none' }}>
+    <Link to={`/doc/${doc.id}`} style={{ display: 'block', textDecoration: 'none', height: '100%' }}>
       <div
-        style={{ position: 'relative', paddingTop: 34 }}
+        style={{ position: 'relative', paddingTop: 34, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -46,9 +46,12 @@ export default function DocumentCard({ doc }: Props) {
 
         {/* Folder body */}
         <div style={{
+          flex: 1,
           background: `${doc.color}40`,
           borderRadius: '0 16px 16px 16px',
           padding: '34px 34px 28px',
+          display: 'flex',
+          flexDirection: 'column',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
           transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
           boxShadow: hovered
@@ -71,6 +74,7 @@ export default function DocumentCard({ doc }: Props) {
             color: 'var(--text-secondary)',
             lineHeight: 1.7,
             marginBottom: 28,
+            flex: 1,
           }}>
             {doc.description}
           </p>
