@@ -1,10 +1,11 @@
 export interface Block {
-  type: 'paragraph' | 'code' | 'heading' | 'table';
+  type: 'paragraph' | 'code' | 'heading' | 'table' | 'detail';
   content: string;
   language?: string;
   spacingBefore?: number;
   headers?: string[];
   rows?: string[][];
+  summary?: string;
 }
 
 export interface Section {

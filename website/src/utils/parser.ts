@@ -53,6 +53,9 @@ export function parseDocument(rawContent: string): ParsedDocument {
   let blankCount = 0        // consecutive blank lines since last content
   let paraSpacing = 0       // spacing captured when paragraph accumulation starts
   let codeSpacing = 0       // spacing captured when code fence opens
+  let inDetail = false
+  let detailLines: string[] = []
+  let detailSpacing = 0
 
   function flushPara() {
     if (!paraLines.length || !currentSection) { paraLines = []; return }
@@ -101,6 +104,26 @@ export function parseDocument(rawContent: string): ParsedDocument {
       continue
     }
 
+    // Inside detail block — collect raw lines (including inner code fences)
+    if (inDetail) {
+      if (trimmed === '</details>') {
+        inDetail = false
+        const summaryLine = detailLines.find(l => l.trim().startsWith('<summary>'))
+        const summary = summaryLine
+          ? summaryLine.trim().replace(/^<summary>/, '').replace(/<\/summary>$/, '').trim()
+          : 'Ver resposta'
+        const bodyLines = detailLines.filter(l => !l.trim().startsWith('<summary>'))
+        const content = bodyLines.join('\n')
+        if (currentSection) {
+          currentSection.blocks.push({ type: 'detail', summary, content, spacingBefore: detailSpacing })
+        }
+        detailLines = []
+      } else {
+        detailLines.push(line)
+      }
+      continue
+    }
+
     // Code fence opener
     if (/^```/.test(trimmed)) {
       flushPara()
@@ -109,6 +132,16 @@ export function parseDocument(rawContent: string): ParsedDocument {
       codeLang = detectLanguage(trimmed)
       inCode = true
       codeLines = []
+      continue
+    }
+
+    // <details> opener
+    if (trimmed === '<details>') {
+      flushPara()
+      detailSpacing = blankCount
+      blankCount = 0
+      inDetail = true
+      detailLines = []
       continue
     }
 

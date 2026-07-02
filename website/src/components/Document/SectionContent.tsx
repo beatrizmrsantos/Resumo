@@ -255,6 +255,92 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
             )
           }
 
+          if (block.type === 'detail') {
+            const renderDetailBody = (raw: string): React.ReactNode[] => {
+              const segments: React.ReactNode[] = []
+              const lines = raw.split('\n')
+              let codeAcc: string[] = []
+              let textAcc: string[] = []
+              let inCodeBlock = false
+              let lang = 'text'
+              let idx = 0
+
+              const flushText = () => {
+                const text = textAcc.join('\n').trim()
+                if (text) {
+                  segments.push(
+                    <div key={`t${idx++}`} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
+                      {text.split('\n').map((l, li) => renderLine(l.trim(), li))}
+                    </div>
+                  )
+                }
+                textAcc = []
+              }
+
+              for (const line of lines) {
+                const tr = line.trim()
+                if (inCodeBlock) {
+                  if (/^```\s*$/.test(tr)) {
+                    const code = codeAcc.join('\n').replace(/^\n+|\n+$/g, '')
+                    if (code) segments.push(<div key={`c${idx++}`} style={{ marginTop: 8 }}><CodeBlock code={code} language={lang} /></div>)
+                    codeAcc = []
+                    inCodeBlock = false
+                  } else {
+                    codeAcc.push(line)
+                  }
+                } else if (/^```/.test(tr)) {
+                  flushText()
+                  const rawLang = tr.replace(/^```/, '').trim().toLowerCase()
+                  const aliases: Record<string, string> = { js: 'javascript', ts: 'typescript', py: 'python', sh: 'bash', yml: 'yaml' }
+                  lang = aliases[rawLang] ?? (rawLang || 'text')
+                  inCodeBlock = true
+                  codeAcc = []
+                } else {
+                  textAcc.push(line)
+                }
+              }
+              flushText()
+              return segments
+            }
+
+            return (
+              <details key={i} style={{
+                marginTop: mt,
+                background: `${section.partColor}08`,
+                border: `1px solid ${section.partColor}30`,
+                borderRadius: 8,
+                overflow: 'hidden',
+              }}>
+                <summary style={{
+                  cursor: 'pointer',
+                  padding: '10px 14px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: section.partColor,
+                  listStyle: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  userSelect: 'none',
+                }}>
+                  <span className="detail-arrow" style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 18, height: 18, borderRadius: '50%',
+                    background: `${section.partColor}20`, fontSize: 10, fontWeight: 800,
+                  }}>▶</span>
+                  {block.summary ?? 'Ver resposta'}
+                </summary>
+                <div style={{
+                  padding: '12px 16px 14px',
+                  borderTop: `1px solid ${section.partColor}20`,
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                }}>
+                  {renderDetailBody(block.content)}
+                </div>
+              </details>
+            )
+          }
+
           if (block.type === 'table' && block.headers && block.rows) {
             const YES_NO_RE = /^(Yes|No\*?|—)$/i
             const cellVal = (v: string) => {

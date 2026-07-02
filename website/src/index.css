@@ -71,3 +71,10 @@ mark {
   /* Inline code wraps instead of breaking layout */
   code { white-space: normal !important; word-break: break-word; }
 }
+
+.detail-arrow {
+  transition: transform 0.2s ease;
+}
+details[open] .detail-arrow {
+  transform: rotate(90deg);
+}
