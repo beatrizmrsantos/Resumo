@@ -13,7 +13,7 @@ export const documents: DocumentMeta[] = [
   {
     id: 'tech-study-guide',
     title: 'Technical Study Guide',
-    description: 'Interview prep covering 47+ technologies: backend, frontend, cloud, databases, testing, and engineering practices.',
+    description: 'Interview prep covering 128 chapters across backend, frontend, cloud, databases, testing, and engineering practices.',
     icon: '💻',
     color: '#E84393',
     tags: ['Java', 'TypeScript', 'React', 'Spring Boot', 'Docker', 'Kubernetes', 'SQL', 'Python', 'GraphQL', 'Next.js'],
@@ -22,7 +22,7 @@ export const documents: DocumentMeta[] = [
   {
     id: 'system-design',
     title: 'System Design Interview Guide',
-    description: 'System design interview prep: the 5-step framework, core building blocks, and 5 fully solved exercises with detailed answers.',
+    description: 'System design interview prep: the 5-step framework, 32 chapters on core building blocks, and 5 fully solved exercises with detailed answers.',
     icon: '🏗️',
     color: '#7C3AED',
     tags: ['Scalability', 'Caching', 'Load Balancing', 'Kafka', 'CDN', 'Microservices', 'CAP Theorem', 'Redis', 'SQL', 'NoSQL'],

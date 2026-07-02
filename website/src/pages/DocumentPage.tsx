@@ -15,6 +15,7 @@ export default function DocumentPage() {
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const pendingScrollRef = useRef<string | null>(null)
+  const navLockRef = useRef(false)
 
   useEffect(() => {
     setSelectedPartId(null)
@@ -60,6 +61,19 @@ export default function DocumentPage() {
     if (selectedPart) return selectedPart.sections
     return parsed.parts.flatMap(p => p.sections)
   }, [parsed, selectedPart])
+
+  // Map subsection activeId back to its parent chapter so the sidebar stays highlighted
+  // while scrolling through subsections inside a chapter.
+  const activeChapterId = useMemo(() => {
+    if (!allSections.length) return activeId
+    const idx = allSections.findIndex(s => s.id === activeId)
+    if (idx === -1) return activeId
+    if (allSections[idx].level === 'chapter') return activeId
+    for (let i = idx - 1; i >= 0; i--) {
+      if (allSections[i].level === 'chapter') return allSections[i].id
+    }
+    return activeId
+  }, [activeId, allSections])
 
   const searchResults: SearchMatch[] = useMemo(() => {
     if (!parsed || !searchQuery.trim()) return []
@@ -114,7 +128,7 @@ export default function DocumentPage() {
       const el = document.getElementById(section.id)
       if (!el) return
       const obs = new IntersectionObserver(
-        entries => { if (entries[0].isIntersecting) setActiveId(section.id) },
+        entries => { if (entries[0].isIntersecting && !navLockRef.current) setActiveId(section.id) },
         { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
       )
       obs.observe(el)
@@ -122,6 +136,12 @@ export default function DocumentPage() {
     })
     return () => observers.forEach(o => o.disconnect())
   }, [allSections])
+
+  const lockNav = useCallback((id: string) => {
+    navLockRef.current = true
+    setActiveId(id)
+    setTimeout(() => { navLockRef.current = false }, 900)
+  }, [])
 
   const navigateTo = useCallback((id: string) => {
     if (!parsed) return
@@ -135,10 +155,10 @@ export default function DocumentPage() {
     }
     const el = document.getElementById(id)
     if (el) {
+      lockNav(id)
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      setActiveId(id)
     }
-  }, [selectedPartId, parsed])
+  }, [selectedPartId, parsed, lockNav])
 
   const navigateToMatch = (direction: 'next' | 'prev') => {
     if (!searchResults.length) return
@@ -635,7 +655,7 @@ export default function DocumentPage() {
                 boxShadow: mobileNavOpen ? `4px 0 24px ${selectedPart.color}40, 0 4px 20px rgba(0,0,0,0.12)` : 'none',
               }}
             >
-              <Sidebar toc={toc} activeId={activeId} onNavigate={navigateToAndClose} compact />
+              <Sidebar toc={toc} activeId={activeChapterId} onNavigate={navigateToAndClose} compact />
             </div>
           )}
 
@@ -647,7 +667,7 @@ export default function DocumentPage() {
             {/* Sidebar — desktop only */}
             {!isMobile && (
               <div style={{ flexShrink: 0 }}>
-                <Sidebar toc={toc} activeId={activeId} onNavigate={navigateTo} />
+                <Sidebar toc={toc} activeId={activeChapterId} onNavigate={navigateTo} />
               </div>
             )}
 
