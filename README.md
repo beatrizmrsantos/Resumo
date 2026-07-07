@@ -41,27 +41,38 @@ Code blocks are delimited with standard markdown backtick fences (` ``` `) and t
 
 ## Adding a new document
 
-1. Drop a `.md` file into `docs/`
-2. Register it in `website/src/content/index.ts`:
+Adding a new document takes less than a minute and requires two steps.
+
+**Step 1** — Drop the `.md` file into `docs/`.
+
+**Step 2** — Register it in `website/src/content/index.ts` by adding an import and an entry to both exports:
 
 ```ts
+// 1. Import the raw file
+import myDocRaw from '../../../docs/my-doc.md?raw'
+
+// 2. Add it to the content map
+export const documentContents: Record<string, string> = {
+  'tech-study-guide': techStudyGuideRaw,
+  'my-doc': myDocRaw,          // ← add this
+}
+
+// 3. Add its metadata (shown on the home page card)
 export const documents: DocumentMeta[] = [
+  // ...existing documents
   {
     id: 'my-doc',
     title: 'My Document',
     description: 'Short description shown on the home page.',
     icon: '📘',
     color: '#6366f1',
-    tags: [],
+    tags: ['Tag1', 'Tag2'],
     filename: 'my-doc.md',
   },
 ]
-
-import myDocRaw from '../../../docs/my-doc.md?raw'
-export const documentContents: Record<string, string> = {
-  'my-doc': myDocRaw,
-}
 ```
+
+The app will pick it up automatically — no other changes needed.
 
 ## Running locally
 
