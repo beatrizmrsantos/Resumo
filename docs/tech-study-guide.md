@@ -270,6 +270,28 @@ gateway.processPayment(99.99, "EUR");
 ```
 
 
+### Stack vs Heap
+
+The JVM splits memory into two main areas, and where a value lives affects its performance and lifecycle:
+
+**Stack**: stores method call frames — local variables, method parameters, and primitive values. It's organized as LIFO (last-in, first-out): every time a method is called, a new frame is pushed; when the method returns, its frame is popped and everything in it is instantly reclaimed. Each thread has its own stack. Access is very fast, but size is limited — deep recursion causes a `StackOverflowError`.
+
+**Heap**: stores all objects (anything created with `new`) and arrays. It's shared across all threads and managed by the Garbage Collector, which reclaims memory only when an object is no longer reachable. Access is slower than the stack because of this extra bookkeeping, and running out of space causes an `OutOfMemoryError`.
+
+```java
+void method() {
+    int x = 42;                       // primitive → lives on the stack
+    Person p = new Person("Ana");     // reference "p" lives on the stack,
+                                       // the actual Person object lives on the heap
+}
+// when method() returns, x and the reference p are popped from the stack;
+// the Person object on the heap is only removed later by the Garbage Collector,
+// once nothing references it anymore
+```
+
+**Rule of thumb**: the stack holds primitives and references (fast, short-lived, automatically cleaned up on return); the heap holds the actual objects those references point to (slower, long-lived, cleaned up by the GC).
+
+
 ### PRIMITIVES vs OBJECT TYPES
 
 Java has two fundamentally different kinds of data:
@@ -297,7 +319,9 @@ Integer c = null;             // valid for object type
 
 Why does this matter? 
 
-Collections like List<Integer> cannot store primitives directly. Also, comparing object types with == compares references (addresses), not values — always use .equals() for objects.
+Collections like List<Integer> cannot store primitives directly — they can only work with Object types. This is because Java Generics are implemented via type erasure, and internally every collection is backed by an array of Object references (e.g. Object[]). A primitive isn't an object and has no reference to store, so it cannot be placed in that array — this is why List<int> doesn't compile, and List<Integer> is used instead (with autoboxing converting each int to an Integer behind the scenes so it can be stored on the heap and referenced).
+
+Also, comparing object types with == compares references (addresses), not values — always use .equals() for objects.
 
 
 ```java
@@ -307,6 +331,57 @@ Integer x = 1000; Integer y = 1000;
 System.out.println(x == y);       // false! Different objects in heap
 System.out.println(x.equals(y));  // true — compares values
 ```
+
+
+### == vs .equals()
+
+**==**: compares values for primitives, but compares references (memory addresses) for objects — it checks whether two variables point to the exact same object in the heap, not whether their contents are equal.
+
+**.equals()**: a method (inherited from Object) meant to compare the actual content/state of two objects. By default, Object.equals() just falls back to == (reference comparison), but classes like String, Integer, and other wrapper types override it to compare values instead. Your own classes must override it too if you want meaningful value comparison.
+
+```java
+// == on primitives compares values directly
+int a = 5, b = 5;
+System.out.println(a == b);              // true
+
+// == on objects compares references
+String s1 = new String("hello");
+String s2 = new String("hello");
+System.out.println(s1 == s2);             // false — different objects in heap
+System.out.println(s1.equals(s2));        // true — String overrides equals() to compare content
+
+// String literals are interned (reused from a pool), so this can be misleading:
+String s3 = "hello";
+String s4 = "hello";
+System.out.println(s3 == s4);             // true — both point to the same pooled literal
+```
+
+Custom classes must override equals() (and hashCode(), to keep the contract consistent) to get meaningful comparisons:
+
+```java
+class Point {
+    int x, y;
+    Point(int x, int y) { this.x = x; this.y = y; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Point)) return false;
+        Point p = (Point) o;
+        return x == p.x && y == p.y;
+    }
+
+    @Override
+    public int hashCode() { return Objects.hash(x, y); }
+}
+
+Point p1 = new Point(1, 2);
+Point p2 = new Point(1, 2);
+System.out.println(p1 == p2);        // false — different objects
+System.out.println(p1.equals(p2));   // true — same x and y, thanks to the override
+```
+
+**Rule of thumb**: use == to check if two references point to the same object (or to compare primitives); use .equals() to check if two objects represent the same value.
 
 
 ### Access Modifiers
@@ -363,7 +438,7 @@ key-value pairs, keys are unique
 
 
 #### Queue
-FIFO or priority-based
+FIFO (First in, First Out) or priority-based
 
 - ArrayDeque:    fast double-ended queue
 - PriorityQueue: always removes the element with the highest priority
@@ -418,6 +493,24 @@ Wildcards:
 
 In Java, exceptions are objects that represent errors or exceptional conditions.
 
+```
+Throwable
+│
+├── Error
+│     ├── OutOfMemoryError
+│     └── StackOverflowError
+│
+└── Exception
+      │
+      ├── IOException        (checked)
+      ├── SQLException       (checked)
+      │
+      └── RuntimeException
+            ├── NullPointerException
+            ├── ArithmeticException
+            ├── IllegalArgumentException
+            └── IndexOutOfBoundsException
+```
 
 **Checked Exceptions**: extend Exception (but not RuntimeException). 
 The compiler FORCES you to handle them or declare with throws. They represent recoverable conditions — file not found, database connection failed.
@@ -440,6 +533,69 @@ try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"))) {
 ```
 
 **General rule**: use unchecked exceptions for programming errors (bugs) and checked exceptions for conditions the caller can reasonably try to recover from.
+
+
+### Interfaces vs Abstract Classes
+
+Both let you define a contract that other classes must follow, but they differ in purpose and capability.
+
+**Interface**: a pure contract — WHAT a class can do, with no state of its own. A class can implement multiple interfaces (Java has no multiple inheritance for classes, but it does for interfaces). Since Java 8, interfaces can have `default` and `static` methods with implementation, but still no instance fields.
+
+```java
+interface Flyable {
+    void fly();                              // abstract — no body
+
+    default void takeOff() {                 // default method — has body
+        System.out.println("Taking off...");
+    }
+}
+
+interface Swimmable {
+    void swim();
+}
+
+// A class can implement several interfaces
+class Duck implements Flyable, Swimmable {
+    public void fly() { System.out.println("Duck flying"); }
+    public void swim() { System.out.println("Duck swimming"); }
+}
+```
+
+**Abstract class**: a partial implementation — a base class that shares state (fields) and common behavior between closely related subclasses. A class can only extend ONE abstract class (single inheritance).
+
+```java
+abstract class Animal {
+    protected String name;                   // can have fields (state)
+
+    Animal(String name) {                    // can have constructors
+        this.name = name;
+    }
+
+    abstract void makeSound();                // abstract — subclasses must implement
+
+    void sleep() {                            // concrete — shared by all subclasses
+        System.out.println(name + " is sleeping");
+    }
+}
+
+class Dog extends Animal {
+    Dog(String name) { super(name); }
+
+    void makeSound() { System.out.println(name + " says Woof"); }
+}
+```
+
+**Key differences**:
+
+| | Interface | Abstract Class |
+|---|---|---|
+| Fields | only `public static final` constants | any instance fields, any visibility |
+| Constructors | none | yes |
+| Multiple inheritance | a class can implement many | a class can extend only one |
+| Method bodies | `default`/`static` methods (Java 8+) | any method can have a body |
+| Use case | unrelated classes sharing a capability (e.g. `Comparable`, `Flyable`) | closely related classes sharing state/behavior (e.g. `Animal` → `Dog`, `Cat`) |
+
+**Rule of thumb**: use an interface to define a capability/contract (a "can-do" relationship); use an abstract class to share code and state between closely related types (an "is-a" relationship with shared implementation).
 
 
 ### Lambdas, Streams, and Functional Interfaces
@@ -529,6 +685,22 @@ user.filter(predicate)        // keep value if predicate matches
 ### Concurrency
 
 
+**What is a Thread?**
+
+A thread is the smallest unit of execution that the CPU can schedule — a single sequential flow of instructions within a program. A running Java program always has at least one thread (the "main" thread), and can spawn more to run code concurrently.
+
+Each thread has its own call stack (its own local variables and method frames — see the Stack vs Heap section above), but all threads within the same process share the same heap. This is exactly why concurrency is hard: two threads running at the same time can read and write the same object on the heap simultaneously, with no guaranteed order.
+
+```java
+Thread t = new Thread(() -> {
+    System.out.println("Running in a new thread: " + Thread.currentThread().getName());
+});
+t.start();   // starts a new thread — runs concurrently with main
+t.join();    // (optional) blocks the main thread until t finishes
+```
+
+In practice, you rarely create Thread objects directly — you use higher-level abstractions like ExecutorService or CompletableFuture (below), which manage a pool of threads for you.
+
 Concurrency in Java is complex because multiple threads share memory.
 
 
@@ -538,17 +710,76 @@ Concurrency in Java is complex because multiple threads share memory.
 **Deadlock**: Thread A waits for the lock that Thread B holds, and Thread B waits for the lock that Thread A holds. Both block forever.
 
 
-- **synchronized**- ensures only one thread executes the block at a time:
+- **synchronized**
+
+Every object in Java has an intrinsic lock (also called a monitor). `synchronized` makes a thread acquire that lock before entering the block, and releases it automatically when the block exits (even if an exception is thrown). While one thread holds the lock, any other thread that tries to enter a block synchronized on the same object simply blocks and waits — this is what makes the block **mutually exclusive**, fixing both the visibility problem (like volatile) AND atomicity, since the whole block runs as one uninterruptible unit.
 
 ```java
 class Counter {
     private int count = 0;
-    public synchronized void increment() { count++; }  // atomic
+    public synchronized void increment() { count++; }  // atomic — whole method is one unit
     public synchronized int get() { return count; }
+}
+// Two threads calling increment() at the same time can no longer interleave —
+// the second thread simply waits until the first one finishes and releases the lock
+```
+
+`synchronized` can be applied at different granularities:
+
+```java
+// 1) Instance method — locks on "this" (the current object)
+public synchronized void increment() { count++; }
+
+// 2) Static method — locks on the Class object itself (shared by ALL instances)
+public static synchronized void staticMethod() { ... }
+
+// 3) Block — locks on an explicit object, letting you protect only part of a method
+// and choose exactly which lock to use
+public void increment() {
+    synchronized (this) {
+        count++;
+    }
+    doSomethingUnrelatedThatDoesNotNeedTheLock();
 }
 ```
 
-- **volatile**- ensures the variable is always read from main memory, not a thread's local cache. Does NOT fix race conditions on compound operations.
+**Trade-offs**: `synchronized` is simple and safe, but blocked threads wait indefinitely and cannot be interrupted, and overusing it (or locking more than necessary) hurts performance since it forces threads to run one at a time instead of in parallel. Locking on multiple objects in inconsistent order across different threads is also the classic cause of a **deadlock** (see above) — always acquire locks in the same order everywhere in your code to avoid it.
+
+**Rule of thumb**: use `synchronized` when you need atomicity for compound operations or multi-step invariants across shared state; use `volatile` only for simple single-variable visibility (like a flag), since it's cheaper and never blocks.
+
+
+- **volatile**
+
+For performance, each CPU core may keep its own cached copy of a variable (e.g. in a register or CPU cache) instead of always reading/writing straight to main memory. This means one thread can update a variable and another thread — running on a different core — may keep seeing a stale, cached value indefinitely, a problem called a **visibility** issue.
+
+Marking a field `volatile` fixes this: every read goes straight to main memory, and every write is flushed straight to main memory, instead of using a thread-local cache. It also establishes a "happens-before" relationship, meaning the JVM/CPU cannot reorder instructions around the volatile access — so other changes visible to the writing thread before it wrote the volatile field become visible to any thread that reads it afterward.
+
+```java
+class Flag {
+    private volatile boolean running = true;
+
+    public void stop() { running = false; }         // written by thread A
+
+    public void run() {
+        while (running) {                            // read by thread B
+            // do work
+        }
+        // without volatile, thread B might cache "running" once
+        // and loop forever, never seeing thread A's update
+    }
+}
+```
+
+**What volatile does NOT do**: it only guarantees visibility, not atomicity. A compound operation like `count++` is actually three steps (read, increment, write), and volatile does nothing to stop two threads from interleaving those steps and losing an update.
+
+```java
+private volatile int count = 0;
+public void increment() { count++; }   // STILL a race condition!
+// Thread A reads count=5, Thread B reads count=5,
+// both write back 6 — one increment is lost, even though count is volatile
+```
+
+**Rule of thumb**: use `volatile` for simple flags or single variables that are only ever written by one thread and read by others (like a shutdown flag). For compound operations (increment, check-then-act), you need `synchronized` or an atomic class like `AtomicInteger` instead.
 
 - **ExecutorService**- pool of reusable threads. You don't create threads manually:
 
@@ -8149,6 +8380,35 @@ spring.datasource.url=jdbc:mysql://localhost:3306/mydb?characterEncoding=utf8mb4
 ```
 
 
+### JSON Support
+
+MySQL (since 5.7) has a native **JSON** column type — it validates that inserted data is well-formed JSON and stores it in an optimised binary format internally (not as plain text), so it doesn't need a separate "JSONB-like" variant the way PostgreSQL does.
+
+```sql
+CREATE TABLE events (
+    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
+    type    VARCHAR(50) NOT NULL,
+    payload JSON NOT NULL
+);
+
+INSERT INTO events (type, payload) VALUES (
+    'user_signup',
+    '{"userId": 42, "email": "b@example.com", "source": "organic"}'
+);
+
+-- Query JSON fields
+SELECT payload->>'$.email' AS email FROM events;
+SELECT * FROM events WHERE payload->>'$.source' = 'organic';
+
+-- Functional index on a JSON field (MySQL needs a generated column for this)
+ALTER TABLE events ADD COLUMN source VARCHAR(50)
+    GENERATED ALWAYS AS (payload->>'$.source') STORED;
+CREATE INDEX idx_events_source ON events(source);
+```
+
+See the **JSONB vs JSON** section under PostgreSQL below for how MySQL's JSON type compares to Postgres' json/jsonb.
+
+
 
 ## 5.03 PostgreSQL
 
@@ -8176,9 +8436,17 @@ It also fully supports **ACID transactions**, relational integrity (primary/fore
 
 PostgreSQL has two JSON types — almost always prefer JSONB:
 
-**json**: stores JSON as text, preserving exact whitespace and key order. Re-parses on every access. Not indexable. Rarely useful.
+**json**: stores JSON as plain text, preserving exact whitespace and key order (including duplicate keys). Every query has to re-parse the raw text from scratch. Not indexable with GIN. Rarely useful — mainly kept for cases where you need to preserve the document exactly as it was sent.
 
-**jsonb**: stores JSON in optimised binary format — indexable, much faster to query and filter. Key order is not preserved (deduplicates keys). Always use this.
+**jsonb** ("JSON binary"): stores JSON already parsed into an internal binary tree structure — no reparsing on read, and directly indexable. Key order is not preserved and duplicate keys are removed at insert time (last value wins). Always use this in practice.
+
+**How this compares to MySQL's JSON type**: MySQL only has one JSON type, and it behaves closer to Postgres' jsonb than to its json — MySQL's JSON is also validated and stored in an optimised binary form, not as raw text. The real difference is in querying and indexing, where PostgreSQL goes much further:
+
+- **Indexing**: PostgreSQL can index a JSONB column directly with a GIN index, making containment (`@>`), key-existence (`?`), and path queries fast out of the box. MySQL cannot index a JSON column directly — you must extract a value into a separate **generated column** (as shown in the MySQL JSON Support example above) and index that instead.
+- **Query operators**: PostgreSQL has a richer operator set purpose-built for JSON — `@>` (contains), `?` (key exists), `@@` with `jsonpath` expressions — plus a full `jsonpath` query language (SQL/JSON standard). MySQL's JSON functions (`JSON_EXTRACT`, `->`, `->>`) cover extraction well but have a smaller set of containment/existence operators.
+- **Ecosystem**: because JSONB is a first-class, indexable Postgres type, it's common to model semi-structured data directly in JSONB columns and query it almost like a NoSQL document store, side by side with normal relational tables. MySQL's JSON support is more commonly used for smaller, less frequently queried blobs of flexible data (settings, metadata) rather than as a primary way to query data at scale.
+
+In short: MySQL JSON ≈ PostgreSQL jsonb in storage format, but PostgreSQL is significantly ahead on indexing and query capabilities for JSON data.
 
 
 ```sql
@@ -8301,20 +8569,71 @@ PostgreSQL offers more index types than most databases:
 
 ### Full-text Search
 
+**Why not just use `LIKE '%word%'`?** A `LIKE` with a leading wildcard cannot use a normal B-tree index (see Indexes above), so it always does a full table scan. It's also purely literal — it doesn't know that "run", "running" and "ran" are the same word, has no concept of word boundaries, relevance, or ignoring irrelevant words like "the"/"a". PostgreSQL's full-text search solves all of this natively, without needing an external engine like Elasticsearch for many use cases.
+
+**The core idea**: text is converted into a **tsvector** (a sorted list of normalised word forms, called *lexemes*, with their positions), and a search phrase is converted into a **tsquery** (the same normalisation applied to the search terms, combined with boolean operators). The `@@` operator then checks whether the tsquery matches the tsvector.
+
 ```sql
--- tsvector: optimised representation for full-text search
--- to_tsvector normalises text: removes stop words, stems words
+SELECT to_tsvector('english', 'Running dogs are running fast');
+-- 'dog':2 'fast':5 'run':1,3
+-- Notice: "Running"/"running" both stemmed to 'run', word order is dropped,
+-- stop words like "are" are removed, and each lexeme keeps its position(s)
+
+SELECT to_tsquery('english', 'run & dog');
+-- 'run' & 'dog' — matches any tsvector containing both lexemes
+```
+
+**to_tsvector('english', text)**: normalises text in three steps —
+1. **Parsing**: splits text into tokens (words, numbers, emails, etc).
+2. **Stop word removal**: discards very common, low-signal words ("a", "the", "is", "and"...).
+3. **Stemming**: reduces words to a common root (lexeme) using a language-specific dictionary, so "running", "runs", and "ran" all become 'run'. This is why searching "run" also matches documents containing "running".
+
+Since normalisation is expensive to redo on every query, store the tsvector as a **generated column** (computed once, on write) instead of recalculating it on every search:
+
+```sql
 ALTER TABLE articles ADD COLUMN search_vector tsvector
     GENERATED ALWAYS AS (to_tsvector('english', title || ' ' || content)) STORED;
 
 CREATE INDEX idx_articles_fts ON articles USING GIN (search_vector);
+-- GIN indexes each lexeme separately, so @@ lookups don't scan the whole table
+```
 
--- Search using @@
-SELECT title FROM articles
-WHERE search_vector @@ to_tsquery('english', 'database & optimisation')
-ORDER BY ts_rank(search_vector, to_tsquery('english', 'database')) DESC;
+**Building the search query — three ways to parse user input**:
 
--- ts_rank: relevance score — higher is better match
+```sql
+-- to_tsquery: requires explicit boolean syntax — you build/sanitise it yourself
+to_tsquery('english', 'database & optimisation')     -- both words must appear
+to_tsquery('english', 'database & !mysql')           -- "database" but NOT "mysql"
+to_tsquery('english', 'database | postgres')         -- either word
+
+-- plainto_tsquery: takes plain text, ANDs all the words together — good default
+-- for "search box" style input where you don't want the user typing operators
+plainto_tsquery('english', 'database optimisation')  -- same as 'database & optimisation'
+
+-- websearch_to_tsquery (PG 11+): understands Google-style syntax from raw user input
+-- quotes for phrases, "-" to exclude, "or" for alternatives — safest for untrusted input
+websearch_to_tsquery('english', '"query planner" -mysql')
+```
+
+**Searching and ranking**:
+
+```sql
+SELECT title, ts_rank(search_vector, query) AS rank
+FROM articles, websearch_to_tsquery('english', 'database optimisation') query
+WHERE search_vector @@ query
+ORDER BY rank DESC;
+
+-- ts_rank: relevance score based on how often/where the matched lexemes appear
+-- (higher = better match) — lets you sort results by relevance instead of just
+-- returning an unordered set of matches like a plain WHERE clause would
+```
+
+**ts_headline**: generates a highlighted excerpt around the matched terms, useful for showing search-result snippets in a UI:
+
+```sql
+SELECT ts_headline('english', content, websearch_to_tsquery('english', 'database'))
+FROM articles WHERE search_vector @@ websearch_to_tsquery('english', 'database');
+-- "...tuning the <b>database</b> for read-heavy workloads..."
 ```
 
 
