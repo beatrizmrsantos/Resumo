@@ -14,8 +14,8 @@ Code examples are part of the learning — read them as explanatory text.
 
 **Part 1 — Programming Languages**
 - 1.01 Java
-- 1.02 TypeScript
-- 1.03 JavaScript
+- 1.02 JavaScript
+- 1.03 TypeScript
 - 1.04 Dart
 - 1.05 HTML
 - 1.06 CSS
@@ -163,6 +163,10 @@ Code examples are part of the learning — read them as explanatory text.
 - 8.63 Performance Optimization
 - 8.64 Production Support
 
+**Part 9 — Data Structures & Algorithms**
+- 9.01 Data Structures
+- 9.02 Algorithms
+
 
 ---
 
@@ -177,6 +181,120 @@ Code examples are part of the learning — read them as explanatory text.
 ### Overview
 
 Java is a compiled-to-bytecode language, which means your source file (.java) is transformed into an intermediate format (.class) that is then executed by the JVM (Java Virtual Machine). This extra layer is what makes Java "write once, run anywhere" — the same bytecode runs on any operating system that has a JVM. Java is strongly typed (you must declare the type of every variable) and object-oriented, meaning code is organized into classes and objects.
+
+
+### How the JVM Works (JDK, JRE, JVM)
+
+Three acronyms that are often confused, but nest inside one another:
+
+**JVM (Java Virtual Machine)**: the engine that actually executes bytecode — an abstract computer that translates `.class` files into instructions the real operating system/CPU can run. It's what makes Java portable: the JVM is platform-specific (a different JVM build for Windows/Mac/Linux), but the bytecode it runs is not.
+
+**JRE (Java Runtime Environment)**: the JVM PLUS the standard class libraries (`java.lang`, `java.util`, etc.) needed to actually run a compiled Java application. If you only need to RUN Java programs (not develop them), the JRE is all you need.
+
+**JDK (Java Development Kit)**: the JRE PLUS development tools — the compiler (`javac`), debugger, and other tooling needed to WRITE and build Java programs.
+
+```text
+JDK
+ ├── Development tools (javac, jdb, javadoc, ...)
+ └── JRE
+      ├── Class libraries (java.lang, java.util, java.io, ...)
+      └── JVM (executes bytecode)
+```
+
+**Rule of thumb**: developers install the JDK (it contains everything, including the JRE); a production server that only runs a pre-built `.jar` technically only needs a JRE, though in practice most environments just install the JDK for simplicity.
+
+
+### Bytecode
+
+Bytecode is the intermediate, platform-independent instruction format Java source code compiles down to — it's not machine code (which the CPU executes directly) and not source code (which humans write); it sits in between.
+
+```text
+Main.java  →  javac (compiler)  →  Main.class (bytecode)  →  JVM  →  machine code (via interpretation/JIT)
+```
+
+```java
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        int x = 1 + 2;
+    }
+}
+```
+
+Compiling this with `javac Main.java` produces `Main.class`, a binary file containing bytecode instructions — you can inspect them with `javap -c Main`:
+
+```text
+0: iconst_1        // push the constant 1 onto the stack
+1: iconst_2        // push the constant 2 onto the stack
+2: iadd            // pop both, add them, push the result
+3: istore_1        // pop the result, store it in local variable slot 1 (x)
+```
+
+Because every JVM (Windows, Mac, Linux, embedded devices) understands the exact same bytecode format, the SAME `.class` file runs unmodified anywhere a JVM is installed — this is literally what "write once, run anywhere" means in practice.
+
+
+### Compilation vs Execution
+
+Java's execution model has two distinct steps, unlike a purely interpreted language (no separate compile step) or a purely compiled one (compiles directly to native machine code):
+
+**1. Compilation (`javac`)**: happens once, ahead of time. Translates `.java` source files into `.class` bytecode files. This step catches syntax errors and type errors — the reason Java is "compile-time type-safe."
+
+**2. Execution (JVM)**: happens every time you run the program. The JVM loads the `.class` bytecode and runs it using a hybrid approach for performance:
+   - **Interpretation**: the JVM initially interprets bytecode instruction-by-instruction — slower, but starts running immediately with no extra delay.
+   - **JIT (Just-In-Time) compilation**: the JVM's HotSpot compiler monitors which methods are called frequently ("hot" methods) and compiles THOSE specific methods down to native machine code at runtime, caching the result — so hot code paths eventually run close to the speed of a natively-compiled language, while still keeping Java's "compile once, run anywhere" bytecode portability.
+
+```text
+.java  --[javac, ahead-of-time]-->  .class (bytecode)  --[JVM, at runtime]-->  interpreted, then JIT-compiled for hot paths
+```
+
+
+### Garbage Collector
+
+Java manages heap memory automatically — you never manually free an object (unlike C's `malloc`/`free`). The **Garbage Collector (GC)** periodically scans the heap, identifies objects that are no longer reachable from any live reference (local variables, static fields, active threads), and reclaims their memory.
+
+```java
+void createUser() {
+    User user = new User("Ana");   // allocated on the heap
+}   // once createUser() returns, "user" goes out of scope —
+    // the User object becomes UNREACHABLE and is eligible for garbage collection
+    // (though the GC may not run immediately — reclaiming happens on its own schedule)
+```
+
+**Generational hypothesis**: most objects die young (a loop variable, a temporary DTO), while a small number live a long time (caches, singletons). The JVM heap is split accordingly:
+
+- **Young Generation** (Eden + two Survivor spaces): where new objects are allocated. Collected frequently with a fast "Minor GC" — objects that survive several collections are promoted to the Old Generation.
+- **Old Generation**: holds long-lived objects. Collected less often, with a more expensive "Major/Full GC" — this is usually the pause developers care about tuning away.
+
+Modern collectors (G1 — the default since Java 9, or ZGC/Shenandoah for very large heaps with near-zero pause times) aim to minimize "stop-the-world" pauses, where all application threads freeze while the GC runs.
+
+**What can prevent garbage collection** (Java's version of a memory leak): static fields holding references to objects no longer needed, unclosed resources, listeners/caches that are never cleared, or objects held by long-lived collections — the object is technically still "reachable," so the GC correctly leaves it alone, even though the program logically no longer needs it.
+
+
+### Classes and Objects
+
+A **class** is a blueprint — it defines what fields (state) and methods (behavior) its instances will have, but does not itself hold any data. An **object** is an actual instance of a class, created with `new`, living on the heap (see Stack vs Heap below), with its own copy of the instance fields defined by the class.
+
+```java
+class Car {                              // the blueprint
+    String model;                         // instance field — each Car has its own copy
+    int speed;
+
+    void accelerate() {                   // instance method — behavior shared by all Cars
+        speed += 10;
+    }
+}
+
+Car car1 = new Car();                     // an object — a specific instance of Car
+car1.model = "Tesla";
+Car car2 = new Car();                     // a completely separate object
+car2.model = "Toyota";
+
+car1.accelerate();
+System.out.println(car1.speed);           // 10
+System.out.println(car2.speed);           // 0 — car2's state is entirely independent of car1's
+```
+
+A class can also have **static** members — fields/methods that belong to the CLASS itself rather than any individual instance, shared by every object (see the `static` keyword below).
 
 
 ### The Four Pillars of OOP
@@ -384,6 +502,75 @@ System.out.println(p1.equals(p2));   // true — same x and y, thanks to the ove
 **Rule of thumb**: use == to check if two references point to the same object (or to compare primitives); use .equals() to check if two objects represent the same value.
 
 
+### hashCode()
+
+`hashCode()` returns an `int` that represents an object as a number — it's what hash-based collections (`HashMap`, `HashSet`, `HashTable`) use to decide which "bucket" an object goes into, so they can locate it in roughly O(1) instead of scanning every element (see Hashmap Internals below for the full bucket mechanism).
+
+**The equals()/hashCode() contract** — this is one of the most common Java interview questions: if two objects are equal according to `.equals()`, they MUST return the same `hashCode()`. The reverse is not required — two unequal objects CAN share a hash code (a "collision"), which hash-based collections handle internally, but two EQUAL objects with DIFFERENT hash codes breaks the contract and causes real bugs.
+
+```java
+class Point {
+    int x, y;
+    Point(int x, int y) { this.x = x; this.y = y; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Point)) return false;
+        Point p = (Point) o;
+        return x == p.x && y == p.y;
+    }
+
+    @Override
+    public int hashCode() { return Objects.hash(x, y); }   // combines x and y into one hash
+}
+```
+
+**What breaks if you only override `equals()` and forget `hashCode()`**: the default `hashCode()` (inherited from `Object`) is based on memory address, so two objects that ARE equal by your `equals()` can land in completely different HashMap buckets — meaning `map.get(key)` can fail to find a value you just put in with an "equal" key, because the map never even looks in the right bucket.
+
+```java
+Point p1 = new Point(1, 2);
+Point p2 = new Point(1, 2);   // p1.equals(p2) is true
+
+Map<Point, String> map = new HashMap<>();
+map.put(p1, "first point");
+System.out.println(map.get(p2));   // if hashCode() isn't overridden: null! (p2 hashes to a different bucket)
+                                     // with hashCode() properly overridden: "first point"
+```
+
+**Rule of thumb**: always override `equals()` and `hashCode()` together (most IDEs generate both at once), never just one.
+
+
+### Pass by Value
+
+Java is ALWAYS pass-by-value — there is no pass-by-reference in Java, which surprises many developers coming from other languages. The nuance is in WHAT value gets passed for objects.
+
+**For primitives**: a copy of the actual value is passed. Modifying the parameter inside the method never affects the caller's variable.
+
+```java
+void doubleIt(int n) { n = n * 2; }
+int x = 5;
+doubleIt(x);
+System.out.println(x);   // 5 — unchanged
+```
+
+**For objects**: the variable itself is a REFERENCE (a pointer to the object on the heap) — and Java passes a COPY of that reference by value. This means the method receives its own pointer to the SAME heap object, so it CAN mutate the object's fields (the mutation is visible to the caller), but reassigning the parameter to point at a different object does NOT affect the caller's original reference.
+
+```java
+void addAge(Point p) { p.x = 999; }              // mutates the object the reference points to
+Point original = new Point(1, 2);
+addAge(original);
+System.out.println(original.x);                  // 999 — the mutation IS visible
+
+void reassign(Point p) { p = new Point(100, 100); }  // reassigns the LOCAL copy of the reference only
+Point original2 = new Point(1, 2);
+reassign(original2);
+System.out.println(original2.x);                 // 1 — unaffected; only the local parameter changed
+```
+
+**Rule of thumb**: this is exactly the same behavior as JavaScript's "pass by reference value" (see the JavaScript chapter) — Java just makes the vocabulary stricter by insisting it's ALL pass-by-value, with object references simply being one of the types of value that gets copied.
+
+
 ### Access Modifiers
 
 
@@ -406,59 +593,243 @@ class Example {
 **General rule**: make fields private, expose only what is necessary through public methods. The more restricted, the smaller the dependency surface.
 
 
+### final
+
+`final` means "cannot be changed again" — but what exactly that means depends on what it's applied to:
+
+```java
+final int MAX_USERS = 100;
+// MAX_USERS = 200;             // COMPILE ERROR — a final variable can only be assigned once
+
+final class Utils { }
+// class MyUtils extends Utils { }   // COMPILE ERROR — a final class cannot be extended (e.g. String, Integer)
+
+class Vehicle {
+    final void start() { }        // a final method cannot be overridden by a subclass
+}
+
+final List<String> names = new ArrayList<>();
+names.add("Ana");                 // fine — final only locks the REFERENCE, not the object's contents
+// names = new ArrayList<>();     // COMPILE ERROR — cannot reassign names to point elsewhere
+```
+
+**Rule of thumb**: `final` on a variable = cannot be reassigned; `final` on a method = cannot be overridden; `final` on a class = cannot be subclassed. This is exactly the same "locks the binding, not necessarily the contents" behavior as JavaScript's `const` (see the JavaScript chapter).
+
+
+### static
+
+`static` means a member belongs to the CLASS itself, not to any individual instance — there is exactly ONE copy, shared by every object of that class (and accessible even with no instance at all).
+
+```java
+class Counter {
+    static int totalCount = 0;      // shared by ALL instances — one copy total
+    int id;                          // one copy PER instance
+
+    Counter() {
+        totalCount++;                 // every new Counter increments the SAME shared field
+        id = totalCount;
+    }
+
+    static void printTotal() {         // static method — can be called without an instance,
+        System.out.println(totalCount); // and can only access static members directly
+    }
+}
+
+new Counter(); new Counter(); new Counter();
+Counter.printTotal();               // 3 — called on the CLASS, not an instance
+```
+
+**Common uses**: utility methods that don't need instance state (`Math.max()`, `Collections.sort()`), constants (`static final`), and the `main` method itself (`public static void main`, called by the JVM before any object of the class exists). A `static` method cannot use `this` or access non-static (instance) members directly, since there is no specific instance to refer to.
+
+
+### String vs StringBuilder vs StringBuffer
+
+**String**: immutable — every operation that "modifies" a String actually creates a brand new String object, leaving the original unchanged. Great for safety and sharing (see Immutability below), but wasteful if you're building/concatenating a string in a loop, since each `+=` allocates a new object.
+
+```java
+String s = "Hello";
+s = s + " World";     // does NOT modify the original "Hello" — creates a NEW String object,
+                        // and reassigns "s" to point to it; the old "Hello" object becomes garbage
+
+// Wasteful in a loop — creates N intermediate String objects, most immediately discarded:
+String result = "";
+for (int i = 0; i < 1000; i++) {
+    result += i;    // creates a new String every single iteration — O(n²) overall
+}
+```
+
+**StringBuilder**: mutable — an internal, resizable character buffer that can be appended to in place, without creating a new object each time. Not thread-safe, but fast — the standard choice for building strings in a loop.
+
+```java
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 1000; i++) {
+    sb.append(i);       // mutates the SAME buffer in place — O(n) overall
+}
+String result = sb.toString();   // convert to an immutable String only once, at the end
+```
+
+**StringBuffer**: functionally identical to StringBuilder (same API), but every method is `synchronized` — safe to share across threads, at the cost of extra locking overhead on every call. Predates StringBuilder (added in Java 5) and is rarely the right choice today, since most string-building isn't actually shared across threads.
+
+**Rule of thumb**: use `String` for values that don't change; use `StringBuilder` for building/concatenating strings (especially in loops); reach for `StringBuffer` only in the rare case where the SAME builder instance is genuinely mutated by multiple threads concurrently.
+
+
+### Immutability
+
+An immutable object's state can never change after construction — every field is set once, in the constructor, and never modified again. `String` is Java's most famous immutable class, but you can (and often should) write your own.
+
+```java
+final class Money {                          // final — cannot be subclassed to add mutability
+    private final double amount;               // final — cannot be reassigned after construction
+    private final String currency;
+
+    Money(double amount, String currency) {
+        this.amount = amount;
+        this.currency = currency;
+    }
+
+    // No setters! "Changing" the amount returns a NEW Money instead of mutating this one:
+    Money add(double delta) {
+        return new Money(this.amount + delta, this.currency);
+    }
+
+    double getAmount() { return amount; }
+    String getCurrency() { return currency; }
+}
+
+Money price = new Money(100, "EUR");
+Money newPrice = price.add(50);      // price itself is UNCHANGED — newPrice is a separate object
+```
+
+**Why immutability matters**: immutable objects are inherently thread-safe (no thread can ever see a partially-updated or torn state, since there's no mutation at all — this is why `String` can be freely shared across threads with zero synchronization), easier to reason about (a reference to an immutable object is guaranteed to always represent the same value), and safe to use as `HashMap` keys (their `hashCode()` can never change after insertion — a mutable key that changes its hash code after being added to a map causes it to become permanently unfindable, since it's now in the wrong bucket).
+
+**Rule of thumb**: default to immutable classes for value-like objects (Money, Point, Coordinates, DTOs) — declare the class `final`, make every field `private final`, set them only in the constructor, and provide no setters, only methods that return a new instance instead of mutating `this`. Records (below) give you this pattern almost for free.
+
+
 ### Collections Framework
 
 
-Java has a hierarchy of interfaces and implementations for collecting data:
+Java has a hierarchy of interfaces and implementations for collecting data. `Collection` is the root interface (implemented by `List`, `Set`, `Queue`); `Map` is separate, since it stores key-value pairs rather than single elements.
 
 
 #### List
 ordered sequence, allows duplicates, access by index
 
-- ArrayList:  dynamic array — O(1) read by index, O(n) insertion in the middle
-- LinkedList: doubly-linked list — O(1) insertion/removal at ends, O(n) access by index
+- **ArrayList**: backed by a dynamic array — O(1) read by index, O(n) insertion/removal in the middle (has to shift every following element), O(1) amortised add at the end. The default choice for most lists.
+- **LinkedList**: a doubly-linked list — O(1) insertion/removal at the ends (or once you already have a reference to the node), but O(n) access by index (has to walk the list from the start).
+
+```java
+List<String> arrayList = new ArrayList<>();
+arrayList.add("a"); arrayList.get(0);   // fast — direct array index
+
+List<String> linkedList = new LinkedList<>();
+linkedList.addFirst("a"); linkedList.addLast("b");   // fast — just relinks pointers, no shifting
+```
 
 
 #### SET
 no duplicates, no guaranteed order (depends on implementation)
 
-- HashSet:      uses HashMap internally — O(1) add/contains/remove, no order
-- LinkedHashSet: insertion-order preserved
-- TreeSet:      sorted order — O(log n) operations
+- **HashSet**: backed internally by a `HashMap` (elements become keys) — O(1) average add/contains/remove, no guaranteed iteration order.
+- **LinkedHashSet**: like HashSet, but also maintains a linked list through entries, so iteration order matches INSERTION order.
+- **TreeSet**: backed by a red-black tree — keeps elements in SORTED order (natural ordering or a custom `Comparator`, see below) — O(log n) for add/contains/remove.
+
+```java
+Set<Integer> hashSet = new HashSet<>(List.of(3, 1, 2));      // iteration order is unspecified
+Set<Integer> linkedSet = new LinkedHashSet<>(List.of(3, 1, 2)); // iterates 3, 1, 2 — insertion order
+Set<Integer> treeSet = new TreeSet<>(List.of(3, 1, 2));        // iterates 1, 2, 3 — sorted order
+```
 
 
 #### MAP
 key-value pairs, keys are unique
 
-- HashMap:     O(1) amortised get/put, not thread-safe, allows null key/value
-- LinkedHashMap: insertion-order preserved
-- TreeMap:     sorted by key — O(log n)
-- ConcurrentHashMap: thread-safe, for concurrent use
+- **HashMap**: O(1) amortised get/put, not thread-safe, allows one null key and multiple null values, no guaranteed iteration order.
+- **LinkedHashMap**: like HashMap, but preserves INSERTION order (or, configured differently, access order — useful for building an LRU cache).
+- **TreeMap**: sorted by key (natural ordering or a `Comparator`) — O(log n) get/put, useful when you need `firstKey()`/`lastKey()`/range queries.
+- **ConcurrentHashMap**: thread-safe for concurrent reads/writes without locking the entire map (see the Concurrency section) — the correct choice instead of `synchronized`-wrapping a HashMap.
+
+```java
+Map<String, Integer> hashMap = new HashMap<>();
+Map<String, Integer> linkedMap = new LinkedHashMap<>();   // iterates in insertion order
+Map<String, Integer> treeMap = new TreeMap<>();            // iterates sorted by key
+```
 
 
+#### Queue and Deque
+FIFO (First In, First Out) by default; `Deque` ("double-ended queue") extends `Queue` to allow adding/removing from BOTH ends, which is why it can also serve as a Stack (LIFO).
 
-#### Queue
-FIFO (First in, First Out) or priority-based
+- **ArrayDeque**: backed by a resizable array — the preferred implementation for both a Queue AND a Stack today; faster than `LinkedList` and `Stack` for almost every use case.
+- **PriorityQueue**: not FIFO — always removes the element with the highest priority next (smallest by natural ordering, or by a `Comparator`), backed by a binary heap — O(log n) insertion/removal.
+- **LinkedList**: also implements `Deque`, but `ArrayDeque` is generally preferred (better cache locality, no per-node object overhead).
 
-- ArrayDeque:    fast double-ended queue
-- PriorityQueue: always removes the element with the highest priority
+```java
+Deque<Integer> queue = new ArrayDeque<>();
+queue.offer(1); queue.offer(2);
+queue.poll();                          // 1 — FIFO: removes from the front
+
+Deque<Integer> stack = new ArrayDeque<>();
+stack.push(1); stack.push(2);
+stack.pop();                           // 2 — LIFO: removes from the front (the "top")
+
+PriorityQueue<Integer> pq = new PriorityQueue<>();
+pq.offer(5); pq.offer(1); pq.offer(3);
+pq.poll();                             // 1 — always the smallest first
+```
 
 
 #### Stack
 LIFO (Last In, First Out)
 
-- ArrayDeque:  preferred modern implementation — push()/pop()/peek(), faster than Stack
-- Stack:       legacy class (extends Vector) — avoid in new code, kept for historical reasons
+- **ArrayDeque**: preferred modern implementation — used via `push()`/`pop()`/`peek()`, faster than the legacy `Stack` class.
+- **Stack**: a legacy class (extends `Vector`, so every method is `synchronized`, adding unnecessary overhead for single-threaded use) — avoid in new code, kept in the JDK for historical/backwards-compatibility reasons.
 
 
-
-How to choose:
+**How to choose**:
   - Need fast random access? → **ArrayList**
   - Insert/remove at ends often? → **ArrayDeque** or **LinkedList**
-  - Need unique elements? → **HashSet** (unordered) or **TreeSet** (sorted)
-  - Need key-value lookup? → **HashMap**
+  - Need unique elements? → **HashSet** (unordered, fastest) or **TreeSet** (sorted) or **LinkedHashSet** (insertion order)
+  - Need key-value lookup? → **HashMap** (fastest), **TreeMap** (sorted), or **LinkedHashMap** (insertion/access order)
   - Concurrent access? → **ConcurrentHashMap**
   - Need LIFO behaviour? → **ArrayDeque** (as a stack)
+  - Need "always process the highest/lowest priority item next"? → **PriorityQueue**
+
+
+### Comparable vs Comparator
+
+Both define an ordering for objects, used by `Collections.sort()`, `TreeSet`, `TreeMap`, and `Arrays.sort()` — the difference is WHERE the ordering logic lives.
+
+**Comparable**: implemented BY the class itself — defines the object's single, natural/default ordering via `compareTo()`.
+
+```java
+class Employee implements Comparable<Employee> {
+    String name;
+    int salary;
+
+    @Override
+    public int compareTo(Employee other) {
+        return Integer.compare(this.salary, other.salary);   // natural order: by salary, ascending
+    }
+}
+
+List<Employee> employees = new ArrayList<>(List.of(emp1, emp2, emp3));
+Collections.sort(employees);          // uses compareTo() — sorts by salary
+```
+
+**Comparator**: defined SEPARATELY from the class — lets you define one or more ALTERNATIVE orderings, without modifying the class itself (essential for classes you don't own, like `String` or `Integer`, or when you need multiple different sort orders for the same type).
+
+```java
+Comparator<Employee> byName = (e1, e2) -> e1.name.compareTo(e2.name);
+Comparator<Employee> byNameThenSalary = Comparator
+    .comparing((Employee e) -> e.name)
+    .thenComparing(e -> e.salary);
+
+employees.sort(byName);                              // sort by name instead of the natural order
+employees.sort(byNameThenSalary.reversed());          // chain and reverse, fluently
+
+employees.sort(Comparator.comparingInt((Employee e) -> e.salary).reversed());  // highest salary first
+```
+
+**Rule of thumb**: implement `Comparable` when a class has one obvious, intrinsic natural order (e.g. numbers sort numerically, dates sort chronologically); use a `Comparator` for any additional or alternative ordering, or when you can't modify the class at all.
 
 
 ### Generics
@@ -598,6 +969,96 @@ class Dog extends Animal {
 **Rule of thumb**: use an interface to define a capability/contract (a "can-do" relationship); use an abstract class to share code and state between closely related types (an "is-a" relationship with shared implementation).
 
 
+### Records
+
+A `record` (Java 16+) is a special, compact class declaration for immutable data carriers — it eliminates the boilerplate of writing a constructor, getters, `equals()`, `hashCode()`, and `toString()` by hand for a class that just holds a fixed set of values (exactly the Immutability pattern shown above).
+
+```java
+record Point(int x, int y) { }
+
+// The line above is equivalent to hand-writing:
+// final class Point {
+//     private final int x;
+//     private final int y;
+//     Point(int x, int y) { this.x = x; this.y = y; }
+//     public int x() { return x; }              // accessor — note: x(), not getX()
+//     public int y() { return y; }
+//     public boolean equals(Object o) { ... }     // generated, compares all fields
+//     public int hashCode() { ... }               // generated, consistent with equals()
+//     public String toString() { ... }            // generated: "Point[x=1, y=2]"
+// }
+
+Point p = new Point(1, 2);
+System.out.println(p.x());        // 1 — accessor method, no "get" prefix
+System.out.println(p);            // Point[x=1, y=2]
+System.out.println(p.equals(new Point(1, 2)));   // true — generated equals() compares by value
+```
+
+Records can still have additional methods, static fields, and custom validation in a "compact constructor":
+
+```java
+record Range(int min, int max) {
+    Range {                                  // compact constructor — validates before assignment
+        if (min > max) throw new IllegalArgumentException("min must be <= max");
+    }
+
+    int length() { return max - min; }        // regular instance method, allowed
+}
+```
+
+**Rule of thumb**: use a record for any class whose sole purpose is to carry an immutable bundle of values (DTOs, API responses, value objects) — it's strictly less code than a hand-written immutable class with no loss of correctness.
+
+
+### Enums
+
+An `enum` defines a fixed, named set of constants — used whenever a variable should only ever hold one of a known, closed list of values (day of week, order status, user role).
+
+```java
+enum OrderStatus {
+    PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+}
+
+OrderStatus status = OrderStatus.PENDING;
+
+switch (status) {
+    case PENDING   -> System.out.println("Waiting for confirmation");
+    case SHIPPED   -> System.out.println("On the way");
+    default        -> System.out.println("Other status");
+}
+```
+
+Unlike enums in many other languages, Java enums are full-fledged classes — they can have fields, constructors, and methods, and each constant can even override a method individually:
+
+```java
+enum Planet {
+    MERCURY(3.303e+23, 2.4397e6),
+    EARTH(5.976e+24, 6.37814e6);
+
+    private final double mass;      // each constant carries its own field values
+    private final double radius;
+
+    Planet(double mass, double radius) {   // enum constructors are always private
+        this.mass = mass;
+        this.radius = radius;
+    }
+
+    double surfaceGravity() {
+        return 6.67300E-11 * mass / (radius * radius);
+    }
+}
+
+System.out.println(Planet.EARTH.surfaceGravity());
+
+// Built-in methods on every enum:
+OrderStatus.valueOf("SHIPPED");    // string → enum constant (throws if no match)
+OrderStatus.values();              // array of all constants, in declaration order
+status.name();                     // "PENDING" — the constant's exact declared name
+status.ordinal();                  // 0 — position in the declaration (avoid relying on this — fragile if reordered)
+```
+
+**Rule of thumb**: prefer enums over a set of `int`/`String` constants for any fixed, closed set of values — you get compile-time type safety (an invalid value simply can't compile) plus the ability to attach behavior directly to each constant.
+
+
 ### Lambdas, Streams, and Functional Interfaces
 
 
@@ -651,6 +1112,29 @@ Predicate<T>   — tests condition: boolean test(T t)
 Consumer<T>    — consumes without returning: void accept(T t)
 Supplier<T>    — provides without input: T get()
 BiFunction<T,U,R> — function with two inputs
+
+
+#### Method References
+
+A method reference is shorthand for a lambda that does nothing but call an existing method — `ClassName::methodName` instead of writing out `x -> ClassName.methodName(x)`. They're purely syntactic sugar (compile to the same functional interface), used only to reduce noise when the lambda body is just a single method call.
+
+```java
+// Static method reference — equivalent to: x -> Integer.parseInt(x)
+Function<String, Integer> parse = Integer::parseInt;
+
+// Instance method on a PARTICULAR object — equivalent to: () -> System.out::println
+Consumer<String> printer = System.out::println;
+
+// Instance method on an ARBITRARY object of a type (very common in streams) —
+// equivalent to: s -> s.toUpperCase()
+Function<String, String> upper = String::toUpperCase;
+names.stream().map(String::toUpperCase).forEach(System.out::println);
+
+// Constructor reference — equivalent to: () -> new ArrayList<>()
+Supplier<List<String>> listFactory = ArrayList::new;
+```
+
+**Rule of thumb**: use a method reference whenever a lambda's entire body is a single, direct call to an existing method with no extra logic — it's more concise and often clearer about intent than the equivalent lambda.
 
 
 ### Optional
@@ -844,13 +1328,1197 @@ SUPPORTS           — join if one exists, otherwise run without transaction
 **Rollback rules**: by default, only RuntimeException triggers rollback. For checked exceptions, you need @Transactional(rollbackFor = Exception.class).
 
 
-## 1.02 TypeScript
+### File I/O
+
+Java's I/O APIs read/write files and streams. The modern `java.nio.file` package (Java 7+) is simpler than the older `java.io.File` for most common tasks:
+
+```java
+// Modern, simple API (java.nio.file) — preferred for whole-file operations
+Path path = Path.of("data.txt");
+List<String> lines = Files.readAllLines(path);              // read entire file into a List<String>
+String content = Files.readString(path);                     // read entire file into a String (Java 11+)
+Files.writeString(path, "Hello, World!");                    // write a String to a file
+
+// try-with-resources — for streaming large files without loading everything into memory
+try (BufferedReader reader = Files.newBufferedReader(path)) {
+    String line;
+    while ((line = reader.readLine()) != null) {
+        process(line);                                        // process one line at a time
+    }
+}   // reader.close() is called automatically, even if an exception is thrown
+
+try (BufferedWriter writer = Files.newBufferedWriter(Path.of("out.txt"))) {
+    writer.write("some content");
+}
+```
+
+**Buffered vs unbuffered**: reading/writing one byte or character at a time directly against the filesystem is slow (each call may be a system call); `Buffered*` classes wrap a stream/reader/writer and batch reads/writes internally, which is why they're used almost universally for real file work.
+
+
+### Serialization
+
+Serialization converts an object into a byte stream (to save to disk, send over a network, or cache), and deserialization reverses the process, reconstructing the object from those bytes.
+
+```java
+class User implements Serializable {     // must implement Serializable to opt in
+    private static final long serialVersionUID = 1L;   // version identifier for compatibility checks
+    String name;
+    transient String password;            // "transient" fields are SKIPPED during serialization
+}
+
+// Serialize (write) an object to a file
+try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("user.ser"))) {
+    out.writeObject(new User());
+}
+
+// Deserialize (read) an object back from a file
+try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("user.ser"))) {
+    User user = (User) in.readObject();
+}
+```
+
+**`serialVersionUID`**: an explicit version number for the class. If you deserialize an object with a different `serialVersionUID` than the class currently has, Java throws `InvalidClassException` — this protects against silently loading corrupted/incompatible data after the class definition has changed.
+
+**In practice**: Java's built-in serialization is rarely used directly in modern applications — it's tied to Java specifically (not cross-language), historically had security vulnerabilities (deserializing untrusted data can execute arbitrary code), and is largely superseded by JSON (Jackson) or Protocol Buffers for APIs, and dedicated formats for caching (Redis, etc).
+
+
+### Reflection
+
+Reflection lets code inspect and manipulate classes, methods, and fields AT RUNTIME — including ones it doesn't know about at compile time. It's what makes frameworks like Spring and Jackson able to work generically with ANY class you give them.
+
+```java
+Class<?> clazz = User.class;                       // or: obj.getClass(), or Class.forName("com.app.User")
+
+System.out.println(clazz.getName());                // "com.app.User"
+Field[] fields = clazz.getDeclaredFields();          // every field, including private ones
+Method[] methods = clazz.getDeclaredMethods();        // every method
+
+// Reading a private field's value via reflection — bypasses normal access control
+Field passwordField = clazz.getDeclaredField("password");
+passwordField.setAccessible(true);                    // required to access a private field
+String value = (String) passwordField.get(userInstance);
+
+// Creating an instance dynamically, without knowing the concrete type at compile time
+Object instance = clazz.getDeclaredConstructor().newInstance();
+
+// Calling a method dynamically by name
+Method method = clazz.getMethod("getName");
+Object result = method.invoke(userInstance);
+```
+
+**Why this matters (even if you rarely write reflection code yourself)**: this is exactly how Spring reads `@Autowired`/`@Component` annotations to wire up dependency injection, how Jackson maps JSON fields onto your POJOs without you writing manual parsing code, and how JUnit discovers and calls your `@Test` methods — reflection is the mechanism underneath most Java "magic" annotations.
+
+**Trade-offs**: reflection bypasses normal compile-time type checking (errors surface at runtime instead), is noticeably slower than direct method calls (no JIT optimization applies the same way), and can break encapsulation (`setAccessible(true)` deliberately overrides `private`). Frameworks pay this cost so application code doesn't have to.
+
+
+### Design Patterns
+
+Reusable, named solutions to recurring software design problems — a shared vocabulary for discussing architecture.
+
+**Singleton** — ensures a class has exactly ONE instance, with a single global access point. Common for shared resources like configuration or a connection pool.
+
+```java
+class DatabaseConnection {
+    private static final DatabaseConnection INSTANCE = new DatabaseConnection();
+    private DatabaseConnection() { }              // private constructor — cannot be "new"'d externally
+    static DatabaseConnection getInstance() { return INSTANCE; }
+}
+DatabaseConnection.getInstance();     // always returns the SAME instance
+```
+
+**Factory** — centralizes object creation logic behind a method, so the caller doesn't need to know which concrete class to instantiate.
+
+```java
+interface Payment { }
+class CreditCardPayment implements Payment { }
+class PayPalPayment implements Payment { }
+
+class PaymentFactory {
+    static Payment create(String type) {
+        return switch (type) {
+            case "credit_card" -> new CreditCardPayment();
+            case "paypal"      -> new PayPalPayment();
+            default            -> throw new IllegalArgumentException("Unknown type: " + type);
+        };
+    }
+}
+Payment payment = PaymentFactory.create("paypal");    // caller doesn't need to know the concrete class
+```
+
+**Builder** — constructs a complex object step by step, avoiding a constructor with many (often optional) parameters ("telescoping constructor" problem).
+
+```java
+class Pizza {
+    private final String size;
+    private final boolean cheese;
+    private final boolean pepperoni;
+
+    private Pizza(Builder b) { size = b.size; cheese = b.cheese; pepperoni = b.pepperoni; }
+
+    static class Builder {
+        private String size = "medium";
+        private boolean cheese, pepperoni;
+
+        Builder size(String s) { size = s; return this; }          // returns "this" for chaining
+        Builder cheese(boolean c) { cheese = c; return this; }
+        Builder pepperoni(boolean p) { pepperoni = p; return this; }
+        Pizza build() { return new Pizza(this); }
+    }
+}
+Pizza pizza = new Pizza.Builder().size("large").cheese(true).build();
+```
+
+**Strategy** — defines a family of interchangeable algorithms behind a common interface, letting the algorithm be swapped at runtime (this is exactly the shape of the PaymentGateway example in the Abstraction section above).
+
+```java
+interface DiscountStrategy { double apply(double price); }
+class NoDiscount implements DiscountStrategy { public double apply(double price) { return price; } }
+class TenPercentOff implements DiscountStrategy { public double apply(double price) { return price * 0.9; } }
+
+class Order {
+    private DiscountStrategy discount;
+    Order(DiscountStrategy discount) { this.discount = discount; }
+    double total(double price) { return discount.apply(price); }   // behavior swapped via the strategy passed in
+}
+new Order(new TenPercentOff()).total(100);   // 90.0
+```
+
+
+### SOLID Principles
+
+Five design principles for writing maintainable, extensible object-oriented code:
+
+**S — Single Responsibility Principle**: a class should have only ONE reason to change. A class that both validates data AND saves it to a database has two responsibilities — split it into a Validator and a Repository.
+
+**O — Open/Closed Principle**: classes should be open for extension, but closed for modification. Instead of adding an `if/else` for every new payment type inside an existing method, add a new class implementing a shared interface (see Strategy above) — existing code doesn't need to change.
+
+**L — Liskov Substitution Principle**: a subclass must be usable anywhere its parent class is expected, without breaking the program's correctness. The classic violation: a `Square extends Rectangle` that overrides `setWidth()` to also change height breaks any code that assumes setting a Rectangle's width leaves its height alone.
+
+**I — Interface Segregation Principle**: prefer many small, specific interfaces over one large, general-purpose one — a class shouldn't be forced to implement methods it doesn't need.
+
+```java
+// Violates ISP — a ReadOnlyFile is forced to implement write(), which makes no sense for it
+interface FileHandler { void read(); void write(); }
+
+// Follows ISP — split into focused interfaces, implement only what's needed
+interface Readable { void read(); }
+interface Writable { void write(); }
+class ReadOnlyFile implements Readable { public void read() { } }   // no write() forced on it
+```
+
+**D — Dependency Inversion Principle**: depend on abstractions (interfaces), not concrete implementations. This is exactly what Dependency Injection (see the Spring Boot chapter) is built on — a high-level `UserService` should depend on an `EmailService` interface, not a concrete `SmtpEmailService` class, so the implementation can be swapped (or mocked in tests) without changing `UserService`.
+
+
+### Big O Analysis
+
+Big O describes how an algorithm's running time (or memory use) grows as the input size (`n`) grows — it's about the GROWTH RATE, not the exact number of operations, which is why constants are dropped (`O(2n)` is just written `O(n)`).
+
+**Common complexities, from fastest to slowest growth**:
+
+```text
+O(1)         — constant       — array index access, HashMap get/put (average case)
+O(log n)     — logarithmic    — binary search, balanced tree operations (TreeMap/TreeSet)
+O(n)         — linear         — a single loop through a list, linear search
+O(n log n)   — linearithmic   — efficient sorting algorithms (Collections.sort, mergesort, quicksort average case)
+O(n²)        — quadratic      — nested loops over the same collection (e.g. comparing every pair)
+O(2^n)       — exponential    — naive recursive Fibonacci, brute-force subsets
+```
+
+```java
+// O(1) — constant time, regardless of list size
+int first = list.get(0);
+
+// O(n) — one pass through the list
+for (String item : list) { process(item); }
+
+// O(n²) — nested loop over the same collection
+for (String a : list) {
+    for (String b : list) {
+        compare(a, b);
+    }
+}
+
+// O(log n) — binary search halves the search space each step
+Collections.binarySearch(sortedList, target);
+```
+
+**Why it matters in interviews**: it's the standard vocabulary for reasoning about whether a solution will scale — an `O(n²)` solution that's fine for 100 elements can be unusably slow for 1,000,000. A very common pattern: trading O(n) extra space (a `HashSet`/`HashMap`) to bring an O(n²) nested-loop solution (e.g. "find duplicates," "two sum") down to O(n) time, since hash-based lookups are O(1) average.
+
+
+## 1.02 JavaScript
+
+
+
+### Overview
+
+JavaScript is the only language that runs natively in browsers, making it the universal language of the web. It has evolved dramatically: from a simple scripting language (ES5) to a mature language with classes, modules, async/await, optional chaining, and more (ES2015+). Node.js brought JavaScript to the server.
+
+
+### How JavaScript Works (Interpreted, JIT, the V8 Engine)
+
+JavaScript is often called "interpreted", but modern engines like **V8** (used in Chrome and Node.js) are more sophisticated — they combine interpretation with **JIT (Just-In-Time) compilation** to get close to compiled-language speed while keeping JS's dynamic, run-immediately nature.
+
+**V8's pipeline**:
+1. **Parsing** — source code is tokenized and turned into an Abstract Syntax Tree (AST).
+2. **Ignition (interpreter)** — converts the AST into bytecode and starts executing it immediately. This is why JS can start running almost instantly, unlike languages that require a full compile step before anything executes.
+3. **TurboFan (JIT compiler)** — while Ignition runs the bytecode, V8 profiles the code in the background: which functions are called often ("hot"), and what types actually flow through them. Hot, type-stable functions get compiled into highly optimized machine code, replacing the slower bytecode for subsequent calls.
+4. **Deoptimization** — if a function was optimized assuming, say, its argument is always a number, and it later receives a string, V8 throws away the optimized machine code and falls back to the interpreter ("deopt"). This is why keeping a function's argument types consistent (**monomorphic**) matters for performance.
+
+```javascript
+// Monomorphic — always called with the same argument shapes/types.
+// TurboFan can specialize the compiled code aggressively.
+function add(a, b) { return a + b; }
+add(1, 2); add(3, 4); add(5, 6);
+
+// Polymorphic/megamorphic — called with different types each time.
+// Harder to optimize, and can trigger deoptimization if it was already compiled.
+add(1, 2); add("a", "b"); add({}, []);
+```
+
+V8 also owns a **Garbage Collector** that manages the heap (see Stack vs Heap below) — a generational collector that scans short-lived "new space" objects frequently (Scavenger) and long-lived "old space" objects less often (Mark-Sweep-Compact).
+
+**Engine vs runtime**: V8 by itself only parses, compiles, executes, and manages memory for JS — it has no concept of `setTimeout`, `fetch`, or the DOM. Those APIs are provided by the **runtime** wrapped around the engine (the browser or Node.js), along with the event loop's task queues that coordinate calling back into V8 (see The Event Loop below).
+
+
+### var vs let (and const)
+
+The three ways to declare a variable behave very differently — this trips up almost everyone coming from another language.
+
+**var** (pre-ES6): function-scoped (not block-scoped) and hoisted with an initial value of `undefined`. Can be redeclared in the same scope without error. Its quirks are exactly why `let`/`const` were introduced in ES6.
+
+```javascript
+if (true) {
+    var x = 1;
+}
+console.log(x);   // 1 — var "leaks" out of the if-block, it's only function-scoped
+
+function loopVar() {
+    for (var i = 0; i < 3; i++) {
+        setTimeout(() => console.log(i), 0);
+    }
+}
+loopVar();   // 3, 3, 3 — all callbacks share the SAME i (function-scoped),
+             // and by the time they run, the loop has already finished with i=3
+```
+
+**let**: block-scoped (`{ }`) — only exists within the nearest enclosing block. Hoisted, but sits in a "temporal dead zone" until its declaration line, so accessing it earlier throws a ReferenceError instead of silently returning `undefined`. Can be reassigned, but not redeclared in the same scope.
+
+```javascript
+if (true) {
+    let y = 1;
+}
+// console.log(y);   // ERROR — y does not exist outside the block
+
+function loopLet() {
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => console.log(i), 0);
+    }
+}
+loopLet();   // 0, 1, 2 — each iteration gets its OWN i (block-scoped),
+             // so each closure captures a different value
+```
+
+**const**: same block scoping and temporal dead zone as `let`, but the binding cannot be reassigned after declaration. Note this only locks the variable binding, not the value itself — an object or array declared with `const` can still have its contents mutated.
+
+```javascript
+const arr = [1, 2, 3];
+arr.push(4);        // fine — mutating the array's contents
+// arr = [];         // ERROR — reassigning the binding itself
+```
+
+**Rule of thumb**: default to `const`; use `let` only when you know the variable needs reassignment (loop counters, accumulators); avoid `var` entirely in modern code.
+
+
+### Primitive Types vs Objects
+
+JavaScript values fall into two fundamentally different categories:
+
+**Primitives**: string, number, boolean, null, undefined, symbol, bigint. Immutable — a primitive value itself can never be mutated, any "modifying" operation just produces a brand new value — and compared/copied by value.
+
+**Objects**: everything else — plain objects, arrays, functions, dates, etc. Mutable, and compared/copied by reference.
+
+```javascript
+let a = "hello";
+let b = a;
+b = "world";
+console.log(a);   // "hello" — primitives are copied by value; b is fully independent of a
+
+let obj1 = { name: "Beatriz" };
+let obj2 = obj1;
+obj2.name = "Carlos";
+console.log(obj1.name);   // "Carlos" — obj1 and obj2 point to the SAME object in memory
+
+// Methods on strings that "look" mutating actually return a new value:
+let str = "hello";
+str.toUpperCase();        // returns "HELLO" but does not change str
+console.log(str);         // still "hello" — strings are immutable
+```
+
+The classic `typeof` quirk:
+```javascript
+typeof "abc"          // "string"
+typeof 42              // "number"
+typeof true             // "boolean"
+typeof undefined        // "undefined"
+typeof Symbol()          // "symbol"
+typeof 10n               // "bigint"
+typeof null              // "object" — a decades-old bug baked into the language; null is NOT an object
+typeof {}                // "object"
+typeof []                // "object" — arrays are objects; use Array.isArray() to check specifically
+typeof function(){}      // "function"
+```
+
+
+### Stack vs Heap
+
+Like most language runtimes, the JS engine splits memory into two regions:
+
+**Stack**: stores primitive values and references (pointers) to objects, scoped to the currently executing function calls. Fixed-size, very fast, LIFO (last-in, first-out).
+
+**Heap**: stores the actual objects, arrays, and functions — a larger, less structured region managed by the Garbage Collector.
+
+```javascript
+function example() {
+    let num = 42;             // the primitive value 42 lives on the stack
+    let obj = { x: 1 };       // the REFERENCE to obj lives on the stack;
+                               // the actual { x: 1 } object lives on the heap
+}
+```
+
+This split is exactly why primitives are copied by value (the value itself sits on the stack and gets duplicated) while objects are copied by reference (only the pointer on the stack is duplicated — both variables still point to the same heap object). See Pass by Value vs Pass by Reference below for how this plays out with function arguments.
+
+
+### Pass by Value vs Pass by Reference
+
+Every argument passed to a JavaScript function is copied — but what gets copied depends on the type:
+
+**Primitives — pass by value**: the function receives a copy of the value itself. Changes inside the function never affect the original variable.
+
+```javascript
+function double(n) { n = n * 2; }
+let x = 5;
+double(x);
+console.log(x);   // 5 — unchanged; double() only modified its own local copy
+```
+
+**Objects — "pass by reference value"**: the function receives a copy of the REFERENCE (the pointer into the heap), not a copy of the object itself. This means the function CAN mutate the object's contents (both the original and the parameter still point at the same heap object), but reassigning the parameter itself does not affect the caller's variable.
+
+```javascript
+function addProp(obj) { obj.newProp = true; }        // mutates the shared object
+let original = { a: 1 };
+addProp(original);
+console.log(original);   // { a: 1, newProp: true } — the mutation IS visible outside
+
+function reassign(obj) { obj = { a: 999 }; }          // reassigns only the LOCAL copy of the reference
+let original2 = { a: 1 };
+reassign(original2);
+console.log(original2);  // { a: 1 } — unaffected; only the local "obj" pointer changed
+```
+
+**Rule of thumb**: mutating an object passed into a function is visible to the caller; reassigning the parameter itself never is — for both primitives and objects.
+
+
+### Scope
+
+Scope determines where in the code a variable is visible. JavaScript uses **lexical (static) scoping** — scope is determined by WHERE code is physically written, not by how a function happens to be called (contrast this with `this`, which is dynamic — see below).
+
+**Global scope**: declared outside any function/block — visible everywhere.
+**Function scope**: `var` declared inside a function — visible anywhere in that function.
+**Block scope**: `let`/`const` declared inside `{ }` — visible only within that block.
+
+```javascript
+let globalVar = "I'm global";
+
+function outer() {
+    let outerVar = "I'm in outer";
+
+    function inner() {
+        let innerVar = "I'm in inner";
+        console.log(globalVar);   // accessible — inner can see all enclosing scopes
+        console.log(outerVar);    // accessible — inner can see all enclosing scopes
+    }
+    inner();
+    // console.log(innerVar);     // ERROR — outer cannot see into inner's scope
+}
+```
+
+**Scope chain**: when a variable is referenced, the engine looks it up in the current scope; if not found, it walks UP through each enclosing scope until it reaches global scope; if it's still not found, a ReferenceError is thrown. This upward-only lookup is exactly the mechanism that makes closures possible (see Closures below).
+
+
+### Hoisting
+
+Before executing any code in a scope, the JS engine does a pass over that scope and "hoists" variable and function declarations — conceptually moves them to the top. What actually gets hoisted, and how it's initialized, differs by declaration type:
+
+**var** — hoisted AND initialized to `undefined`. Referencing it before its declaration line is legal, it just evaluates to `undefined`.
+```javascript
+console.log(x);    // undefined — not an error; "var x" was hoisted
+var x = 5;
+```
+
+**function declarations** — hoisted WITH their entire body. They can be called before the line where they're written.
+```javascript
+sayHi();                                // works — logs "Hi"
+function sayHi() { console.log("Hi"); }
+```
+
+**let/const** — hoisted, but left UNINITIALIZED. They sit in a "temporal dead zone" (TDZ) from the top of the block until their declaration line; accessing them there throws a ReferenceError instead of returning `undefined`.
+```javascript
+console.log(y);    // ReferenceError: Cannot access 'y' before initialization
+let y = 5;
+```
+
+**function expressions / arrow functions assigned to a variable** — only the variable declaration is hoisted, following that variable's own rules (var/let/const); the function body is not.
+```javascript
+sayBye();                                        // TypeError: sayBye is not a function
+var sayBye = function() { console.log("Bye"); }; // (var was hoisted as undefined, not the function)
+```
+
+**Rule of thumb**: hoisting is just a side effect of how the engine prepares each scope before running it — write code as though nothing were hoisted (declare everything before using it) rather than relying on this behavior.
+
+
+### == vs ===
+
+**===** (strict equality): compares both value AND type — no conversion happens. If the types differ, it's simply `false`.
+
+**==** (loose equality): compares values after performing type coercion — JavaScript tries to convert both operands to a common type before comparing, following a fairly complex set of rules.
+
+```javascript
+console.log(1 === 1);        // true — same type, same value
+console.log(1 === "1");      // false — different types, no coercion
+console.log(1 == "1");       // true — "1" is coerced to 1 before comparing
+
+console.log(0 == false);     // true  — false is coerced to 0
+console.log(0 === false);    // false — different types
+
+console.log(null == undefined);   // true  — special case, loose equality treats them as equal
+console.log(null === undefined);  // false — different types
+
+console.log("" == 0);        // true  — "" coerces to 0
+console.log([] == false);    // true  — [] coerces to "" then to 0
+
+console.log(NaN == NaN);     // false — NaN is never equal to anything, even itself
+console.log(NaN === NaN);    // false — same reason
+Number.isNaN(NaN);           // true — the only reliable way to check for NaN
+```
+
+The coercion rules behind `==` are inconsistent and easy to get wrong (`[] == false` surprises almost everyone), which is why virtually every style guide and linter (ESLint's `eqeqeq` rule) requires `===`/`!==` everywhere. The only common exception is `x == null`, which is sometimes used deliberately as a concise way to check for both `null` and `undefined` at once.
+
+**Rule of thumb**: always use `===` and `!==`. Never use `==`/`!=` unless you have a specific, deliberate reason (like the `x == null` check above).
+
+
+### The Event Loop — HOW JAVASCRIPT HANDLES CONCURRENCY
+
+JavaScript is single-threaded — there is only one call stack, so only one piece of code runs at any instant. Yet it handles asynchronous operations (network requests, timers, file I/O) without blocking. This works because of four cooperating pieces:
+
+1. **Call Stack** — where synchronous code actually executes, one frame at a time (LIFO). While anything is on the stack, nothing else can run.
+2. **Web APIs / Node APIs** — provided by the runtime, NOT by JS itself: `setTimeout`, `fetch`, DOM events, `fs` operations. These run in the background, outside the call stack, so they don't block it.
+3. **Callback/Task Queues** — when a background API finishes (a timer fires, a fetch resolves), its callback is placed into a queue, waiting for its turn.
+4. **Event Loop** — a simple, constant loop that asks: "Is the call stack empty? If so, take the next callback from a queue and push it onto the stack."
+
+**Breaking down `setTimeout(() => {...}, 0)`**: `setTimeout` takes two arguments — a callback function to run later, and a delay in milliseconds. `() => {...}` is that callback, written as an arrow function (see Regular Functions vs Arrow Functions above) — it's the code that will actually execute once the timer fires. The `0` is the delay: "run this after (at least) 0ms." Despite the 0ms delay, this callback does NOT run immediately or synchronously — `setTimeout` always hands the callback off to a Web API first (see point 2 above), and that Web API only places it in the macrotask queue once the delay has elapsed. Even with a delay of 0, the callback must still wait for the ENTIRE current synchronous code to finish AND the entire microtask queue to drain before the event loop is allowed to pick it up (see the explanation and diagram below). This is exactly why `setTimeout(fn, 0)` is a common trick to intentionally defer a piece of code to run "as soon as possible, but only after everything else currently queued" — it can never run before the synchronous code that follows it.
+
+```javascript
+console.log("1");           // synchronous → executes immediately, on the call stack
+setTimeout(() => {
+    console.log("3");       // macrotask → handled by a Web API, then queued
+}, 0);
+Promise.resolve()
+    .then(() => console.log("2"));  // microtask → queued as soon as the Promise resolves
+console.log("4");           // synchronous → executes immediately, on the call stack
+// Output: 1, 4, 2, 3
+```
+
+Why "2" before "3", even though setTimeout has a 0ms delay? Because there are actually TWO separate queues, with different priority — see below.
+
+So the order is always: run all synchronous code → drain the ENTIRE microtask queue → run exactly ONE macrotask → drain the microtask queue again → run the next macrotask → ...
+
+
+### Microtasks vs Macrotasks
+
+Not all queued callbacks are equal — the event loop always fully drains the microtask queue before it's allowed to touch the macrotask queue, even if that means new microtasks keep pushing macrotasks back.
+
+**Macrotasks** (the "task queue"): `setTimeout`, `setInterval`, `setImmediate` (Node), I/O callbacks, UI rendering, DOM events. The event loop processes exactly ONE macrotask per iteration.
+
+**Microtasks** (a separate, higher-priority queue): Promise callbacks (`.then`/`.catch`/`.finally`), `queueMicrotask()`, async/await continuations, `MutationObserver`. ALL pending microtasks run before the next macrotask — including any NEW microtasks queued while the queue is being drained.
+
+```javascript
+console.log("start");                                        // 1 — sync
+
+setTimeout(() => console.log("macrotask 1"), 0);              // macrotask
+
+Promise.resolve().then(() => {
+    console.log("microtask 1");                                // 3 — microtask
+    Promise.resolve().then(() => console.log("microtask 2"));  // queued DURING the drain —
+});                                                              // still runs before any macrotask
+
+setTimeout(() => console.log("macrotask 2"), 0);              // macrotask
+
+console.log("end");                                            // 2 — sync
+
+// Output: start, end, microtask 1, microtask 2, macrotask 1, macrotask 2
+// All sync code first, then EVERY microtask (even ones queued mid-drain),
+// THEN one macrotask, then the microtask queue is checked again, then the next macrotask...
+```
+
+**Rule of thumb**: if something needs to run as soon as possible but after the current synchronous code finishes, use a microtask (a Promise or `queueMicrotask`) — it is guaranteed to run before any timer, even `setTimeout(fn, 0)`.
+
+
+### Closures
+
+
+A closure is a function that remembers the variables from the scope where it was defined, even after that scope has finished executing.
+
+
+```javascript
+function makeCounter() {
+    let count = 0;               // count lives in makeCounter's scope
+    return function() {
+        count++;                  // the returned function closes over count
+        return count;
+    };
+}
+
+const counter = makeCounter();
+counter();  // 1
+counter();  // 2
+counter();  // 3
+```
+
+Each call to makeCounter() creates a new closure with its own count. This is how React's useState works internally — each component instance has its own enclosed state.
+
+
+### This — THE MOST CONFUSING PART OF JAVASCRIPT
+
+In JavaScript, `this` is determined by HOW a function is called, not where it is defined — this is called **dynamic scoping** for `this`. Arrow functions are the one exception: they have no `this` of their own at all.
+
+**Regular functions**: `this` is set fresh every time the function is invoked, based on the "call-site" — what's to the left of the dot when it's called:
+
+```javascript
+const obj = {
+    name: "Beatriz",
+    greet: function() {
+        console.log(this.name);     // "Beatriz" — called as obj.greet(), so this = obj
+    }
+};
+
+const fn = obj.greet;
+fn();          // undefined — called with no receiver, this = global object (or undefined in strict mode)
+obj.greet();   // "Beatriz" — same function, but called as a method of obj this time
+
+// The exact same function object behaves differently depending on HOW it's called:
+const other = { name: "Carlos", greet: obj.greet };
+other.greet(); // "Carlos" — this = other, because that's the object left of the dot
+```
+
+**Arrow functions**: do NOT have their own `this`. Instead, they capture (close over) `this` from the enclosing lexical scope at the moment they are DEFINED — exactly like a regular variable in a closure. Calling an arrow function differently, or with `.call()`/`.apply()`/`.bind()`, can never change what `this` refers to inside it.
+
+```javascript
+const obj = {
+    name: "Beatriz",
+    greetArrow: () => {
+        console.log(this.name);     // undefined — this is NOT obj here;
+                                      // it's whatever "this" was outside the object literal
+                                      // (the module/global scope, since arrow functions
+                                      // don't create their own "this")
+    }
+};
+
+// Where arrow functions shine: preserving the outer "this" inside a callback
+class Timer {
+    constructor() { this.seconds = 0; }
+
+    start() {
+        // Regular function would lose "this" here — setTimeout calls the
+        // callback with no receiver, so this.seconds would throw/be undefined
+        setTimeout(function() {
+            // this.seconds++;   // BROKEN — "this" is not the Timer instance
+        }, 1000);
+
+        // Arrow function inherits "this" from start()'s scope, i.e. the Timer instance
+        setTimeout(() => {
+            this.seconds++;      // WORKS — "this" is still the Timer instance
+        }, 1000);
+    }
+}
+```
+
+**bind/call/apply**: explicitly control what `this` is for a regular function (they have no effect on arrow functions, since arrow functions ignore the call-site entirely):
+
+```javascript
+fn.call(obj);          // invoke fn immediately with this = obj
+fn.apply(obj, [args]); // same as call, but arguments passed as an array
+const bound = fn.bind(obj);  // returns a NEW function permanently bound to this = obj
+bound();                // "Beatriz" — this can never be changed again, even with obj2.bound = bound
+```
+
+**Rule of thumb**: use a regular function when you need `this` to be dynamic — i.e. determined by the caller (object methods, event handlers where `this` should be the element, class methods called directly). Use an arrow function when you want `this` to be lexical — i.e. inherited from the surrounding code (callbacks passed to `setTimeout`/array methods/promises inside a class or method, where you want `this` to keep meaning "the enclosing instance"). A useful test: if you'd otherwise need `.bind(this)` or `const self = this;` to make it work, that's exactly the case an arrow function solves.
+
+
+### Regular Functions vs Arrow Functions — Beyond `this`
+
+`this` binding (above) is the most important difference, but there are several other distinctions worth knowing:
+
+**arguments object**: regular functions have access to an array-like `arguments` object holding every passed argument; arrow functions do not have their own — they inherit `arguments` from the enclosing scope, exactly like they inherit `this`.
+
+```javascript
+function regular() { console.log(arguments); }
+regular(1, 2, 3);          // Arguments(3) [1, 2, 3]
+
+const arrow = (...args) => { console.log(args); };  // use rest parameters instead
+arrow(1, 2, 3);             // [1, 2, 3]
+```
+
+**Cannot be used as constructors**: regular functions can be called with `new` to construct objects; arrow functions cannot — they have no internal `[[Construct]]` behavior and no `prototype` property.
+
+```javascript
+function Person(name) { this.name = name; }
+new Person("Ana");                        // works
+
+const PersonArrow = (name) => { this.name = name; };
+// new PersonArrow("Ana");                // TypeError: PersonArrow is not a constructor
+```
+
+**No own `prototype` property**: `function.prototype` exists on regular functions (used to build the prototype chain — see below), but is `undefined` on arrow functions.
+
+**Implicit return / concise syntax**: an arrow function with a single expression body implicitly returns that expression, with no `return` keyword or `{ }` needed.
+
+```javascript
+const square = x => x * x;                // implicit return
+const square2 = x => { return x * x; };   // equivalent, explicit form
+```
+
+**Cannot be generator functions**: `function*` exists; there is no arrow-function equivalent.
+
+**Rule of thumb**: use arrow functions for short callbacks and anywhere you want to inherit the outer `this`; use regular `function` declarations for object methods, constructors, and anywhere you need your own `this`, `arguments`, or generator behavior.
+
+
+### Prototype Chain
+
+
+Every JavaScript object has an internal [[Prototype]] property that points to another object (or null). When you access a property, JavaScript first looks at the object itself, then walks up the prototype chain until it finds it or reaches null. This is JavaScript's inheritance mechanism.
+
+
+```javascript
+function Animal(name) { this.name = name; }
+Animal.prototype.eat = function() { console.log(this.name + " eats"); };
+
+const dog = new Animal("Rex");
+dog.eat();   // found on Animal.prototype, not dog itself
+
+// ES6 classes are syntactic sugar over this prototype system:
+class Animal {
+    constructor(name) { this.name = name; }
+    eat() { console.log(this.name + " eats"); }
+}
+// Animal.prototype.eat is still where the method lives
+```
+
+
+### Classes
+
+ES6 classes are syntactic sugar over the prototype-based inheritance shown above — a class's methods still live on `ClassName.prototype` under the hood.
+
+```javascript
+class Animal {
+    #secret = "shh";              // private field (ES2022) — only accessible inside the class
+
+    static count = 0;             // static property — shared by the class itself, not instances
+
+    constructor(name) {
+        this.name = name;
+        Animal.count++;
+    }
+
+    speak() {                     // instance method — lives on Animal.prototype
+        console.log(`${this.name} makes a sound`);
+    }
+
+    get displayName() {           // getter — accessed like a property, not called like a method
+        return `Animal: ${this.name}`;
+    }
+
+    set displayName(value) {      // setter
+        this.name = value;
+    }
+
+    static create(name) {         // static method — called on the class itself, not an instance
+        return new Animal(name);
+    }
+}
+
+class Dog extends Animal {        // inheritance
+    speak() {
+        super.speak();            // call the parent's method
+        console.log(`${this.name} barks`);
+    }
+}
+
+const rex = new Dog("Rex");
+rex.speak();                          // "Rex makes a sound" then "Rex barks"
+console.log(rex instanceof Animal);   // true
+console.log(rex.displayName);         // "Animal: Rex" — called like a property, not rex.displayName()
+```
+
+**Key points**: unlike function declarations, classes are NOT hoisted the usable way — they sit in a temporal dead zone just like `let`/`const` (see Hoisting above). All code inside a class body runs in strict mode automatically. Private fields (`#field`) are truly private — inaccessible even via bracket notation from outside the class, unlike the older convention of just prefixing a property with `_`.
+
+
+### Objects
+
+Objects are collections of key-value pairs (properties), where keys are strings or Symbols and values can be anything — including functions (methods).
+
+```javascript
+const user = {
+    name: "Beatriz",
+    age: 25,
+    greet() { console.log(`Hi, I'm ${this.name}`); },   // method shorthand
+};
+
+// Computed property names
+const key = "email";
+const user2 = { [key]: "b@example.com" };   // { email: "b@example.com" }
+
+// Shorthand property names
+const name = "Ana", age = 30;
+const user3 = { name, age };   // { name: "Ana", age: 30 }
+```
+
+**Common `Object` static methods**:
+
+```javascript
+Object.keys(user);          // ["name", "age", "greet"] — array of keys
+Object.values(user);        // ["Beatriz", 25, function] — array of values
+Object.entries(user);       // [["name","Beatriz"], ["age",25], ...] — array of [key, value] pairs
+Object.assign({}, user, { age: 26 });   // shallow merge into a new object
+Object.freeze(user);        // makes the object immutable (shallow) — further writes silently fail (or throw in strict mode)
+Object.isFrozen(user);      // true
+
+// Iterating
+for (const k in user) { console.log(k); }                    // ALL enumerable keys, including inherited ones
+for (const [k, v] of Object.entries(user)) { console.log(k, v); }  // only own properties, gives key AND value
+```
+
+**Shallow vs deep copy** — a very common interview gotcha:
+
+```javascript
+const shallow = { ...user };               // spread — copies only top-level properties
+const shallow2 = Object.assign({}, user);  // equivalent to the spread above
+// Nested objects/arrays are still SHARED references in a shallow copy!
+
+const deep = structuredClone(user);            // true deep copy (modern browsers / Node 17+)
+const deepOld = JSON.parse(JSON.stringify(user)); // older deep-copy trick — loses functions, undefined, and turns Dates into strings
+```
+
+
+### Arrays — Important Methods
+
+Arrays are ordered, index-based objects with a large built-in method library, split into two categories:
+
+**Mutating methods** (change the original array in place):
+
+```javascript
+const arr = [1, 2, 3];
+arr.push(4);           // add to end → [1,2,3,4], returns the new length
+arr.pop();              // remove from end → [1,2,3], returns the removed item
+arr.shift();            // remove from start → [2,3], returns the removed item
+arr.unshift(0);         // add to start → [0,2,3], returns the new length
+arr.splice(1, 1, "x");  // remove/insert at an index → removes 1 item at index 1, inserts "x"
+arr.sort();              // sorts IN PLACE, and defaults to STRING comparison! [10,2,1].sort() → [1,10,2]
+arr.sort((a, b) => a - b);  // correct numeric ascending sort — always pass a comparator for numbers
+arr.reverse();            // reverses in place
+```
+
+**Non-mutating methods** (return a new array/value, leave the original untouched — preferred in modern/functional code):
+
+```javascript
+const nums = [1, 2, 3, 4, 5];
+
+nums.map(n => n * 2);                  // [2,4,6,8,10] — transform every element
+nums.filter(n => n % 2 === 0);         // [2,4] — keep elements matching a condition
+nums.reduce((acc, n) => acc + n, 0);   // 15 — accumulate into a single value
+nums.find(n => n > 3);                 // 4 — first matching element, or undefined
+nums.findIndex(n => n > 3);            // 3 — index of the first match, or -1
+nums.some(n => n > 4);                 // true — does AT LEAST ONE element match?
+nums.every(n => n > 0);                // true — do ALL elements match?
+nums.includes(3);                       // true — does the array contain this value?
+nums.indexOf(3);                        // 2 — index of a value, or -1
+nums.slice(1, 3);                       // [2,3] — extract a portion; does NOT mutate (contrast with splice)
+nums.concat([6, 7]);                    // [1,2,3,4,5,6,7] — merge arrays into a new one
+nums.join(", ");                        // "1, 2, 3, 4, 5" — join into a string
+nums.flat();                             // flattens one level of nested arrays
+nums.flatMap(n => [n, n * 2]);          // map + flat combined in a single pass
+Array.from({ length: 3 }, (_, i) => i); // [0,1,2] — build an array from an array-like/iterable
+Array.isArray(nums);                    // true — the reliable array check (see the typeof [] quirk above)
+```
+
+**Chaining** — a very common interview pattern:
+
+```javascript
+const total = [1, 2, 3, 4, 5, 6]
+    .filter(n => n % 2 === 0)     // [2, 4, 6]
+    .map(n => n * n)               // [4, 16, 36]
+    .reduce((sum, n) => sum + n, 0); // 56
+```
+
+**Common pitfall**: `map`/`filter`/`reduce`/`find` all invoke their callback with `(element, index, array)`. `forEach` looks similar but just iterates for side effects and always returns `undefined` — use it only when you don't need a new array back.
+
+
+### Destructuring
+
+Destructuring pulls values out of arrays/objects into individual variables in a single step.
+
+```javascript
+// Object destructuring
+const user = { name: "Beatriz", age: 25, address: { city: "Lisbon" } };
+const { name, age } = user;
+const { name: userName } = user;              // rename while destructuring
+const { role = "guest" } = user;              // default value if the property is missing
+const { address: { city } } = user;           // nested destructuring
+
+// Array destructuring — position-based, not key-based
+const [first, second] = [1, 2, 3];
+const [, , third] = [1, 2, 3];                 // skip elements with empty slots
+const [a, b, ...rest] = [1, 2, 3, 4];          // rest captures the remaining elements
+
+// Swapping variables without a temp variable
+let x = 1, y = 2;
+[x, y] = [y, x];
+
+// Very common in function parameters — self-documenting, avoids positional args
+function createUser({ name, age, role = "user" }) {
+    console.log(name, age, role);
+}
+createUser({ name: "Ana", age: 30 });
+```
+
+
+### Spread and Rest
+
+These share the same `...` syntax but do opposite things depending on where they appear — a common interview gotcha.
+
+**Spread**: EXPANDS an iterable/object into individual elements — used when you're PROVIDING a value (inside a literal, or a function call).
+
+```javascript
+const arr = [1, 2, 3];
+const copy = [...arr];             // shallow copy of an array
+const merged = [...arr, 4, 5];     // [1,2,3,4,5]
+
+const obj = { a: 1, b: 2 };
+const objCopy = { ...obj, c: 3 };  // shallow copy + add a property
+
+function sum(a, b, c) { return a + b + c; }
+sum(...[1, 2, 3]);                 // spreads the array into 3 separate arguments
+```
+
+**Rest**: COLLECTS multiple elements/arguments INTO a single array/object — used when you're RECEIVING a value (a destructuring pattern, or a parameter list). It must always be the LAST element.
+
+```javascript
+function sum(...numbers) {          // rest parameter — gathers all args into a real array
+    return numbers.reduce((a, b) => a + b, 0);
+}
+sum(1, 2, 3, 4);                    // numbers = [1, 2, 3, 4]
+
+const [first, ...others] = [1, 2, 3, 4];               // others = [2, 3, 4]
+const { id, ...otherFields } = { id: 1, name: "Ana", age: 30 };  // otherFields = { name, age }
+```
+
+**Rule of thumb**: `...` on the left/receiving side (destructuring, parameter lists) = rest; `...` on the right/providing side (literals, function calls) = spread.
+
+
+### Promises
+
+A Promise is an object representing the eventual completion (or failure) of an asynchronous operation. It has exactly three states, and can only transition once, in one direction: pending → fulfilled, OR pending → rejected. Once settled, a Promise's outcome never changes again.
+
+```javascript
+const promise = new Promise((resolve, reject) => {
+    // the "executor" — runs synchronously and immediately
+    setTimeout(() => {
+        const success = true;
+        if (success) resolve("Data loaded");    // pending → fulfilled
+        else reject(new Error("Failed"));        // pending → rejected
+    }, 1000);
+});
+
+promise
+    .then(value => console.log(value))     // runs if fulfilled
+    .catch(error => console.error(error))  // runs if rejected (or if a .then() throws)
+    .finally(() => console.log("Done"));   // always runs, regardless of outcome
+```
+
+**Chaining**: each `.then()` returns a NEW promise, which is why calls can be chained — if a `.then()` returns a plain value, the next `.then()` receives it directly; if it returns a Promise, the chain automatically waits for it to settle before continuing.
+
+```javascript
+fetch("/api/user/1")
+    .then(response => response.json())    // returns a Promise — the next .then() awaits it
+    .then(user => user.name)               // returns a plain value
+    .then(name => console.log(name));      // receives the plain value directly
+```
+
+**Promise combinators** — running multiple promises together:
+
+```javascript
+Promise.all([p1, p2, p3]);
+// Waits for ALL to fulfill. Rejects immediately if ANY ONE rejects ("fail fast").
+// Result: array of values, in the same order as the input.
+
+Promise.allSettled([p1, p2, p3]);
+// Waits for ALL to settle (fulfilled OR rejected) — never itself rejects.
+// Result: array of { status: "fulfilled", value } or { status: "rejected", reason }.
+
+Promise.race([p1, p2, p3]);
+// Settles as soon as the FIRST promise settles (fulfilled or rejected) — whichever is fastest.
+
+Promise.any([p1, p2, p3]);
+// Settles as soon as the FIRST promise FULFILLS. Only rejects if ALL of them reject.
+```
+
+**Rule of thumb**: use `Promise.all` when every result is required and any single failure should abort everything; use `allSettled` when you want every result regardless of individual failures; use `race`/`any` for timeouts or "fastest wins" scenarios.
+
+
+### Async/Await
+
+`async`/`await` is syntactic sugar over Promises — it lets asynchronous code read like synchronous code, while still being non-blocking under the hood (an `async` function always returns a Promise, and `await` pauses the function, NOT the whole thread, until that Promise settles).
+
+```javascript
+// Promise chain
+fetch("/api/user/1")
+    .then(response => response.json())
+    .then(user => console.log(user))
+    .catch(error => console.error(error));
+
+// The same logic with async/await
+async function getUser(id) {
+    try {
+        const response = await fetch(`/api/user/${id}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const user = await response.json();
+        return user;
+    } catch (error) {
+        console.error("Failed to fetch user:", error);
+        throw error;    // errors from a rejected awaited Promise are thrown, catchable with try/catch
+    }
+}
+
+// Combine with Promise.all to run requests concurrently instead of sequentially
+const [user, posts] = await Promise.all([
+    fetch("/api/user/1").then(r => r.json()),
+    fetch("/api/posts").then(r => r.json()),
+]);
+// Awaiting them one at a time (await fetch(...); await fetch(...);) would run them
+// sequentially instead, wasting time — Promise.all lets both requests fly in parallel.
+```
+
+
+### Fetch API
+
+`fetch()` is the built-in, Promise-based way to make HTTP requests in JavaScript — the modern replacement for the older, callback-based `XMLHttpRequest`. It's a Web API (see The Event Loop above), provided by the browser/Node.js runtime, not by the JS language itself.
+
+```javascript
+// GET request — the simplest case
+const response = await fetch("/api/users");
+const users = await response.json();     // parse the body as JSON (also returns a Promise)
+
+// POST request with a JSON body — method/headers/body must be specified explicitly
+const response = await fetch("/api/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Ana", email: "ana@example.com" }),
+});
+```
+
+**The most common `fetch` gotcha**: the returned Promise only rejects on a NETWORK failure (DNS failure, no connectivity) — it does NOT reject for HTTP error status codes like 404 or 500. You must check `response.ok` (or `response.status`) yourself:
+
+```javascript
+const response = await fetch("/api/users/999");
+// response.ok is false for a 404, but fetch() did NOT throw — this line still runs normally!
+
+if (!response.ok) {
+    throw new Error(`HTTP error: ${response.status}`);   // you must throw manually if you want this to be an error
+}
+```
+
+**Reading the response body**: the body can only be read ONCE — `response.json()`, `response.text()`, `response.blob()` all consume the body stream, so calling more than one on the same response throws.
+
+```javascript
+response.json();    // parses the body as JSON
+response.text();    // reads the body as plain text
+response.blob();    // reads the body as binary data (e.g. downloading an image/file)
+```
+
+**Aborting a request**: `fetch` supports cancellation via an `AbortController` — useful for cancelling a stale request (e.g. a search-as-you-type request superseded by a newer keystroke):
+
+```javascript
+const controller = new AbortController();
+fetch("/api/search?q=abc", { signal: controller.signal })
+    .catch(err => { if (err.name === "AbortError") console.log("Request was cancelled"); });
+
+controller.abort();   // cancels the in-flight request
+```
+
+**Rule of thumb**: `fetch` is fine for simple cases, but production apps typically wrap it (or use a library like Axios, or a data-fetching layer like React Query/SWR — see the React chapter) to handle the `response.ok` check, retries, and request cancellation consistently, instead of repeating that boilerplate at every call site.
+
+
+### Modules
+
+JavaScript has two module systems in common use today:
+
+**CommonJS (CJS)** — Node.js's original module system. Synchronous, uses `require`/`module.exports`:
+
+```javascript
+// math.js
+module.exports = { add: (a, b) => a + b };
+// or: exports.add = (a, b) => a + b;
+
+// app.js
+const { add } = require("./math");
+```
+
+**ES Modules (ESM)** — the language standard, native to browsers and modern Node.js, using `import`/`export`. Its imports/exports must be static, top-level declarations, which is exactly what lets bundlers perform tree-shaking (removing unused exports from the final bundle):
+
+```javascript
+// math.js
+export const add = (a, b) => a + b;                        // named export — a file can have many
+export default function multiply(a, b) { return a * b; }   // default export — only one per file
+
+// app.js
+import multiply, { add } from "./math.js";   // default + named import together
+import * as math from "./math.js";            // import everything as a namespace object
+
+// Dynamic import — loads a module asynchronously, returns a Promise (enables code splitting)
+const mathModule = await import("./math.js");
+```
+
+**Key difference**: CJS is resolved synchronously and can be `require`d conditionally, anywhere in the code; ESM is resolved statically (ahead of time) and imports must be top-level. Node.js supports both today — `.cjs`/`.mjs` extensions, or `"type": "module"` in package.json to make `.js` files ESM by default.
+
+
+### Memory Leaks
+
+A memory leak happens when memory that's no longer needed is never released, because something still holds a reference to it, preventing the Garbage Collector from reclaiming it. Common causes in JavaScript:
+
+**1. Accidental global variables**: forgetting `let`/`const`/`var` creates an implicit global, which lives for the entire lifetime of the program.
+
+```javascript
+function leak() {
+    leakedVar = "I'm global now";   // no declaration keyword — silently attaches to the global object
+}
+```
+
+**2. Forgotten timers/intervals**: a `setInterval` that's never cleared keeps its callback — and everything the callback closes over — alive forever.
+
+```javascript
+const data = fetchLargeData();
+setInterval(() => console.log(data.length), 1000);   // never cleared — "data" can never be garbage collected
+// Fix: clearInterval(id) once it's no longer needed
+```
+
+**3. Detached DOM nodes**: keeping a JS reference to a DOM element after removing it from the document — the element can't be freed because the JS variable still points to it.
+
+```javascript
+let detachedNode = document.getElementById("item");
+detachedNode.remove();      // removed from the DOM...
+// ...but "detachedNode" still references it — it leaks until detachedNode is reassigned/cleared
+```
+
+**4. Closures holding onto large data unintentionally**: a closure captures its ENTIRE enclosing scope, so a long-lived function that closes over a large object it no longer needs prevents that object from ever being freed.
+
+**5. Event listeners that are never removed**: attaching a listener to a long-lived object (like `window`) from a short-lived component, without ever calling `removeEventListener`.
+
+```javascript
+window.addEventListener("resize", handleResize);
+// If the component using this is destroyed but the listener is never removed,
+// "handleResize" (and anything it closes over) stays alive as long as "window" does.
+```
+
+**How to detect**: Chrome DevTools → Memory tab → take heap snapshots before/after an action that should free memory, and compare them — a steadily growing heap or increasing detached DOM node count across repeated actions is the classic sign.
+
+**Rule of thumb**: always pair "subscribe" with "unsubscribe" — clear every timer, remove every event listener, and drop long-lived references once they're no longer needed (this is exactly what React's `useEffect` cleanup function exists for).
+
+
+### ES2015+ FEATURES
+
+
+```javascript
+// Optional chaining — stops at the first null/undefined
+const city = user?.address?.city;                  // undefined, not TypeError
+const method = obj?.method?.();
+
+// Nullish coalescing — only falls back on null/undefined (not 0 or "")
+const displayName = user.name ?? "Anonymous";
+// vs logical OR — falls back on any falsy value (0, "", false, null, undefined)
+const displayName2 = user.name || "Anonymous";
+
+// Template literals
+const msg = `Hello ${name}, you are ${age} years old`;
+```
+
+
+
+## 1.03 TypeScript
 
 
 
 ### Overview
 
 TypeScript is a superset of JavaScript developed by Microsoft. This means that any valid JavaScript is also valid TypeScript — you can adopt TypeScript gradually. The compiler (tsc) transforms TypeScript into plain JavaScript, so it runs in any environment that runs JavaScript: browser, Node.js, Deno. The big advantage is static type checking at compile time — you find errors before running the code, and your editor gives you much more precise autocomplete.
+
+
+### Why TypeScript Exists
+
+JavaScript is dynamically typed — a variable's type is only checked when the code actually runs, so an entire category of bugs (calling a method that doesn't exist, passing a string where a number was expected, forgetting a required object property) only surfaces in production, or worse, silently produces wrong results instead of crashing.
+
+```javascript
+// Plain JavaScript — no error until this line actually executes
+function getTotal(order) {
+    return order.price * order.qty;
+}
+getTotal({ price: 10 });   // NaN at runtime — "qty" was misspelled/forgotten, nothing caught it
+```
+
+TypeScript adds a type system ON TOP of JavaScript that catches this class of mistake at compile time, before the code ever runs:
+
+```typescript
+function getTotal(order: { price: number; qty: number }): number {
+    return order.price * order.qty;
+}
+// getTotal({ price: 10 });   // COMPILE ERROR: Property 'qty' is missing
+```
+
+Beyond catching bugs early, types act as always-accurate, always-up-to-date documentation — your editor can autocomplete object properties, function parameters, and catch typos as you type, instead of needing to read the implementation or hope a comment is still correct. Because TypeScript is a strict superset, you can also adopt it incrementally on an existing JS codebase, file by file, rather than needing a full rewrite.
+
+
+### How TypeScript Compilation Works
+
+TypeScript code is never executed directly — the TypeScript compiler (`tsc`) transpiles `.ts`/`.tsx` files into plain `.js` files, and it's that generated JavaScript that actually runs in the browser or Node.js.
+
+```text
+your-file.ts  →  tsc (type-checks AND strips types)  →  your-file.js  →  runs in Node/browser
+```
+
+**Type erasure**: all type annotations, interfaces, and generic parameters exist ONLY at compile time — `tsc` deletes them entirely when generating the output JS. This means you can never inspect a TypeScript type at runtime (there is no `typeof` for a `type` or `interface`), and it's why generics can't do things that require runtime type information (like `new T()` with an unconstrained `T`).
+
+```typescript
+interface User { id: number; name: string; }
+function greet(user: User) { console.log(`Hi ${user.name}`); }
+
+// compiles to plain JS — the interface and the type annotation are both gone:
+// function greet(user) { console.log(`Hi ${user.name}`); }
+```
+
+**tsconfig.json** controls how compilation behaves — the most important options:
+
+```jsonc
+{
+  "compilerOptions": {
+    "target": "ES2020",        // which JS version to output (affects syntax like async/await)
+    "module": "ESNext",        // which module system to emit (CommonJS vs ES Modules)
+    "strict": true,             // enables all strict type-checking flags (always turn this on)
+    "noImplicitAny": true,      // error when a type can't be inferred and silently becomes "any"
+    "esModuleInterop": true,    // smooths over CJS/ESM interop when importing
+    "outDir": "./dist"          // where compiled .js files are written
+  }
+}
+```
+
+**In practice**: most projects don't call `tsc` directly for building — bundlers like esbuild, SWC, or Vite strip types (much faster than `tsc`, but WITHOUT type-checking) while `tsc --noEmit` (or the editor's language server) runs separately just for type-checking. Tools like `ts-node` or `tsx` compile and run TypeScript on the fly for local development, without a separate build step.
 
 
 ### The Type System
@@ -889,32 +2557,61 @@ let dir: Direction = "north";
 
 ### INTERFACE vs TYPE
 
-Both define the shape of an object, but they differ in capability:
+Both describe the shape of an object, and for plain object shapes they're often interchangeable — but they come from different mental models and diverge in capability.
 
+**interface**: describes only the shape of an object (or a function/class contract) — you cannot use it to name a union, a primitive, or a tuple type directly. Its defining feature is that it's **open** — the same interface name can be declared more than once, and TypeScript automatically merges all declarations into one.
 
 ```typescript
-// Interface — preferred for object shapes, can be extended, can be merged
 interface User {
     id: number;
     name: string;
     email?: string;    // optional property
 }
 
+// extends — interfaces can build on other interfaces (like class inheritance)
 interface AdminUser extends User {
     role: "admin";
     permissions: string[];
 }
 
-// Declaration merging — two interface declarations with the same name merge
-interface Window { myProperty: string; }   // adds to the global Window type
+// Declaration merging — THIS IS UNIQUE TO INTERFACES.
+// Declaring "User" again does not error — it adds to the existing shape.
+interface User {
+    createdAt: Date;
+}
+// The final User type now has id, name, email?, AND createdAt — merged automatically.
 
-// Type alias — more powerful: unions, intersections, mapped types, tuples
-type ID = string | number;
-type Point = { x: number; y: number };
-type AdminUser = User & { role: "admin" };   // intersection
+// This is exactly how libraries let you extend global/ambient types:
+interface Window { myCustomProperty: string; }   // adds a property to the global Window type
 ```
 
-**Rule of thumb**: use interface for object shapes that may be extended or implemented by a class. Use type for everything else (unions, mapped types, utility compositions).
+**type** (type alias): just gives a name to ANY type — not only object shapes. This makes it strictly more expressive than interface: unions, intersections, tuples, primitives, mapped types, and conditional types can only be expressed with `type`.
+
+```typescript
+type ID = string | number;                   // union — interface CANNOT do this
+type Point = { x: number; y: number };        // object shape — same as an interface here
+type AdminUser = User & { role: "admin" };    // intersection — merges shapes together
+
+// Mapped type — only possible with type
+type Optional<T> = { [K in keyof T]?: T[K] };
+
+// A type alias declared twice with the same name is a COMPILE ERROR —
+// unlike interface, there is no merging:
+// type ID = boolean;   // ERROR: Duplicate identifier 'ID'
+```
+
+**Key differences at a glance**:
+
+| | interface | type |
+|---|---|---|
+| Object shapes | yes | yes |
+| Unions / primitives / tuples | no | yes |
+| Declaration merging (redeclaring adds fields) | yes | no (compile error) |
+| Extending another shape | `extends` | `&` (intersection) |
+| Implemented by a class | yes (`implements`) | yes, but less idiomatic |
+| Error messages | generally cleaner, shows the interface name | can show the fully expanded shape, sometimes harder to read |
+
+**Rule of thumb**: use `interface` for object/class shapes, especially public API contracts (like a library's props or a class's public interface) where declaration merging is a feature, not a bug. Use `type` for anything that isn't a plain object shape — unions, intersections, tuples, or mapped/conditional types. In practice, teams often standardize on one for consistency (many style guides now prefer `type` everywhere except when declaration merging is specifically needed), but understanding both is what interviewers are checking for.
 
 
 ### Generics
@@ -1013,6 +2710,214 @@ function isUser(obj: User | Admin): obj is User {
 ```
 
 
+### Type Guards
+
+A type guard is any expression that TypeScript recognizes well enough to narrow a type from it — Type Narrowing (above) is the general concept; type guards are the specific checks that trigger it.
+
+**typeof guard** — for primitives (string, number, boolean, symbol, bigint, undefined, function):
+
+```typescript
+function format(value: string | number) {
+    if (typeof value === "string") return value.toUpperCase();
+    return value.toFixed(2);
+}
+```
+
+**instanceof guard** — for class instances:
+
+```typescript
+class ApiError extends Error { statusCode = 500; }
+
+function handle(error: Error) {
+    if (error instanceof ApiError) {
+        console.log(error.statusCode);   // narrowed to ApiError here
+    }
+}
+```
+
+**in guard** — checks whether a property exists on an object, useful for narrowing between object shapes that don't share a common discriminant field:
+
+```typescript
+type Cat = { meow: () => void };
+type Dog = { bark: () => void };
+
+function makeSound(animal: Cat | Dog) {
+    if ("meow" in animal) animal.meow();   // narrowed to Cat
+    else animal.bark();                     // narrowed to Dog
+}
+```
+
+**Custom type guards (user-defined type predicates)** — a function whose return type is `arg is Type`, telling TypeScript to narrow the argument's type in every branch where the function returns true:
+
+```typescript
+interface User { email: string; }
+interface Admin { permissions: string[]; }
+
+function isUser(obj: User | Admin): obj is User {
+    return "email" in obj;
+}
+
+function process(entity: User | Admin) {
+    if (isUser(entity)) {
+        console.log(entity.email);   // narrowed to User
+    }
+}
+```
+
+**Assertion functions** — similar to type guards, but instead of narrowing in an if-branch, they THROW if the condition is false, and narrow everything AFTER the call for the rest of the function:
+
+```typescript
+function assertIsString(value: unknown): asserts value is string {
+    if (typeof value !== "string") throw new Error("Not a string");
+}
+
+function process2(value: unknown) {
+    assertIsString(value);
+    console.log(value.toUpperCase());   // narrowed to string from here on, no if-block needed
+}
+```
+
+**Rule of thumb**: reach for `typeof`/`instanceof`/`in` for quick, built-in checks; write a custom type predicate (`arg is Type`) when the check involves your own logic across an object shape; use an assertion function when you want to fail fast and avoid wrapping the rest of the function in an if-block.
+
+
+### Enums
+
+An enum defines a named set of constant values — useful when a variable should only ever hold one of a fixed, known list of options.
+
+```typescript
+enum Role {
+    Admin,       // 0
+    Editor,      // 1
+    Viewer,      // 2
+}
+let role: Role = Role.Admin;
+
+// String enums — more readable at runtime (e.g. in logs/network payloads) than numeric ones
+enum Status {
+    Pending = "PENDING",
+    Active = "ACTIVE",
+    Closed = "CLOSED",
+}
+function updateStatus(status: Status) { ... }
+updateStatus(Status.Active);
+```
+
+Numeric enums are, by default, **bidirectional** — you can go from name to value and value to name, which generates extra JS at runtime:
+
+```typescript
+console.log(Role.Admin);     // 0
+console.log(Role[0]);        // "Admin" — reverse mapping, generated automatically
+```
+
+**const enum** — inlines the values at compile time and generates NO runtime object at all, avoiding the extra JS code enums otherwise produce (but cannot be used across module boundaries with certain bundler settings, e.g. isolatedModules):
+
+```typescript
+const enum Direction { Up, Down }
+let d = Direction.Up;   // compiles directly to: let d = 0;  — no Direction object exists at runtime
+```
+
+**Modern alternative — union of string literals**: many teams prefer this over enums entirely, since it requires no extra runtime code and integrates more naturally with the rest of the structural type system:
+
+```typescript
+type Status2 = "PENDING" | "ACTIVE" | "CLOSED";
+function updateStatus2(status: Status2) { ... }
+updateStatus2("ACTIVE");   // just a plain string, fully type-checked
+```
+
+**Rule of thumb**: prefer a string literal union for simple fixed sets of values (no runtime cost, works well with discriminated unions); reach for `enum` when you specifically want a namespaced, referenceable set of named constants (`Role.Admin` reads more intentionally than the raw string `"ADMIN"` in some codebases).
+
+
+### Advanced Types
+
+**Conditional types** — a type-level `if`, using `extends ? :`, that picks between two types based on whether one is assignable to another:
+
+```typescript
+type IsString<T> = T extends string ? "yes" : "no";
+type A = IsString<"hello">;   // "yes"
+type B = IsString<42>;        // "no"
+```
+
+**infer** — used inside a conditional type to extract and name a nested type, instead of just checking it:
+
+```typescript
+type ElementType<T> = T extends (infer U)[] ? U : T;
+type Item = ElementType<string[]>;   // string — "infer" pulled the array's element type out
+
+// This is exactly how the built-in ReturnType<T> utility type works internally:
+type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+```
+
+**Mapped types with modifiers** — transform every property of an existing type, and can ADD or REMOVE modifiers with `+`/`-`:
+
+```typescript
+type Partial2<T> = { [K in keyof T]?: T[K] };          // adds "?" to every property
+type Required2<T> = { [K in keyof T]-?: T[K] };         // removes "?" from every property
+type Readonly2<T> = { readonly [K in keyof T]: T[K] };  // adds "readonly" to every property
+type Mutable<T> = { -readonly [K in keyof T]: T[K] };   // removes "readonly" from every property
+```
+
+**Template literal types** — build new string literal types by combining other types, just like a JS template literal, but at the type level:
+
+```typescript
+type EventName = "click" | "hover";
+type HandlerName = `on${Capitalize<EventName>}`;   // "onClick" | "onHover"
+
+type Route = `/users/${number}`;    // matches "/users/1", "/users/42", but not "/users/abc"
+```
+
+**satisfies operator** (TS 4.9+) — validates that a value matches a type WITHOUT widening the value's own inferred type the way a type annotation would, so you keep the most specific type possible while still getting type-checking:
+
+```typescript
+type Colors = Record<string, [number, number, number]>;
+
+// With a type annotation — value is widened to Colors, losing the specific keys
+const palette: Colors = { red: [255, 0, 0] };
+// palette.red is (number,number,number) — but so would palette.blue be, if it existed... TS can't tell it's missing
+
+// With satisfies — TS checks it against Colors, but keeps the literal/specific inferred type
+const palette2 = { red: [255, 0, 0] } satisfies Colors;
+palette2.red;    // TypeScript knows exactly this key exists, with its precise tuple type
+```
+
+
+### Declaration Files
+
+A declaration file (`.d.ts`) contains ONLY type information — no actual runtime code (no function bodies, no implementation) — describing the shape of JavaScript code for the TypeScript compiler. This is what lets you get full type-checking and autocomplete when using a library that was written in plain JavaScript, without that library needing to be rewritten in TypeScript itself.
+
+```typescript
+// math.d.ts — describes the shape of a plain JavaScript library, e.g. "math.js"
+declare function add(a: number, b: number): number;
+declare const PI: number;
+
+export { add, PI };
+```
+
+```javascript
+// math.js — the actual plain JavaScript implementation, with no type annotations at all
+function add(a, b) { return a + b; }
+const PI = 3.14159;
+module.exports = { add, PI };
+```
+
+When both files sit alongside each other, importing from `"./math"` in a `.ts` file gives full autocomplete and type-checking on `add`/`PI`, even though `math.js` itself has zero TypeScript in it — the compiler reads `math.d.ts` purely for type information and trusts that the actual JS behaves as described.
+
+**Where declaration files come from in practice**:
+1. **Auto-generated** — running `tsc` with `"declaration": true` in `tsconfig.json` generates a `.d.ts` file alongside each compiled `.js` output, automatically, for YOUR OWN TypeScript code — this is how a TypeScript library you publish gives its consumers types for free.
+2. **Bundled with the library** — many npm packages ship their own `.d.ts` files directly (check for a `"types"` field in their `package.json`).
+3. **DefinitelyTyped (`@types/...`)** — a massive community-maintained repository of declaration files for popular JavaScript-only libraries that don't ship their own types:
+
+```bash
+npm install --save-dev @types/lodash    # adds type definitions for the plain-JS "lodash" library
+```
+
+```typescript
+import _ from "lodash";
+_.chunk([1, 2, 3, 4], 2);   // fully typed and autocompleted, even though lodash itself is plain JS
+```
+
+**Rule of thumb**: you'll rarely hand-write a `.d.ts` file yourself unless publishing a library or integrating a small JS module with no existing types — most of the time, declaration files are either generated automatically from your own TypeScript, or installed as an `@types/*` package for a JS dependency.
+
+
 ### Decorators
 
 
@@ -1036,184 +2941,6 @@ class UserService {
 ```
 
 This is how NestJS, TypeORM, and Angular use decorators extensively.
-
-
-## 1.03 JavaScript
-
-
-
-### Overview
-
-JavaScript is the only language that runs natively in browsers, making it the universal language of the web. It has evolved dramatically: from a simple scripting language (ES5) to a mature language with classes, modules, async/await, optional chaining, and more (ES2015+). Node.js brought JavaScript to the server.
-
-
-### The Event Loop — HOW JAVASCRIPT HANDLES CONCURRENCY
-
-JavaScript is single-threaded — there is only one call stack. Yet it handles asynchronous operations (network requests, timers) without blocking. How?
-
-The EVENT LOOP continuously checks:
-1. Is the CALL STACK empty?
-2. If yes, pick the next task from the TASK QUEUE and push it onto the stack.
-
-
-```javascript
-console.log("1");           // synchronous → executes immediately
-setTimeout(() => {
-    console.log("3");       // macrotask → goes to task queue
-}, 0);
-Promise.resolve()
-    .then(() => console.log("2"));  // microtask → goes to microtask queue
-console.log("4");           // synchronous → executes immediately
-// Output: 1, 4, 2, 3
-```
-
-Why "2" before "3"? 
-Microtasks (Promises, queueMicrotask) have a separate queue that is ALWAYS fully drained before the event loop picks the next macrotask (setTimeout, setInterval, I/O callbacks). 
-So the order is: synchronous code → microtasks → one macrotask → microtasks → one macrotask...
-
-### Closures
-
-
-A closure is a function that remembers the variables from the scope where it was defined, even after that scope has finished executing.
-
-
-```javascript
-function makeCounter() {
-    let count = 0;               // count lives in makeCounter's scope
-    return function() {
-        count++;                  // the returned function closes over count
-        return count;
-    };
-}
-
-const counter = makeCounter();
-counter();  // 1
-counter();  // 2
-counter();  // 3
-```
-
-Each call to makeCounter() creates a new closure with its own count. This is how React's useState works internally — each component instance has its own enclosed state.
-
-
-### This — THE MOST CONFUSING PART OF JAVASCRIPT
-
-In JavaScript, this is determined by HOW a function is called, not where it is defined (except arrow functions, which close over the surrounding this).
-
-
-```javascript
-const obj = {
-    name: "Beatriz",
-    greet: function() {
-        console.log(this.name);     // "Beatriz" — this is obj
-    },
-    greetArrow: () => {
-        console.log(this.name);     // undefined — arrow captures outer this
-    }
-};
-
-const fn = obj.greet;
-fn();          // undefined — this is the global object (or undefined in strict mode)
-obj.greet();   // "Beatriz" — called as method of obj
-
-// bind/call/apply explicitly set this
-fn.call(obj);  // "Beatriz"
-const bound = fn.bind(obj);
-bound();       // "Beatriz"
-```
-
-**Rule**: use regular functions when you need dynamic this (event handlers, methods). Use arrow functions when you want to inherit the outer this (callbacks inside class methods, setTimeout inside methods).
-
-
-### Prototype Chain
-
-
-Every JavaScript object has an internal [[Prototype]] property that points to another object (or null). When you access a property, JavaScript first looks at the object itself, then walks up the prototype chain until it finds it or reaches null. This is JavaScript's inheritance mechanism.
-
-
-```javascript
-function Animal(name) { this.name = name; }
-Animal.prototype.eat = function() { console.log(this.name + " eats"); };
-
-const dog = new Animal("Rex");
-dog.eat();   // found on Animal.prototype, not dog itself
-
-// ES6 classes are syntactic sugar over this prototype system:
-class Animal {
-    constructor(name) { this.name = name; }
-    eat() { console.log(this.name + " eats"); }
-}
-// Animal.prototype.eat is still where the method lives
-```
-
-
-### Async/Await and Promises
-
-
-A Promise represents a value that will be available in the future. 
-It has three states: pending, fulfilled, rejected.
-
-
-```javascript
-// Promise chain
-fetch("/api/user/1")
-    .then(response => response.json())
-    .then(user => console.log(user))
-    .catch(error => console.error(error));
-
-// async/await — syntactic sugar over Promises, reads like synchronous code
-async function getUser(id) {
-    try {
-        const response = await fetch(`/api/user/${id}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const user = await response.json();
-        return user;
-    } catch (error) {
-        console.error("Failed to fetch user:", error);
-        throw error;
-    }
-}
-
-// Run multiple Promises concurrently
-const [user, posts] = await Promise.all([
-    fetch("/api/user/1").then(r => r.json()),
-    fetch("/api/posts").then(r => r.json()),
-]);
-// Both requests run in parallel; we wait for both to finish
-
-// First to resolve wins
-const result = await Promise.race([slowApi(), fastApi()]);
-```
-
-### ES2015+ FEATURES
-
-
-```javascript
-// Destructuring
-const { name, age = 0 } = user;                    // object with default
-const [first, ...rest] = [1, 2, 3, 4];             // array
-
-// Spread
-const merged = { ...defaults, ...overrides };
-const copy = [...array, newItem];
-
-// Optional chaining — stops at the first null/undefined
-const city = user?.address?.city;                  // undefined, not TypeError
-const method = obj?.method?.();
-
-// Nullish coalescing — only falls back on null/undefined (not 0 or "")
-const name = user.name ?? "Anonymous";
-// vs logical OR — falls back on any falsy value (0, "", false, null, undefined)
-const name = user.name || "Anonymous";
-
-// Template literals
-const msg = `Hello ${name}, you are ${age} years old`;
-
-// Modules
-export const PI = 3.14;
-export default function add(a, b) { return a + b; }
-import add, { PI } from "./math.js";
-```
-
 
 
 ## 1.04 Dart
@@ -2506,12 +4233,143 @@ A Spring Bean is an object managed by the Spring container (called the Applicati
 **Session**   — one instance per HTTP session (web apps)
 
 
+### Component Scan
+
+Component scanning is how Spring DISCOVERS which classes should become beans, without you registering each one manually. `@SpringBootApplication` implicitly includes `@ComponentScan`, which tells Spring: "scan this package and every sub-package for classes annotated with `@Component` (and its specializations `@Service`, `@Repository`, `@Controller`) and register them in the Application Context."
+
+```java
+@SpringBootApplication   // implies @ComponentScan(basePackages = "com.example.app") — the package it's in
+public class MyApp {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApp.class, args);
+    }
+}
+```
+
+**This is why package structure matters in Spring Boot**: by convention, the class annotated with `@SpringBootApplication` should sit in the ROOT package of your application, so component scanning naturally covers every sub-package. A `@Service` class placed OUTSIDE that root package (a sibling package, not a child) is silently never picked up — a very common source of "why isn't my bean being injected?" bugs. You can override the scanned packages explicitly with `@ComponentScan(basePackages = "...")` if needed.
+
+
+### Configuration Classes
+
+`@Configuration` marks a class as a source of bean definitions written in plain Java code, as an alternative to component-scanning a class directly — useful for beans you don't own the source of (a third-party class) or that need custom construction logic.
+
+```java
+@Configuration
+public class AppConfig {
+
+    @Bean                                       // registers the RETURN VALUE as a bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();                // you can't add @Component to RestTemplate — it's a library class
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());   // custom construction logic
+        return mapper;
+    }
+}
+
+// Elsewhere, inject it exactly like any other bean:
+@Service
+public class ApiClient {
+    private final RestTemplate restTemplate;
+    public ApiClient(RestTemplate restTemplate) { this.restTemplate = restTemplate; }
+}
+```
+
+**Rule of thumb**: use `@Component`/`@Service`/`@Repository` (component scanning) for classes you write yourself; use `@Configuration` + `@Bean` for third-party classes, or when bean creation needs custom logic that an annotation alone can't express.
+
+
 ### Auto-configuration
 
 
 Spring Boot reads your classpath and application.yml/properties and automatically configures beans. If it sees spring-boot-starter-data-jpa on the classpath plus a datasource URL in properties, it auto-configures a DataSource, EntityManager, and transaction manager. You don't write any of that code.
 
 You can always override auto-configuration by providing your own bean of the same type — Spring Boot backs off when it detects yours.
+
+
+### application.properties vs application.yml
+
+Both configure the same things (datasource URL, server port, logging levels, custom values read via `@Value`) — the difference is purely syntax. Only one is needed; using both for overlapping keys is confusing and best avoided.
+
+```properties
+# application.properties — flat key=value pairs, dots represent nesting
+server.port=8080
+spring.datasource.url=jdbc:postgresql://localhost:5432/mydb
+spring.datasource.username=admin
+spring.jpa.hibernate.ddl-auto=update
+logging.level.com.example=DEBUG
+```
+
+```yaml
+# application.yml — hierarchical, indentation represents nesting (equivalent to the above)
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: admin
+  jpa:
+    hibernate:
+      ddl-auto: update
+logging:
+  level:
+    com.example: DEBUG
+```
+
+**YAML is generally preferred** for larger configs — the nesting is visually clear and avoids repeating the common prefix (`spring.datasource.` three times) on every line. **Properties files are sometimes preferred** for very small configs or when a tool/team is already standardized on them; YAML is also whitespace-sensitive, which can cause subtle bugs (mixing tabs and spaces) that a flat `.properties` file can't have.
+
+
+### Profiles
+
+A Profile is a named group of configuration that's only active in specific environments (dev, test, production) — this lets you use a local database in development and a production one in production, without touching code.
+
+```yaml
+# application.yml — shared/default config
+spring:
+  application:
+    name: my-app
+
+---
+# application-dev.yml — only loaded when the "dev" profile is active
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dev_db
+
+---
+# application-prod.yml — only loaded when the "prod" profile is active
+spring:
+  datasource:
+    url: jdbc:postgresql://prod-host:5432/prod_db
+logging:
+  level:
+    root: WARN
+```
+
+**Activating a profile**:
+```bash
+java -jar app.jar --spring.profiles.active=prod
+# or as an environment variable: SPRING_PROFILES_ACTIVE=prod
+```
+
+**Profile-specific beans** — only create a bean when a given profile is active:
+
+```java
+@Service
+@Profile("dev")
+public class MockEmailService implements EmailService {
+    public void send(String to, String body) { System.out.println("DEV: pretending to send email"); }
+}
+
+@Service
+@Profile("prod")
+public class SmtpEmailService implements EmailService {
+    public void send(String to, String body) { /* actually sends via SMTP */ }
+}
+```
+
+**Rule of thumb**: keep secrets (passwords, API keys) OUT of profile files committed to Git — use environment variables or a secrets manager instead, and reference them with `${ENV_VAR_NAME}` placeholders in the YAML/properties file.
 
 
 ### SPRING DATA JPA AND THE N+1 PROBLEM
@@ -2600,6 +4458,131 @@ public class UserController {
 }
 ```
 
+
+### DTOs
+
+A DTO (Data Transfer Object) is a plain object used to shape the data that crosses the API boundary — separate from the `@Entity` used internally to represent a database table. Returning entities directly from a Controller is a common anti-pattern.
+
+```java
+// Entity — internal representation, tied to the database schema
+@Entity
+public class User {
+    @Id private Long id;
+    private String name;
+    private String email;
+    private String passwordHash;      // must NEVER be exposed in an API response
+    @OneToMany private List<Order> orders;   // could trigger lazy-loading issues if serialized directly
+}
+
+// DTO — exactly what the API exposes, nothing more
+public record UserResponse(Long id, String name, String email) { }
+
+// Mapping between them, typically in the Service layer
+UserResponse toResponse(User user) {
+    return new UserResponse(user.getId(), user.getName(), user.getEmail());
+}
+```
+
+**Why bother with a separate DTO?** It prevents leaking sensitive/internal fields (password hashes, internal flags), decouples your API contract from your database schema (you can change the Entity without breaking API consumers, and vice versa), and avoids serializing lazy-loaded JPA relationships that can trigger extra queries or `LazyInitializationException` outside a transaction. Libraries like MapStruct auto-generate the mapping code shown above for larger projects.
+
+
+### Validation
+
+Spring integrates with Bean Validation (JSR 380 — implemented by Hibernate Validator) to declaratively validate incoming data using annotations, instead of hand-writing `if` checks.
+
+```java
+public record CreateUserRequest(
+    @NotBlank(message = "Name is required") String name,
+    @Email(message = "Invalid email format") String email,
+    @Min(18) @Max(120) int age
+) { }
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @PostMapping
+    public ResponseEntity<User> create(@Valid @RequestBody CreateUserRequest request) {
+        // @Valid triggers validation BEFORE this method body runs —
+        // if validation fails, Spring throws MethodArgumentNotValidException automatically,
+        // and this line is never reached
+        return ResponseEntity.status(201).body(userService.create(request));
+    }
+}
+```
+
+Common validation annotations: `@NotNull`, `@NotBlank` (String, also rejects whitespace-only), `@NotEmpty` (collections/strings, rejects empty but allows whitespace), `@Size(min=, max=)`, `@Email`, `@Min`/`@Max`, `@Pattern(regexp=...)`, `@Positive`/`@Negative`.
+
+
+### ResponseEntity
+
+`ResponseEntity<T>` wraps a response body together with the HTTP status code and headers — giving full control over the response, instead of Spring inferring a status code (200) automatically from a plain return value.
+
+```java
+@GetMapping("/{id}")
+public ResponseEntity<User> getUser(@PathVariable Long id) {
+    return userService.findById(id)
+        .map(user -> ResponseEntity.ok(user))                    // 200 OK with the user in the body
+        .orElse(ResponseEntity.notFound().build());               // 404 Not Found, no body
+
+}
+
+@PostMapping
+public ResponseEntity<User> create(@RequestBody User user) {
+    User saved = userService.save(user);
+    return ResponseEntity
+        .status(HttpStatus.CREATED)                                // 201 Created
+        .header("Location", "/users/" + saved.getId())
+        .body(saved);
+}
+```
+
+**Rule of thumb**: return the plain object directly when a successful response always looks the same (always 200); use `ResponseEntity` whenever the status code, headers, or "no body at all" needs to vary based on the outcome.
+
+
+### Exception Handling and the Global Exception Handler
+
+Rather than wrapping every controller method in `try/catch`, Spring lets you centralize error handling with `@ControllerAdvice` (or `@RestControllerAdvice`, which also adds `@ResponseBody`) — a class that intercepts exceptions thrown from ANY controller and converts them into a consistent error response.
+
+```java
+class UserNotFoundException extends RuntimeException {
+    UserNotFoundException(Long id) { super("User not found: " + id); }
+}
+
+record ErrorResponse(String message, int status, LocalDateTime timestamp) { }
+
+@RestControllerAdvice   // applies globally, across every @RestController in the app
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(UserNotFoundException ex) {
+        var error = new ErrorResponse(ex.getMessage(), 404, LocalDateTime.now());
+        return ResponseEntity.status(404).body(error);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)   // thrown by @Valid failures
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
+        return ResponseEntity.status(400).body(new ErrorResponse(message, 400, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(Exception.class)                          // catch-all fallback
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        var error = new ErrorResponse("Internal server error", 500, LocalDateTime.now());
+        return ResponseEntity.status(500).body(error);          // never leak ex.getMessage() here — may expose internals
+    }
+}
+
+// Now controllers stay clean — just throw, and the handler above formats the response:
+@GetMapping("/{id}")
+public User getUser(@PathVariable Long id) {
+    return userService.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+}
+```
+
+**Rule of thumb**: one `@RestControllerAdvice` class per application (or per module in a large app) keeps error response formatting consistent everywhere, instead of every controller reinventing its own error JSON shape.
+
+
 ### Service (Business Logic Layer)
 
 Contains the core business logic.
@@ -2649,6 +4632,163 @@ public class User {
 ```
 
 
+### Entity Relationships
+
+JPA maps foreign-key relationships between tables onto object references between entities, using annotations that mirror the database relationship.
+
+**@OneToOne** — each row relates to exactly one row in another table (e.g. a User has one Profile):
+
+```java
+@Entity
+public class User {
+    @Id private Long id;
+    @OneToOne(mappedBy = "user")   // "mappedBy" means Profile owns the foreign key
+    private Profile profile;
+}
+
+@Entity
+public class Profile {
+    @Id private Long id;
+    @OneToOne
+    @JoinColumn(name = "user_id")   // this side owns the foreign key column
+    private User user;
+}
+```
+
+**@ManyToOne / @OneToMany** — the most common relationship (e.g. many Orders belong to one User). Always declare `@ManyToOne` on the "many" side — it's the side that actually holds the foreign key column in the database:
+
+```java
+@Entity
+public class Order {
+    @Id private Long id;
+    @ManyToOne                       // the OWNING side — Order table has a user_id column
+    @JoinColumn(name = "user_id")
+    private User user;
+}
+
+@Entity
+public class User {
+    @Id private Long id;
+    @OneToMany(mappedBy = "user")    // the INVERSE side — no extra column, just a Java-side view
+    private List<Order> orders;
+}
+```
+
+**@ManyToMany** — requires a JOIN TABLE, since neither table can hold a simple foreign key for a many-to-many relationship (e.g. Students and Courses):
+
+```java
+@Entity
+public class Student {
+    @Id private Long id;
+    @ManyToMany
+    @JoinTable(
+        name = "student_course",                          // the join table
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private List<Course> courses;
+}
+```
+
+**Rule of thumb**: the side with `mappedBy` is the INVERSE side (read-only from JPA's perspective — it doesn't own the foreign key); the side WITHOUT `mappedBy` (using `@JoinColumn`) is the OWNING side, and changes to the relationship must be made through it for JPA to actually persist them.
+
+
+### Fetch Types and Cascade Types
+
+**Fetch types** control WHEN a related entity is loaded from the database:
+
+- **LAZY**: the related entity is only loaded the FIRST TIME it's actually accessed (e.g. `order.getUser()`), via a proxy — this is what causes the N+1 problem (see above) if not handled carefully, and can throw `LazyInitializationException` if accessed outside an active transaction/session.
+- **EAGER**: the related entity is loaded IMMEDIATELY, in the same query (or an automatic extra query) as the owning entity — simpler, but can silently pull in far more data than needed.
+
+```java
+@ManyToOne(fetch = FetchType.LAZY)     // default for @ManyToOne/@OneToMany in modern JPA
+private User user;
+
+@OneToMany(fetch = FetchType.EAGER)    // rarely a good idea — loads ALL orders every time a User loads
+private List<Order> orders;
+```
+
+**Cascade types** control what happens to related entities when an operation is performed on the owning entity:
+
+```java
+@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<Order> orders;
+// CascadeType.ALL: saving/deleting a User also saves/deletes its Orders automatically
+// orphanRemoval = true: removing an Order from this list also deletes it from the database
+```
+
+Common cascade types: `PERSIST` (saving the parent also saves new children), `MERGE`, `REMOVE` (deleting the parent also deletes children), `ALL` (all of the above) — use cascades carefully, since `CascadeType.ALL` on the wrong relationship can unintentionally delete data that other entities still reference.
+
+**Rule of thumb**: default to `LAZY` for every relationship (explicit `JOIN FETCH`/`@EntityGraph` when you actually need the related data, as shown in the N+1 section above) — this keeps queries predictable and avoids accidentally loading huge object graphs.
+
+
+### Pagination and Sorting
+
+`JpaRepository` supports pagination and sorting out of the box via `Pageable`, avoiding manual `LIMIT`/`OFFSET` SQL.
+
+```java
+public interface UserRepository extends JpaRepository<User, Long> {
+    Page<User> findByActive(boolean active, Pageable pageable);
+}
+
+// In the Service/Controller:
+Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").descending());  // page 0, 20 per page
+Page<User> page = userRepository.findByActive(true, pageable);
+
+page.getContent();          // the actual List<User> for this page
+page.getTotalElements();    // total matching rows across ALL pages
+page.getTotalPages();
+page.hasNext();
+```
+
+```java
+// Exposed directly as a REST endpoint — Spring parses ?page=&size=&sort= from the URL automatically
+@GetMapping
+public Page<User> getUsers(@PageableDefault(size = 20) Pageable pageable) {
+    return userRepository.findAll(pageable);
+}
+// GET /users?page=1&size=10&sort=name,asc
+```
+
+
+### JPQL, Native Queries, and Specifications
+
+**JPQL (Java Persistence Query Language)**: an object-oriented query language — queries reference ENTITY names and FIELD names (not table/column names), and JPA translates it to SQL for the underlying database, keeping queries portable across database vendors.
+
+```java
+@Query("SELECT u FROM User u WHERE u.active = true AND u.createdAt > :date")
+List<User> findRecentActiveUsers(@Param("date") LocalDateTime date);
+// "User" and "u.active" are the ENTITY CLASS and FIELD, not necessarily the table/column names
+```
+
+**Native queries**: plain SQL, used when JPQL can't express something you need (a database-specific function, complex window functions, a heavily hand-tuned query):
+
+```java
+@Query(value = "SELECT * FROM users WHERE active = true ORDER BY created_at DESC LIMIT 10", nativeQuery = true)
+List<User> findTop10Active();
+```
+
+**Specifications**: build queries programmatically and compose them conditionally, instead of writing many near-duplicate `@Query` methods for every combination of optional filters:
+
+```java
+public class UserSpecifications {
+    public static Specification<User> hasRole(String role) {
+        return (root, query, cb) -> cb.equal(root.get("role"), role);
+    }
+    public static Specification<User> isActive() {
+        return (root, query, cb) -> cb.isTrue(root.get("active"));
+    }
+}
+
+// Compose specifications dynamically, based on which filters were actually provided:
+Specification<User> spec = Specification.where(UserSpecifications.isActive())
+    .and(UserSpecifications.hasRole("admin"));
+List<User> admins = userRepository.findAll(spec);   // repository must extend JpaSpecificationExecutor<User>
+```
+
+**Rule of thumb**: use derived query methods (`findByEmail`) for simple lookups, JPQL for most custom queries, native SQL only when JPQL genuinely can't express what's needed, and Specifications when the number of optional filter combinations would otherwise require writing many separate query methods.
+
+
 ### Request Flow
 
 ```text
@@ -2670,6 +4810,189 @@ Controller
     ↓
 HTTP Response
 ```
+
+
+### Spring Security
+
+Spring Security is the standard way to add authentication and authorization to a Spring Boot app (see the Authentication & Authorization chapter for the underlying JWT/OAuth2/RBAC concepts — this section shows how they're WIRED UP in Spring specifically).
+
+**Basic configuration** — a `SecurityFilterChain` bean defines which endpoints require authentication:
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())                              // typically disabled for stateless JWT APIs
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()             // public endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")       // role-restricted
+                .anyRequest().authenticated()                            // everything else needs authentication
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))  // no server-side session — JWT-based
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();     // see Password Security in the Authentication chapter
+    }
+}
+```
+
+**JWT filter** — a custom filter that runs before every request, extracts the token from the `Authorization` header, and populates Spring Security's context if it's valid:
+
+```java
+public class JwtAuthFilter extends OncePerRequestFilter {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
+        String token = extractToken(request);                    // read "Authorization: Bearer <token>"
+        if (token != null && jwtService.isValid(token)) {
+            String username = jwtService.extractUsername(token);
+            var auth = new UsernamePasswordAuthenticationToken(username, null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(auth);   // mark the request as authenticated
+        }
+        chain.doFilter(request, response);
+    }
+}
+```
+
+**Method-level security** — restrict individual methods instead of (or in addition to) whole URL patterns:
+
+```java
+@PreAuthorize("hasRole('ADMIN')")
+public void deleteUser(Long id) { ... }
+```
+
+
+### Actuator
+
+Spring Boot Actuator exposes production-ready monitoring endpoints out of the box — health checks, metrics, and environment info — without writing any of that code yourself.
+
+```yaml
+# application.yml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics    # only expose what's needed — Actuator can leak internals if wide open
+```
+
+```bash
+GET /actuator/health      # { "status": "UP" }  — used by load balancers/Kubernetes liveness probes
+GET /actuator/metrics     # JVM memory, HTTP request counts, custom metrics
+GET /actuator/info        # arbitrary build/app info you configure
+GET /actuator/env         # environment variables and properties (sensitive — restrict access!)
+```
+
+Custom health indicators can report on your OWN dependencies (a database, a downstream API):
+
+```java
+@Component
+public class DatabaseHealthIndicator implements HealthIndicator {
+    public Health health() {
+        return isDatabaseReachable() ? Health.up().build() : Health.down().build();
+    }
+}
+```
+
+**Rule of thumb**: `/actuator/health` is what Kubernetes liveness/readiness probes typically call (see the Kubernetes chapter) — always expose it, but lock down `/actuator/env` and other sensitive endpoints behind authentication in production.
+
+
+### Logging
+
+Spring Boot uses SLF4J as a logging facade (with Logback as the default implementation) — you code against the SLF4J interface, and the actual logging backend can be swapped without changing application code.
+
+```java
+@Service
+public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    public User createUser(String name) {
+        log.info("Creating user: {}", name);            // {} is a placeholder — avoids string concatenation cost
+        try {
+            return userRepository.save(new User(name));
+        } catch (Exception e) {
+            log.error("Failed to create user: {}", name, e);   // pass the exception as the last argument for the stack trace
+            throw e;
+        }
+    }
+}
+```
+
+**Log levels** (from most to least verbose): `TRACE` < `DEBUG` < `INFO` < `WARN` < `ERROR` — setting a level shows that level and everything above it. Configured per-package in `application.yml`:
+
+```yaml
+logging:
+  level:
+    root: INFO
+    com.example.myapp: DEBUG      # more verbose for your own code
+    org.hibernate.SQL: DEBUG      # log every SQL statement Hibernate generates — invaluable for debugging N+1s
+```
+
+**Rule of thumb**: `INFO` for normal business events, `DEBUG` for detailed diagnostic info (usually off in production), `WARN` for recoverable problems, `ERROR` for failures that need attention — never log sensitive data (passwords, tokens, full card numbers) at any level.
+
+
+### Caching
+
+Spring's caching abstraction adds a cache in front of expensive method calls, transparently, using annotations — the actual cache store (in-memory, Redis, etc.) is pluggable.
+
+```java
+@Configuration
+@EnableCaching
+public class CacheConfig { }
+
+@Service
+public class ProductService {
+
+    @Cacheable("products")                 // caches the return value, keyed by the method argument
+    public Product getProduct(Long id) {
+        return productRepository.findById(id).orElseThrow();  // only actually runs on a cache MISS
+    }
+
+    @CachePut("products")                  // always runs the method, but also updates the cache with the result
+    public Product updateProduct(Product product) {
+        return productRepository.save(product);
+    }
+
+    @CacheEvict("products")                // removes the entry from the cache (e.g. after a delete)
+    public void deleteProduct(Long id) {
+        productRepository.deleteById(id);
+    }
+}
+```
+
+By default Spring Boot uses a simple in-memory `ConcurrentHashMap`-based cache — for a real production/distributed setup, a Redis-backed cache (`spring-boot-starter-data-redis`) is used instead, so multiple app instances share the same cache.
+
+
+### Scheduling
+
+`@Scheduled` runs a method automatically on a fixed interval or cron expression, without a separate job scheduler process.
+
+```java
+@Configuration
+@EnableScheduling
+public class SchedulingConfig { }
+
+@Component
+public class ReportJob {
+
+    @Scheduled(fixedRate = 60000)              // every 60 seconds, measured from the START of each run
+    public void refreshCache() { ... }
+
+    @Scheduled(fixedDelay = 60000)             // every 60 seconds, measured from the END of the previous run
+    public void syncData() { ... }
+
+    @Scheduled(cron = "0 0 2 * * *")           // cron expression — every day at 2:00 AM
+    public void nightlyCleanup() { ... }
+}
+```
+
+**fixedRate vs fixedDelay**: `fixedRate` can overlap if a run takes longer than the interval (a new run starts on schedule regardless); `fixedDelay` guarantees a gap AFTER each run finishes, so overlapping runs are impossible. **Limitation**: `@Scheduled` runs on a single instance's JVM — if the app is scaled to multiple instances, EVERY instance runs the job independently unless you add distributed locking (e.g. ShedLock) to ensure it only runs once across the cluster.
 
 
 
@@ -4018,18 +6341,202 @@ Typical use cases:
 React is a JavaScript library for building user interfaces, created by Facebook Meta. It is declarative — you describe how the UI SHOULD look based on state, and React ensures the DOM stays in sync. It uses a Virtual DOM to minimise actual DOM changes (which are slow). React is only the view layer — you complement it with React Router (routing), Zustand/Redux (state), and React Query/SWR (data fetching).
 
 
+### What React Really Is
+
+At its core, React is just a function that maps state to UI: `UI = f(state)`. You never manually create, update, or remove a DOM element — you write a function (a component) that describes what the UI should look like FOR A GIVEN state, and whenever that state changes, you call the same function again (React re-renders) and it decides what, if anything, needs to change in the real DOM.
+
+This is the key shift from **imperative** to **declarative** UI programming:
+
+```javascript
+// Imperative (vanilla JS) — YOU describe every step to mutate the DOM
+const button = document.createElement("button");
+button.textContent = "0";
+button.addEventListener("click", () => {
+    const count = parseInt(button.textContent) + 1;
+    button.textContent = count;
+});
+document.body.appendChild(button);
+
+// Declarative (React) — you describe WHAT the UI looks like for a given state;
+// React figures out HOW to update the real DOM to match
+function Counter() {
+    const [count, setCount] = useState(0);
+    return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+
+Importantly, React itself is ONLY this reconciliation/component model — it has no built-in opinion on routing, global state management, or data fetching. That's why real-world React apps pull in React Router, Zustand/Redux, and React Query/SWR alongside it.
+
+
+### Rendering
+
+"Rendering" in React means calling your component function to figure out what the UI SHOULD look like — it does NOT necessarily mean anything changes on screen. Rendering happens in two phases:
+
+**1. Render phase**: React calls your component function(s), builds a new Virtual DOM tree, and diffs it against the previous one (reconciliation, see below). This phase is "pure" — it must not have side effects, since React may pause, throw away, or restart it (especially under Concurrent Rendering, see below).
+
+**2. Commit phase**: React takes the minimal set of differences found during the render phase and applies them to the real DOM — this is the only phase that actually touches the page the user sees. `useEffect` callbacks run after the commit phase.
+
+**What triggers a re-render**: a component re-renders when its own state changes (`useState`/`useReducer` setter called), when its parent re-renders (by default, ALL children re-render too, even if their own props didn't change — this is what `React.memo` optimizes, see Performance Patterns below), or when a consumed Context value changes.
+
+```javascript
+function Parent() {
+    const [count, setCount] = useState(0);
+    return (
+        <div>
+            <button onClick={() => setCount(count + 1)}>{count}</button>
+            <Child />   {/* re-renders every time Parent re-renders, even though it takes no props */}
+        </div>
+    );
+}
+```
+
+
 ### Virtual DOM and Reconciliation
 
 
-The Virtual DOM is an in-memory representation of the real DOM. When state changes, React creates a new Virtual DOM tree, diffs it against the previous one (reconciliation), and applies only the minimal set of real DOM changes needed. This batching and diffing is what makes React fast.
+The Virtual DOM is an in-memory, lightweight JS representation of the real DOM — a tree of plain objects describing what elements should exist, with what props. When state changes, React creates a NEW Virtual DOM tree during the render phase, and **reconciliation** is the algorithm that diffs it against the previous tree to compute the minimal set of real DOM operations needed.
 
-React 18 introduced Concurrent Mode — React can now pause, interrupt, and resume rendering. Long renders don't block the UI. 
+React's diffing algorithm relies on two heuristics to stay fast (real tree-diffing is O(n³), React's is O(n)):
+1. **Different element types produce different trees** — if a `<div>` becomes a `<span>` at the same position, React tears down the old subtree and builds a new one from scratch, rather than trying to diff their children.
+2. **Keys tell React which list items are "the same" across renders** — without a key, React just compares list items by position, which causes it to update the wrong DOM nodes when items are reordered (see Lists and Keys below).
 
-### Key APIs
+Since React 16, this diffing work is coordinated by an internal engine called **Fiber** — a rewrite of the reconciliation algorithm that represents each component as a "fiber" node in a linked-list-like tree, letting React pause, resume, prioritize, or abandon rendering work instead of blocking the main thread with one large synchronous pass. This is what makes React 18's Concurrent Rendering possible (see below).
 
-**useTransition** — mark a state update as non-urgent (show stale UI while transitioning, update in background)
+React 18 introduced Concurrent Rendering — React can now pause, interrupt, and resume rendering work. Long renders don't block the UI.
 
-**useDeferredValue** — defer re-rendering of a slow component
+
+### JSX
+
+JSX is a syntax extension that lets you write HTML-like markup directly inside JavaScript. It is not understood by browsers — a compiler (Babel, SWC, or the TypeScript compiler) transforms it into plain `React.createElement()` calls before it ever runs.
+
+```jsx
+const element = <h1 className="title">Hello, {name}</h1>;
+
+// compiles to (roughly):
+const element = React.createElement(
+    "h1",
+    { className: "title" },
+    "Hello, ", name
+);
+// React.createElement returns a plain JS object describing the element —
+// this object is what makes up the Virtual DOM tree from the section above
+```
+
+Because JSX compiles to regular function calls, it can embed any JavaScript expression inside `{ }` — but only expressions, not statements (no `if`/`for` directly; use ternaries, `&&`, or `.map()` instead):
+
+```jsx
+function Greeting({ user, isLoggedIn }) {
+    return (
+        <div>
+            {isLoggedIn ? <span>Welcome, {user.name}</span> : <span>Please log in</span>}
+            {isLoggedIn && <button>Log out</button>}
+            <ul>{items.map(item => <li key={item.id}>{item.name}</li>)}</ul>
+        </div>
+    );
+}
+```
+
+Newer versions of React (17+) use an "automatic" JSX transform, so `import React from "react"` is no longer required in every file just to use JSX — the compiler auto-imports the specific `jsx()` helper it needs.
+
+
+### Components
+
+A component is just a JavaScript function that returns JSX (describing what should be rendered) — modern React almost exclusively uses **function components** (class components still exist for legacy code, but hooks replaced most of their use cases).
+
+```jsx
+function Greeting({ name }) {           // a component — PascalCase name is required,
+    return <h1>Hello, {name}!</h1>;      // lowercase tags are treated as native DOM elements
+}
+
+<Greeting name="Beatriz" />              // usage — looks like an HTML tag
+```
+
+**Composition**: complex UIs are built by combining small components, including via the special `children` prop, which lets a component wrap arbitrary content passed between its opening and closing tags:
+
+```jsx
+function Card({ title, children }) {
+    return (
+        <div className="card">
+            <h2>{title}</h2>
+            {children}
+        </div>
+    );
+}
+
+<Card title="Profile">
+    <p>This content becomes Card's "children" prop.</p>
+</Card>
+```
+
+React favors composition over inheritance — instead of extending a base component class to share behavior, you nest/combine components (or use custom hooks, see below).
+
+
+### Props
+
+Props ("properties") are how a parent passes data DOWN to a child component. They are read-only from the child's perspective — a component must never modify its own props directly.
+
+```jsx
+function UserCard({ name, age, onSelect }) {   // props are just the function's parameters,
+                                                  // conventionally destructured
+    // name = "new value";   // WRONG — mutating props is a React anti-pattern
+    return <div onClick={() => onSelect(name)}>{name}, {age}</div>;
+}
+
+<UserCard name="Ana" age={30} onSelect={handleSelect} />
+```
+
+Data flows one way — **top-down (unidirectional data flow)**: parents pass data to children via props, and children communicate back UP by calling a function passed down to them as a prop (like `onSelect` above), never by reaching up into the parent directly. This one-directional flow is what makes React apps predictable to reason about, at the cost of "prop drilling" when data needs to pass through many intermediate layers (a problem Context API, below, is designed to solve).
+
+```jsx
+// Spreading props — pass many props at once
+<UserCard {...userData} />
+
+// Default props
+function Button({ variant = "primary", children }) { ... }
+```
+
+
+### State
+
+State is data that belongs to a component and can change over time — unlike props, it is owned and controlled by the component itself (not passed in from outside), and updating it is what triggers a re-render.
+
+```jsx
+function Counter() {
+    const [count, setCount] = useState(0);   // state — local, private, triggers re-render on change
+    return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+
+**State vs props**: props are how a component receives data from its parent (read-only, controlled externally); state is data a component manages internally (mutable via its setter, controlled internally). A component re-renders when either changes.
+
+**State updates are asynchronous and batched**: calling a setter does not update the variable immediately — React schedules a re-render and applies the update before the next render, batching multiple state updates from the same event into a single re-render for performance.
+
+```jsx
+function handleClick() {
+    setCount(count + 1);
+    console.log(count);   // still the OLD value — the update hasn't been applied yet
+}
+
+// Multiple setState calls in the same event are batched into ONE re-render, not three:
+function handleClick2() {
+    setCount(c => c + 1);
+    setName("Ana");
+    setActive(true);
+    // React re-renders once with all three updates applied, not three separate times
+}
+```
+
+**State must be treated as immutable**: never mutate a state object/array directly — always create a new one, since React compares state by reference to decide whether to re-render.
+
+```jsx
+// WRONG — mutates the existing array; React may not detect the change
+items.push(newItem);
+setItems(items);
+
+// RIGHT — creates a new array reference
+setItems([...items, newItem]);
+```
+
 
 ### Hooks
 
@@ -4093,37 +6600,394 @@ inputRef.current.focus();
 Every time a component re-renders, all functions and calculations inside it are recreated. useMemo and useCallback avoid this for expensive or reference-sensitive values.
 
 
-### Keys
+### Custom Hooks
+
+A custom hook is just a regular JavaScript function whose name starts with `use` and that calls other hooks inside it — this is how React lets you extract and reuse STATEFUL logic between components, something that was impossible with plain functions before hooks existed (previously this required patterns like Higher-Order Components or render props).
+
+```javascript
+// Custom hook — encapsulates fetching + loading/error state, reusable across components
+function useFetch(url) {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        fetch(url)
+            .then(res => res.json())
+            .then(json => { if (!cancelled) setData(json); })
+            .catch(err => { if (!cancelled) setError(err); })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };   // avoid setting state after unmount
+    }, [url]);
+
+    return { data, loading, error };
+}
+
+// Usage — looks just like a built-in hook, but is 100% custom
+function UserProfile({ userId }) {
+    const { data: user, loading, error } = useFetch(`/api/users/${userId}`);
+    if (loading) return <Spinner />;
+    if (error) return <ErrorMessage error={error} />;
+    return <div>{user.name}</div>;
+}
+```
+
+**Rules of Hooks apply to custom hooks too**: only call hooks at the top level (never inside loops/conditions/nested functions) and only from React function components or other custom hooks — this is what lets React reliably associate each hook call with the same piece of state across re-renders (internally, React tracks hooks by CALL ORDER, not by name).
 
 
-Keys help React identify which list items have changed, been added, or removed.
-They must be stable, unique among siblings, and not array indices (index keys cause subtle bugs when items are reordered or deleted).
+### Context API
 
+Context lets you share a value across a whole subtree of components WITHOUT manually passing it down through every intermediate component's props ("prop drilling").
+
+```jsx
+const ThemeContext = createContext("light");   // default value, used if no Provider is above
+
+function App() {
+    const [theme, setTheme] = useState("dark");
+    return (
+        <ThemeContext.Provider value={theme}>
+            <Toolbar />   {/* theme doesn't need to be passed as a prop through here... */}
+        </ThemeContext.Provider>
+    );
+}
+
+function Toolbar() {
+    return <ThemedButton />;   {/* ...or here... */}
+}
+
+function ThemedButton() {
+    const theme = useContext(ThemeContext);   // ...consumed directly, however deep it is
+    return <button className={theme}>Click me</button>;
+}
+```
+
+**Performance caveat**: when a Context's value changes, EVERY component that consumes it via `useContext` re-renders — even if that specific component only cares about part of the value, and even if the new value is deeply equal to the old one (Context compares by reference). This is why Context is best suited for low-frequency-changing, broadly-needed data (theme, authenticated user, locale) rather than high-frequency state (like form input values), where a dedicated state library (Zustand, Redux) that supports selective/partial subscriptions performs better.
+
+
+### Controlled vs Uncontrolled Components
+
+This distinction is about who "owns" the current value of a form input — React state, or the DOM itself.
+
+**Controlled component**: the input's value is driven entirely by React state — every keystroke calls `onChange`, which updates state, which re-renders the input with the new value. React is the single source of truth.
+
+```jsx
+function ControlledInput() {
+    const [value, setValue] = useState("");
+    return <input value={value} onChange={e => setValue(e.target.value)} />;
+    // the DOM input's value is ALWAYS exactly whatever "value" state says it is
+}
+```
+
+**Uncontrolled component**: the input manages its own value internally, in the DOM, the way plain HTML always has — React just reads the value when needed (typically via a ref), instead of tracking every keystroke in state.
+
+```jsx
+function UncontrolledInput() {
+    const inputRef = useRef(null);
+    const handleSubmit = () => {
+        console.log(inputRef.current.value);   // read the value only when needed
+    };
+    return <input ref={inputRef} defaultValue="initial" />;   // defaultValue, not value
+}
+```
+
+**Rule of thumb**: use controlled components by default — they enable instant validation, conditionally disabling submit buttons, and formatting as the user types, since React always knows the current value. Use uncontrolled components for simple forms (or integrating non-React widgets) where you only need the value on submit and want to avoid the extra re-render on every keystroke.
+
+
+### Forms
+
+Handling forms in React usually means combining controlled inputs (above) with state for each field, and preventing the browser's default full-page-reload form submission behavior.
+
+```jsx
+function LoginForm() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState({});
+
+    function handleSubmit(e) {
+        e.preventDefault();   // stop the browser's native form submission (full page reload)
+        const newErrors = {};
+        if (!email.includes("@")) newErrors.email = "Invalid email";
+        if (password.length < 8) newErrors.password = "Too short";
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length === 0) {
+            // submit to the API
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <input value={email} onChange={e => setEmail(e.target.value)} />
+            {errors.email && <span>{errors.email}</span>}
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+            {errors.password && <span>{errors.password}</span>}
+            <button type="submit">Log in</button>
+        </form>
+    );
+}
+```
+
+For forms with many fields or complex validation, libraries like **React Hook Form** (uncontrolled-by-default, minimizes re-renders) or **Formik** combined with a schema validator like **Zod** or **Yup** are standard in production, rather than hand-rolling state for every field.
+
+
+### Lists and Keys
+
+Rendering a list in JSX is just calling `.map()` to turn an array of data into an array of elements — there is no special "list" syntax in React.
+
+```jsx
+{items.map(item => <Item key={item.id} {...item} />)}
+```
+
+Keys help React identify which list items have changed, been added, or removed between renders (this is exactly the second heuristic mentioned in Virtual DOM and Reconciliation above). They must be stable, unique among siblings, and — critically — not array indices, since index keys cause subtle bugs when items are reordered, inserted, or deleted (React ends up matching the wrong old item to the wrong new position, which can misapply state or input values to the wrong row).
 
 ```javascript
 // Bad — array index as key
 {items.map((item, i) => <Item key={i} {...item} />)}
 
-// Good — stable, unique ID
+// Good — stable, unique ID that doesn't change even if the list is reordered
 {items.map(item => <Item key={item.id} {...item} />)}
 ```
 
 
-### Performance Patterns
+### Lifecycle
 
-React.memo  — prevents re-render if props have not changed (shallow comparison)
+Every component goes through three phases: **mounting** (created and inserted into the DOM for the first time), **updating** (re-rendered because props/state/context changed), and **unmounting** (removed from the DOM). In function components, `useEffect` (and its dependency array) is how you hook into these phases — it replaces the separate lifecycle methods class components used to require.
 
-```javascript
-  const MyComponent = React.memo(({ name }) => <div>{name}</div>);
-
-Code splitting with React.lazy and Suspense:
-  const HeavyChart = React.lazy(() => import("./HeavyChart"));
-  <Suspense fallback={<Spinner />}>
-      <HeavyChart />
-  </Suspense>
+```jsx
+useEffect(() => {
+    console.log("mounted, or a dependency changed");
+    return () => {
+        console.log("cleanup — runs before the NEXT effect, and on unmount");
+    };
+}, [dep]);
 ```
 
-State lifting: when two components need to share state, lift it to their nearest common ancestor and pass it down as props.
+**Mapping from the old class-component lifecycle methods**, useful for reading legacy code:
+
+| Class lifecycle method | Function component equivalent |
+|---|---|
+| `componentDidMount` | `useEffect(() => { ... }, [])` |
+| `componentDidUpdate` | `useEffect(() => { ... }, [dep1, dep2])` |
+| `componentWillUnmount` | the cleanup function returned from `useEffect` |
+| `render()` | the function component's body/return itself |
+
+Function components + hooks are now the default in modern React — class components still work, but are considered legacy for new code.
+
+
+### Performance Patterns
+
+**React.memo** — prevents a component from re-rendering if its props haven't changed (shallow comparison), which matters because by default EVERY child re-renders whenever its parent does (see Rendering above), regardless of whether that child's own props changed.
+
+```javascript
+const MyComponent = React.memo(({ name }) => <div>{name}</div>);
+// Only re-renders if "name" is a different value/reference than last render
+```
+
+**Code splitting** with `React.lazy` and `Suspense` — load a component's code on demand instead of in the initial bundle, showing a fallback while it loads:
+
+```javascript
+const HeavyChart = React.lazy(() => import("./HeavyChart"));
+<Suspense fallback={<Spinner />}>
+    <HeavyChart />
+</Suspense>
+```
+
+**State lifting**: when two components need to share state, lift it to their nearest common ancestor and pass it down as props, rather than trying to sync two separate copies of the same state.
+
+**A common pitfall that defeats `React.memo`**: passing a new inline function or object as a prop on every render defeats the shallow comparison, since a new function/object is a new reference every time — this is exactly why `useMemo`/`useCallback` (see Hooks above) exist, to keep those references stable across renders.
+
+
+### Error Boundaries
+
+An Error Boundary is a component that catches JavaScript errors thrown anywhere in its child component tree DURING RENDERING, logs them, and displays a fallback UI instead of letting the error crash the entire app. Without one, an error in any single component unmounts the whole React tree.
+
+Error boundaries must currently be class components — there is no hook equivalent, because they rely on two lifecycle methods with no function-component counterpart:
+
+```jsx
+class ErrorBoundary extends React.Component {
+    state = { hasError: false };
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true };   // update state so the next render shows the fallback
+    }
+
+    componentDidCatch(error, info) {
+        logErrorToService(error, info);   // side effect — report to Sentry/logging service
+    }
+
+    render() {
+        if (this.state.hasError) return <h1>Something went wrong.</h1>;
+        return this.props.children;
+    }
+}
+
+<ErrorBoundary>
+    <UserProfile />
+</ErrorBoundary>
+```
+
+**What it does NOT catch**: errors in event handlers (use a regular try/catch there), errors in asynchronous code (setTimeout, fetch callbacks), errors during server-side rendering, or errors thrown in the Error Boundary itself. Typically you wrap major sections of an app (routes, widgets) individually, so one broken widget doesn't take down the entire page.
+
+
+### Concurrent Rendering
+
+Before React 18, rendering was always synchronous and all-or-nothing — once React started rendering an update, it couldn't stop until the entire component tree was processed, which could block the main thread (and freeze user input) for large updates.
+
+**Concurrent Rendering** (enabled by the Fiber architecture — see Virtual DOM and Reconciliation above) lets React work on a render WITHOUT committing it, meaning it can pause a render, work on something more urgent (like responding to a keystroke), and then either resume or discard the paused work entirely. This makes it possible for React to keep the UI responsive even while preparing a large or slow update in the background.
+
+**useTransition** — marks a state update as low-priority ("non-urgent"). React keeps showing the OLD UI (rather than a loading state) while it renders the new one in the background, only swapping over once ready:
+
+```jsx
+function SearchResults() {
+    const [isPending, startTransition] = useTransition();
+    const [results, setResults] = useState([]);
+
+    function handleChange(query) {
+        startTransition(() => {
+            setResults(computeExpensiveResults(query));   // low priority — can be interrupted
+        });
+    }
+
+    return <div style={{ opacity: isPending ? 0.6 : 1 }}>{/* results */}</div>;
+}
+```
+
+**useDeferredValue** — similar idea, but for a VALUE instead of a state update: it returns a version of the value that "lags behind" during urgent updates, letting an expensive re-render based on it happen at lower priority.
+
+```jsx
+function SearchPage({ query }) {
+    const deferredQuery = useDeferredValue(query);
+    // the input itself stays responsive; ResultsList re-renders at lower priority
+    return <ResultsList query={deferredQuery} />;
+}
+```
+
+**Rule of thumb**: reach for these only when a specific state update is known to trigger an expensive re-render (large lists, heavy computation) that would otherwise make typing/clicking feel laggy — most components never need them.
+
+
+### React Router
+
+React itself has no built-in routing (see What React Really Is above) — **React Router** is the standard library that adds client-side routing to a plain React SPA (see the SPA chapter): mapping URL paths to components, WITHOUT a full page reload on navigation.
+
+```jsx
+import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from "react-router-dom";
+
+function App() {
+    return (
+        <BrowserRouter>
+            <nav>
+                <Link to="/">Home</Link>
+                <Link to="/users">Users</Link>
+            </nav>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/users" element={<UserList />} />
+                <Route path="/users/:id" element={<UserDetail />} />   {/* dynamic segment */}
+                <Route path="*" element={<NotFound />} />                {/* catch-all, 404 */}
+            </Routes>
+        </BrowserRouter>
+    );
+}
+
+function UserDetail() {
+    const { id } = useParams();           // reads the ":id" segment from the current URL
+    const navigate = useNavigate();        // programmatic navigation, e.g. after an action
+    return <button onClick={() => navigate("/users")}>Back to list ({id})</button>;
+}
+```
+
+**How it works under the hood**: `<Link>` intercepts clicks and uses the browser's History API (`pushState`) to change the URL WITHOUT triggering a real page request; React Router listens for URL changes and re-renders whichever `<Route>` matches the new path — this is the client-side routing mechanism referenced in the SPA chapter. (Next.js, see that chapter, ships its own file-based router instead of React Router, since it also controls server-side rendering.)
+
+
+### Fetching Data
+
+Plain React has no built-in data-fetching mechanism — the most basic approach combines `useEffect` (see Hooks above) with the Fetch API (see the JavaScript chapter):
+
+```jsx
+function UserProfile({ userId }) {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch(`/api/users/${userId}`)
+            .then(res => res.json())
+            .then(data => { if (!cancelled) setUser(data); })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };   // avoid setting state after unmount (see Memory Leaks in the JS chapter)
+    }, [userId]);
+
+    if (loading) return <Spinner />;
+    return <div>{user.name}</div>;
+}
+```
+
+**Why this manual approach falls short at scale**: no caching (navigating away and back re-fetches from scratch), no automatic re-fetching when the data might be stale, no request de-duplication (two components fetching the same data both hit the network), and boilerplate (loading/error state) repeated in every component that fetches anything.
+
+**Data-fetching libraries** — **React Query (TanStack Query)** and **SWR** solve exactly this, by wrapping fetching in a hook that handles caching, re-fetching, and loading/error state automatically:
+
+```jsx
+import { useQuery } from "@tanstack/react-query";
+
+function UserProfile({ userId }) {
+    const { data: user, isLoading, error } = useQuery({
+        queryKey: ["user", userId],                        // cache key — same key = shared cache entry
+        queryFn: () => fetch(`/api/users/${userId}`).then(r => r.json()),
+    });
+
+    if (isLoading) return <Spinner />;
+    if (error) return <ErrorMessage error={error} />;
+    return <div>{user.name}</div>;
+}
+// Navigating away and back reuses the cached data instantly, then silently
+// re-fetches in the background to check for updates — no manual useEffect needed
+```
+
+**Rule of thumb**: `useEffect` + `fetch` is fine to understand the fundamentals or for a single simple case; any real application with more than a couple of data-fetching components benefits from React Query/SWR, since the caching/de-duplication/re-fetching behavior is hard to replicate correctly by hand.
+
+
+### State Management (Redux, Zustand)
+
+React's built-in state (`useState`, `useContext` — see State and Context API above) works well for state that's local to a component or a small subtree. **Global state management libraries** exist for state that's needed widely across the app (the logged-in user, a shopping cart, UI theme) where prop drilling or Context's re-render-everything behavior (see the Context API performance caveat above) becomes a real problem.
+
+**Redux** — the original, most established solution: ALL application state lives in a single, centralized store; state can only change via a "reducer" function processing a dispatched "action," making every state change explicit, traceable, and easy to debug (Redux DevTools can show every action and replay state history).
+
+```jsx
+// A slice of the Redux store (using Redux Toolkit, the modern standard way to write Redux)
+const counterSlice = createSlice({
+    name: "counter",
+    initialState: { value: 0 },
+    reducers: {
+        increment: (state) => { state.value += 1; },   // looks mutating, but Redux Toolkit handles immutability internally
+    },
+});
+
+// In a component:
+const count = useSelector(state => state.counter.value);   // read from the store
+const dispatch = useDispatch();
+dispatch(counterSlice.actions.increment());                 // the ONLY way to change state
+```
+
+**Zustand** — a much lighter-weight alternative: a plain hook-based store, no boilerplate actions/reducers/providers required, and (crucially) components only re-render when the SPECIFIC piece of state they read from the store actually changes — unlike Context, which re-renders every consumer on ANY change to the shared value (see the Context API section above).
+
+```jsx
+import { create } from "zustand";
+
+const useCounterStore = create((set) => ({
+    count: 0,
+    increment: () => set((state) => ({ count: state.count + 1 })),
+}));
+
+// In a component — only re-renders when "count" specifically changes, not on unrelated store updates
+function Counter() {
+    const count = useCounterStore((state) => state.count);
+    const increment = useCounterStore((state) => state.increment);
+    return <button onClick={increment}>{count}</button>;
+}
+```
+
+**Rule of thumb**: start with `useState`/Context for local/simple shared state; reach for Zustand when you need genuinely global state with good performance and minimal boilerplate (the common modern default for new projects); reach for Redux when a team specifically wants its stricter conventions, time-travel debugging, and extensive middleware ecosystem — often on larger, more established codebases that already use it.
 
 
 ## 3.02 Angular
@@ -4496,6 +7360,65 @@ app/
         page.tsx   — "/dashboard/users/42" — [id] is a dynamic parameter
 ```
 
+
+### Routing
+
+Beyond the basic file-to-URL mapping above, the App Router has a few more folder conventions for less common routing patterns:
+
+```text
+app/
+  blog/
+    [slug]/page.tsx           — dynamic segment: "/blog/hello-world" → params.slug = "hello-world"
+    [...tags]/page.tsx        — catch-all: "/blog/a/b/c" → params.tags = ["a","b","c"], requires ≥1 segment
+    [[...tags]]/page.tsx      — optional catch-all: also matches "/blog" itself (tags = undefined)
+
+  (marketing)/                — route group: organizes files WITHOUT adding "/marketing" to the URL
+    about/page.tsx            — still just "/about"
+    layout.tsx                — a layout that applies only to routes inside this group
+
+  @modal/                     — parallel route (slot): renders alongside the main page.tsx,
+                                 e.g. a modal that can be shown/dismissed independently
+```
+
+**Navigating between pages** — use `<Link>` for user-triggered navigation (it prefetches the linked page's code in the background and avoids a full page reload) and the `useRouter` hook for programmatic navigation (e.g. after a form submits):
+
+```jsx
+import Link from "next/link";
+import { useRouter } from "next/navigation";   // note: "next/navigation", not "next/router" (Pages Router)
+
+function Nav() {
+    return <Link href="/dashboard">Dashboard</Link>;   // client-side navigation, no full reload
+}
+
+function LoginForm() {
+    const router = useRouter();
+    async function handleSubmit() {
+        await login();
+        router.push("/dashboard");   // programmatic navigation after an action completes
+    }
+}
+```
+
+**Reading route params and search params** in a Server Component (passed automatically as props to `page.tsx`):
+
+```tsx
+// app/dashboard/users/[id]/page.tsx
+export default async function UserPage({
+    params,
+    searchParams,
+}: {
+    params: { id: string };
+    searchParams: { [key: string]: string | undefined };
+}) {
+    const user = await db.findUserById(params.id);   // "/dashboard/users/42" → params.id = "42"
+    const tab = searchParams.tab ?? "profile";        // "?tab=settings" → searchParams.tab = "settings"
+    return <div>{user.name} — {tab}</div>;
+}
+```
+
+**Rule of thumb**: `[slug]` for a single required dynamic segment, `[...slug]` when a route should accept a variable-depth path, `(group)` purely to organize files/apply a shared layout without affecting the URL, and `@slot` only for advanced UI like modals that need to render independently of the main page content.
+
+
 ### SERVER COMPONENTS vs CLIENT COMPONENTS
 
 This is the central innovation of the App Router. 
@@ -4572,6 +7495,64 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json(user);
 }
 ```
+
+
+### Server Actions
+
+Server Actions are async functions that run ONLY on the server, but can be called directly from a component (Server or Client) as if they were a normal function — no manually writing a Route Handler and calling `fetch()` against it. They're marked with the `"use server"` directive.
+
+```tsx
+// app/actions.ts
+"use server";
+
+export async function createUser(formData: FormData) {
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    await db.createUser({ name, email });
+    revalidatePath("/users");   // refresh cached data for this path after the mutation
+}
+```
+
+**Used directly as a form's `action`** — this works even with JavaScript disabled/before hydration, since the browser can submit the form natively while Next.js progressively enhances it once JS loads:
+
+```tsx
+// app/users/new/page.tsx — Server Component
+import { createUser } from "../actions";
+
+export default function NewUserPage() {
+    return (
+        <form action={createUser}>
+            <input name="name" />
+            <input name="email" />
+            <button type="submit">Create</button>
+        </form>
+    );
+}
+```
+
+**Called imperatively from a Client Component**, e.g. in response to a button click rather than a form submit:
+
+```tsx
+"use client";
+import { createUser } from "../actions";
+import { useTransition } from "react";
+
+export function CreateUserButton({ formData }: { formData: FormData }) {
+    const [isPending, startTransition] = useTransition();
+    return (
+        <button
+            disabled={isPending}
+            onClick={() => startTransition(() => createUser(formData))}
+        >
+            {isPending ? "Creating..." : "Create User"}
+        </button>
+    );
+}
+```
+
+**Why this matters**: Server Actions collapse what used to require two separate pieces (a Route Handler for the API endpoint, plus client-side `fetch` code to call it) into a single function, while keeping mutation logic (database writes, validation, secrets) entirely on the server. Under the hood, Next.js still makes an HTTP POST request to the server when a Server Action is invoked — it's syntactic/architectural sugar over that, not a way to literally call server code from the browser.
+
+**Rule of thumb**: use a Server Action for form submissions and mutations triggered from within your own app's components; use a Route Handler when you need a stable, versioned API endpoint that other clients (mobile apps, third parties, webhooks) also need to call.
 
 
 ### Data Fetching and Caching
@@ -4651,6 +7632,119 @@ export async function generateMetadata({ params }): Promise<Metadata> {
     };
 }
 ```
+
+
+### Pages Router
+
+Before the App Router (Next.js 13+, see above), Next.js used the `pages/` directory — still fully supported today, and still what many existing production codebases use, so it's worth recognizing even when writing new code with the App Router.
+
+```text
+pages/
+  index.tsx              — the "/" route
+  about.tsx              — "/about"
+  users/
+    [id].tsx              — "/users/:id" — dynamic route (bracket syntax is shared with the App Router)
+  api/
+    users.ts               — "/api/users" — API route (equivalent to a Route Handler in the App Router)
+  _app.tsx                  — wraps every page (roughly equivalent to app/layout.tsx)
+  _document.tsx              — customizes the base HTML document
+```
+
+**Key difference from the App Router**: every component in `pages/` is a **Client Component by default** (no React Server Components) — data fetching happens via special EXPORTED FUNCTIONS in the page file, rather than simply using `async`/`await` directly in the component body:
+
+```tsx
+// pages/users/[id].tsx
+export async function getServerSideProps({ params }) {   // SSR — re-runs on every request
+    const user = await db.findUserById(params.id);
+    return { props: { user } };                            // becomes the page component's props
+}
+
+export async function getStaticProps() {                   // SSG — runs at build time only
+    const posts = await db.getAllPosts();
+    return { props: { posts }, revalidate: 60 };             // "revalidate" enables ISR (see above)
+}
+
+export default function UserPage({ user }) {                // receives props from getServerSideProps/getStaticProps
+    return <div>{user.name}</div>;
+}
+```
+
+**Rule of thumb**: the App Router is the recommended default for new projects (Server Components, layouts, streaming, and the features covered above) — the Pages Router remains supported for existing codebases and some libraries/patterns that haven't fully migrated, but Next.js's own docs steer new work toward the App Router.
+
+
+### Middleware
+
+Middleware runs BEFORE a request completes, at the edge (close to the user, before it reaches your actual page/API logic) — defined once, in a single `middleware.ts` file at the project root, and applied to every matching route automatically.
+
+```typescript
+// middleware.ts — runs before matching requests reach any page/route
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+    const token = request.cookies.get("session")?.value;
+
+    if (!token && request.nextUrl.pathname.startsWith("/dashboard")) {
+        return NextResponse.redirect(new URL("/login", request.url));   // block unauthenticated access
+    }
+
+    const response = NextResponse.next();                                // continue to the requested page
+    response.headers.set("X-Custom-Header", "value");                     // add a header to every response
+    return response;
+}
+
+export const config = {
+    matcher: ["/dashboard/:path*"],   // only run this middleware for paths matching this pattern
+};
+```
+
+**Common uses**: authentication/authorization checks before a protected page even starts rendering (as above), A/B testing (redirect a percentage of users to a variant), geolocation-based redirects/rewrites, and adding security headers globally. Because it runs at the edge, before any page-specific code, it's the right place for cross-cutting concerns that should apply broadly — but it should stay lightweight (no heavy computation or slow database calls), since it adds latency to EVERY matching request.
+
+
+### Authentication
+
+Next.js has no built-in authentication system — it's commonly paired with **NextAuth.js (Auth.js)**, a library purpose-built for Next.js that handles OAuth providers, session management, and credential-based login (see the Authentication & Authorization chapter for the underlying JWT/OAuth2/session concepts).
+
+```typescript
+// auth.ts
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+    providers: [Google],
+});
+
+// app/api/auth/[...nextauth]/route.ts — handles the OAuth flow automatically
+export { GET, POST } from "@/auth";
+```
+
+```tsx
+// Reading the session in a Server Component
+import { auth } from "@/auth";
+
+export default async function DashboardPage() {
+    const session = await auth();
+    if (!session) redirect("/login");
+    return <div>Welcome, {session.user.name}</div>;
+}
+```
+
+Protecting routes is commonly combined with Middleware (above) — redirecting unauthenticated users before a protected page even starts rendering, rather than rendering the page and THEN checking.
+
+
+### Deployment (Vercel)
+
+**Vercel** is the company that created Next.js, and its hosting platform is purpose-built around it — deploying there requires close to zero configuration, since Vercel's infrastructure directly understands Next.js's rendering modes (SSR, SSG, ISR — see above), Server Actions, Middleware (edge functions), and Image Optimization out of the box.
+
+```bash
+npm install -g vercel
+vercel                  # deploy the current directory — detects Next.js automatically
+vercel --prod            # deploy to production
+```
+
+**What happens automatically on Vercel**: every Git push gets its own PREVIEW deployment (a unique URL, great for reviewing a PR's changes live before merging — pairs naturally with the Pull Request workflow in the Git chapter), static pages (SSG) are served from a global CDN, SSR pages run as serverless functions that scale automatically with traffic, Middleware runs on Vercel's edge network close to users, and ISR revalidation (see The Four Rendering Modes above) is handled natively without extra infrastructure.
+
+**Alternatives**: Next.js can also be **self-hosted** (as a Node.js server, via `next start`, or containerized with Docker — see the Docker chapter) on any platform (AWS, a VPS, etc.), or deployed to other platforms with Next.js support (Netlify, AWS Amplify) — but some features (like ISR or Middleware) may need extra configuration or behave slightly differently outside Vercel, since Vercel is the reference implementation of the platform Next.js's more advanced features were designed around.
 
 
 ## 3.05 React Native
@@ -6399,6 +9493,32 @@ Key distinction: Image vs Container
 **Container** - a running instance of an image (like an object). Has its own isolated process, network, and filesystem layer on top of the image.
 
 
+### Containers vs Virtual Machines
+
+Both provide isolation for running applications, but at fundamentally different levels — this difference is exactly why containers are so much lighter weight.
+
+```text
+Virtual Machines                          Containers
+┌─────────┐ ┌─────────┐                  ┌─────────┐ ┌─────────┐
+│  App A  │ │  App B  │                  │  App A  │ │  App B  │
+├─────────┤ ├─────────┤                  ├─────────┤ ├─────────┤
+│ Guest OS│ │ Guest OS│  ← full OS each!  │  (just the app's    │
+├─────────┴─┴─────────┤                  │   dependencies)      │
+│      Hypervisor       │                 ├───────────┴─────────┤
+├───────────────────────┤                 │   Docker Engine       │
+│      Host OS           │                ├───────────────────────┤
+│      Hardware           │               │      Host OS (shared kernel) │
+└─────────────────────────┘               │      Hardware                 │
+                                            └───────────────────────────────┘
+```
+
+**Virtual Machines**: virtualize the HARDWARE — each VM runs its own complete guest operating system (its own kernel), managed by a hypervisor. Strong isolation (a VM is essentially a separate computer), but heavyweight: each VM consumes GBs of disk/RAM just for its OS, and takes minutes to boot.
+
+**Containers**: virtualize the OPERATING SYSTEM — all containers on a machine share the HOST's kernel, and Docker uses OS-level isolation features (Linux namespaces for process/network/filesystem isolation, cgroups for resource limits) to make each container believe it has the machine to itself. Much lighter weight: a container image only needs to package the APPLICATION and its dependencies (not a whole OS), starts in milliseconds/seconds, and many containers can run on the same host with far less overhead than the equivalent number of VMs.
+
+**Trade-off**: containers have weaker isolation than VMs (a kernel-level vulnerability can theoretically be exploited across containers sharing that kernel, whereas a VM's guest kernel is fully separate) — this is why highly sensitive multi-tenant workloads sometimes still use VMs, or a hybrid (e.g. AWS Firecracker, "micro-VMs") for stronger isolation with container-like speed. For most application deployment, containers' speed and density benefits far outweigh this trade-off.
+
+
 ### Dockerfile and Layer Caching
 
 
@@ -6442,6 +9562,123 @@ Multi-stage builds solve the problem of build tooling (JDK, Maven, node_modules)
 
 Result: a Spring Boot app built with a JDK image produces a ~600MB image. With multi-stage (JDK build → JRE runtime), the final image is ~150MB.
 
+
+### Ports
+
+A container's network is isolated by default — a process listening on port 8080 INSIDE the container is not reachable from the host machine until that port is explicitly published/mapped.
+
+```bash
+docker run -p 8080:8080 my-app        # host_port:container_port — maps host 8080 → container 8080
+docker run -p 3000:8080 my-app        # host 3000 → container 8080 (different numbers on each side is fine)
+docker run -P my-app                  # publish ALL exposed ports to random available host ports
+```
+
+`EXPOSE 8080` in a Dockerfile is documentation only — it doesn't actually publish the port; `-p` at `docker run` time is what makes it reachable from outside the container.
+
+
+### Environment Variables
+
+Environment variables are the standard way to configure a containerized application (database URLs, feature flags, secrets) without baking values into the image itself — the same image can then run in dev, staging, and production with different configuration.
+
+```bash
+docker run -e SPRING_PROFILES_ACTIVE=prod -e DB_HOST=prod-db my-app
+
+# Or from a file, instead of many -e flags:
+docker run --env-file .env my-app
+```
+
+```dockerfile
+ENV APP_ENV=production      # sets a default inside the image — can still be overridden at "docker run"
+```
+
+**Rule of thumb**: never bake secrets (passwords, API keys) directly into an image via `ENV` in the Dockerfile — anyone who can pull the image can extract them. Pass secrets at runtime instead (`-e`, `--env-file`, or a secrets manager/Kubernetes Secret — see the Kubernetes chapter).
+
+
+### Volumes
+
+By default, a container's filesystem is EPHEMERAL — any data written inside it is lost when the container is removed. Volumes solve this by mapping storage that persists independently of the container's lifecycle.
+
+```bash
+# Named volume — managed by Docker, persists across container restarts/removal
+docker run -v pgdata:/var/lib/postgresql/data postgres
+
+# Bind mount — maps a specific HOST directory into the container (great for local development,
+# so code changes on the host are immediately visible inside the container)
+docker run -v $(pwd)/src:/app/src my-app
+```
+
+**Named volumes** are the right choice for data that should persist and be managed by Docker (a database's data directory) — Docker controls where they're stored and they survive `docker rm` on the container. **Bind mounts** are ideal for development (live-reloading source code) since they point directly at a host path you control, but tie the container to that specific host's filesystem layout — not portable the way a named volume is.
+
+
+### Networks
+
+By default, Docker creates an isolated virtual network so containers can communicate with each other by NAME (not IP address, which can change) without exposing that communication to the host at all.
+
+```bash
+docker network create my-app-network
+docker run --network my-app-network --name db postgres
+docker run --network my-app-network --name app my-spring-app
+# Inside "app"'s container, connecting to "db" (by container NAME) reaches the database container —
+# Docker's embedded DNS resolves container names within the same network automatically
+```
+
+This is exactly the mechanism Docker Compose (below) uses automatically — every service in a `docker-compose.yml` file is put on the same network and can reach each other by service name, with zero manual network setup.
+
+
+### Docker Hub
+
+Docker Hub is the default public registry for Docker images — a "package registry" for containers, similar in spirit to npm for JavaScript packages or Maven Central for Java. `FROM postgres`, `FROM node`, `FROM eclipse-temurin` all pull from Docker Hub by default.
+
+```bash
+docker pull postgres:16              # download an image from Docker Hub
+docker build -t myusername/my-app:1.0 .    # build and tag your own image
+docker push myusername/my-app:1.0     # publish it to your Docker Hub account (requires docker login)
+```
+
+**Official images** (like `postgres`, `node`, `nginx`, with no username prefix) are curated and maintained by Docker/the project itself — generally the safest, best-documented starting point. Private registries (AWS ECR, GitHub Container Registry, a self-hosted registry) are commonly used instead of Docker Hub for proprietary application images in production.
+
+
+### Docker Compose
+
+Docker Compose defines and runs MULTIPLE containers together as one application, described declaratively in a single YAML file — instead of manually running several `docker run` commands with matching network/volume/environment flags every time.
+
+```yaml
+# docker-compose.yml — a Spring Boot app + PostgreSQL database, wired together
+version: "3.8"
+services:
+  app:
+    build: .                          # build from the Dockerfile in the current directory
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mydb   # "db" — the OTHER service's name,
+      SPRING_DATASOURCE_USERNAME: postgres                      # resolved automatically (see Networks above)
+      SPRING_DATASOURCE_PASSWORD: secret
+    depends_on:
+      - db                              # start "db" before "app" (does not wait for Postgres to be READY, just started)
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # persists database data across "docker compose down"
+
+volumes:
+  pgdata:
+```
+
+```bash
+docker compose up              # build (if needed) and start every service
+docker compose up -d           # same, but detached (runs in the background)
+docker compose down            # stop and remove containers (add -v to also remove volumes)
+docker compose logs -f app     # follow logs for a specific service
+```
+
+**Why this matters**: without Compose, running this same two-container setup manually means creating a network, running Postgres with the right volume/env vars, then running the app with matching env vars pointing at the database container — Compose captures all of that in one file, checked into version control, so any teammate can spin up an identical local environment with a single command. This is the standard way to run "Spring Boot + PostgreSQL" (or any multi-service app) locally in development.
 
 
 ## 4.06 Kubernetes (K8s)
@@ -6502,6 +9739,79 @@ Use for: detecting deadlocks or infinite loops.
 
 **Readiness probe**: is the container READY to serve traffic? If it fails, Kubernetes removes the Pod from the Service's endpoints (no traffic is sent).
 Use for: startup time, database connections, dependency warm-up.
+
+
+### Scaling
+
+**Manual scaling**: simply change the replica count on a Deployment (see Core Objects above) — Kubernetes creates or removes Pods to match.
+
+```bash
+kubectl scale deployment my-app --replicas=5
+```
+
+**Horizontal Pod Autoscaler (HPA)**: automatically adjusts the NUMBER of Pod replicas based on observed metrics (typically CPU or memory usage, or custom metrics like requests-per-second), scaling out under load and back in when it subsides — this is what "Horizontal" in "Horizontal Pod Autoscaler" refers to, exactly the horizontal scaling concept from the NoSQL chapter, applied to compute instead of data.
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70    # add more Pods once average CPU exceeds 70% of the requested amount
+```
+
+This is why setting accurate `requests` (see Requests vs Limits above) matters — the HPA calculates "70% utilization" relative to the Pod's requested CPU, so an inaccurate request value makes the autoscaler's decisions inaccurate too.
+
+**Vertical Pod Autoscaler (VPA)**: instead of adding more Pods, automatically adjusts a Pod's resource `requests`/`limits` based on observed usage — the "vertical" counterpart to the HPA, less commonly used since it typically requires restarting the Pod to apply new resource values.
+
+**Cluster Autoscaler**: operates one level up — adds or removes actual NODES (servers) in the cluster when Pods can't be scheduled due to insufficient cluster capacity, or when nodes are underutilized. Works together with the HPA: HPA decides how many Pods are needed; Cluster Autoscaler ensures there's enough underlying node capacity to actually run them.
+
+
+### Rolling Updates
+
+A rolling update replaces Pods running the OLD version of an application with the NEW version gradually, a few at a time, rather than stopping everything at once — this is what makes zero-downtime deployments possible, and is the default update strategy for a Kubernetes Deployment.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 6
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1    # at most 1 Pod can be down/updating at a time
+      maxSurge: 1          # at most 1 EXTRA Pod (beyond the desired replica count) during the rollout
+  template:
+    spec:
+      containers:
+        - name: my-app
+          image: my-app:2.0    # updating this field triggers a rolling update
+```
+
+**How it works**: Kubernetes creates new Pods running the new image, waits for each one to pass its Readiness Probe (see above — this is exactly why readiness probes matter for safe deployments) before routing traffic to it, then terminates a corresponding old Pod, and repeats until every Pod is on the new version. At every point during the rollout, enough Pods are available and ready to keep serving traffic without a gap.
+
+```bash
+kubectl rollout status deployment/my-app     # watch the progress of an ongoing rollout
+kubectl rollout undo deployment/my-app        # roll back to the previous version, using the same
+                                                # gradual, zero-downtime rolling mechanism in reverse
+kubectl rollout history deployment/my-app      # see previous revisions available to roll back to
+```
+
+**Rule of thumb**: rolling updates depend entirely on an accurate readiness probe — if a Pod reports "ready" before it's actually able to serve traffic correctly, Kubernetes will happily route real user requests to a broken Pod during the rollout.
 
 
 
@@ -6573,6 +9883,87 @@ It runs locally on your computer and is responsible for:
 - Allowing developers to work offline
 
 Git does **not** require an internet connection or a remote server.
+
+
+### What is Version Control?
+
+Version control (VCS) is a system that records changes to a set of files over time, so you can recall specific versions later, see who changed what and when, and let multiple people work on the same files without overwriting each other's work. Without it, teams resort to manually renaming files (`report_final_v2_ACTUALLY_FINAL.docx`) or emailing changes back and forth — both error-prone and impossible to scale past one person.
+
+Two broad models existed before Git's approach:
+
+**Centralized VCS** (e.g. Subversion/SVN, CVS) — one central server holds the full history; developers check out a working copy of the CURRENT version only. Requires a network connection for almost every operation (committing, viewing history), and the central server is a single point of failure.
+
+**Distributed VCS** (Git, Mercurial) — every developer clones the ENTIRE repository, including its full history. Commits, branching, and browsing history all happen locally and instantly; a network connection is only needed to synchronize with others (push/pull/fetch — see below).
+
+
+### Git vs GitHub vs GitLab vs Bitbucket
+
+This is a very common point of confusion: **Git** is the version control TOOL itself (runs locally, no server required — see above). **GitHub**, **GitLab**, and **Bitbucket** are separate, competing HOSTING PLATFORMS/services built around Git — they store remote copies of Git repositories in the cloud and add collaboration features on top (Pull Requests, issue tracking, CI/CD pipelines, code review tools, access control).
+
+```text
+Git         → the version control system (the engine)
+GitHub      → a hosting platform for Git repos, owned by Microsoft; adds PRs, Actions (CI/CD), Issues
+GitLab      → a hosting platform for Git repos; strong built-in CI/CD, can be self-hosted
+Bitbucket   → a hosting platform for Git repos, owned by Atlassian; integrates tightly with Jira/Trello
+```
+
+You could use Git without ever touching GitHub/GitLab/Bitbucket (e.g. hosting your own bare repository on a private server) — but in practice, teams almost always pair local Git with one of these platforms as the shared "source of truth" remote.
+
+
+### GitHub Desktop vs Git CLI
+
+**Git CLI (command line)**: the `git` command run in a terminal — every Git operation, exposed directly, with full control over flags and edge cases. Steeper learning curve, but what most professional developers use day to day, since it's scriptable and works identically across every platform/editor.
+
+**GitHub Desktop / GUI clients**: a visual interface (from GitHub, or built into editors like VS Code/JetBrains IDEs) for the most common operations — staging, committing, branching, viewing diffs — without memorizing commands. Easier for beginners and great for reviewing changes visually, but less powerful for advanced operations (interactive rebase, cherry-picking specific hunks) which usually still require the CLI.
+
+**Rule of thumb**: GUI tools are a fine starting point and remain useful for visualizing diffs/history even for experienced developers, but learning the CLI is worthwhile since it's universal (works over SSH on any server, in any CI pipeline) and gives access to every Git feature.
+
+
+### Initial Configuration
+
+Before making any commits, Git needs to know who you are — this identity is attached to every commit you create:
+
+```bash
+git config --global user.name "Beatriz Santos"
+git config --global user.email "beatriz@example.com"
+
+git config --global init.defaultBranch main    # name new repos' default branch "main" instead of "master"
+git config --global core.editor "code --wait"   # set VS Code as Git's default commit-message editor
+
+git config --list                                # view all current configuration
+```
+
+`--global` applies the setting to every repository on your machine (stored in `~/.gitconfig`); omitting it applies only to the current repository (stored in `.git/config`) — useful if you need a different email for work vs personal projects.
+
+
+### The Three Trees: Working Directory, Staging Area, and Repository
+
+Git tracks a file's state across three distinct areas — understanding this model is the key to understanding almost every Git command.
+
+```text
+Working Directory  →  git add  →  Staging Area  →  git commit  →  Repository (.git)
+(your actual files)    (index)    (what WILL be    (permanent
+                                   in the next        history)
+                                   commit)
+```
+
+**Working Directory**: the actual files on disk, as you see and edit them in your editor/file explorer — this is where changes start.
+
+**Staging Area** (also called "the index"): a preparation zone. `git add <file>` copies a file's CURRENT state from the working directory into the staging area — this lets you build up a commit piece by piece (stage only some files, or even only some LINES within a file with `git add -p`), rather than being forced to commit everything you've changed at once.
+
+**Repository**: the permanent, committed history (`.git` folder) — `git commit` takes whatever is currently in the staging area and saves it as a new, permanent snapshot (see How Git Stores Data below).
+
+```bash
+# Editing a file changes only the Working Directory
+echo "new line" >> file.txt
+
+git status              # shows file.txt as "modified" (working directory), not yet staged
+git add file.txt         # copies the CURRENT content of file.txt into the Staging Area
+git status                # now shows file.txt as staged ("Changes to be committed")
+git commit -m "message"   # takes what's in the Staging Area and creates a permanent commit
+```
+
+This is exactly why `git diff` (working directory vs staging area) and `git diff --staged` (staging area vs last commit) show different things — they're comparing different pairs of these three trees.
 
 
 ### How Git Stores Data
@@ -6656,6 +10047,103 @@ git reset --hard HEAD~1         # undo last commit AND discard changes (destruct
 git revert <hash>               # create a new commit that undoes a commit (safe)
 git cherry-pick <hash>          # apply a specific commit to the current branch
 ```
+
+
+### Remote Repositories
+
+A "remote" is just a named reference to another copy of the repository, usually hosted on GitHub/GitLab/Bitbucket (see above). `origin` is the conventional name for the primary remote a repository was cloned from — it's just a convention, not a special keyword.
+
+```bash
+git remote -v                                    # list configured remotes and their URLs
+git remote add origin https://github.com/user/repo.git   # attach a remote named "origin"
+git remote remove origin                          # detach a remote
+
+git push -u origin main    # push AND set "origin main" as the default upstream for future plain "git push"
+```
+
+A repository can have multiple remotes — a common pattern when contributing to open source is `origin` (your own fork) plus `upstream` (the original project you forked from).
+
+
+### Fetch vs Pull vs Push
+
+These three commands are how local and remote history stay in sync — mixing them up is one of the most common sources of Git confusion for beginners.
+
+**git fetch**: downloads new commits/branches from the remote into your LOCAL copy of the remote's branches (e.g. `origin/main`) — but does NOT touch your own working branch or working directory at all. Safe to run at any time, purely informational until you act on it.
+
+```bash
+git fetch origin
+git log origin/main    # inspect what changed on the remote, without merging it into your branch yet
+git diff main origin/main   # see exactly what's different before deciding to merge
+```
+
+**git pull**: `git fetch` immediately followed by `git merge` (or `git rebase`, with `git pull --rebase`) into your CURRENT branch — this is why `git pull` can create merge commits or conflicts, while `git fetch` never can.
+
+```bash
+git pull origin main         # fetch + merge, in one step
+git pull --rebase origin main  # fetch + rebase instead of merge — keeps history linear
+```
+
+**git push**: uploads your LOCAL commits to the remote, updating the remote branch to match. Fails (safely) if the remote has commits you don't have locally yet — you must `pull`/`fetch` and reconcile first, which prevents accidentally overwriting a teammate's work.
+
+```bash
+git push origin main
+git push --force-with-lease   # overwrite the remote branch anyway — DANGEROUS, only after a rebase on
+                                # a branch you're SURE no one else is using; --force-with-lease is safer than
+                                # --force since it fails if the remote changed since you last fetched
+```
+
+**Rule of thumb**: `fetch` = "check what's new remotely, don't touch my work"; `pull` = "check what's new AND merge it into what I'm doing now"; `push` = "upload my commits so others can see them."
+
+
+### Tags
+
+A tag is a permanent, named pointer to a specific commit — unlike a branch (which moves forward as new commits are added), a tag stays fixed forever, making it ideal for marking release points (`v1.0.0`, `v2.1.3`).
+
+```bash
+git tag v1.0.0                              # lightweight tag — just a name pointing at HEAD
+git tag -a v1.0.0 -m "First stable release"  # annotated tag — stores author, date, and message (recommended)
+
+git tag                                      # list all tags
+git checkout v1.0.0                          # inspect the code exactly as it was at that release (detached HEAD)
+
+git push origin v1.0.0                       # tags are NOT pushed automatically — must push explicitly
+git push origin --tags                       # push all tags at once
+```
+
+**Rule of thumb**: use annotated tags (`-a`) for anything meant to represent a real release, since they carry metadata (who tagged it, when, why) that a lightweight tag doesn't.
+
+
+### .gitignore
+
+A `.gitignore` file tells Git which files/patterns to never track — build artifacts, dependencies, secrets, and OS/editor-specific files that shouldn't be part of the shared history.
+
+```gitignore
+# Dependencies
+node_modules/
+target/
+
+# Build output
+dist/
+*.class
+
+# Secrets — NEVER commit these
+.env
+*.pem
+
+# OS/editor files
+.DS_Store
+.vscode/
+```
+
+**Important caveat**: `.gitignore` only prevents UNTRACKED files from being added — if a file is ALREADY tracked (previously committed), adding it to `.gitignore` does nothing until you explicitly untrack it:
+
+```bash
+git rm --cached .env    # stop tracking the file, but keep it on disk
+# then commit this removal, and .env will be ignored from now on
+```
+
+If a secret was ever committed, adding it to `.gitignore` afterward does NOT remove it from history — it's still recoverable from old commits, and requires rewriting history (`git filter-repo` or the older `git filter-branch`) plus rotating the leaked credential.
+
 
 ### Merge vs Rebase
 
@@ -6786,6 +10274,75 @@ Use Rebase when:
 - Cleaning up your own local feature branch.
 - Updating your branch with the latest changes from `main`.
 - You want a clean, linear commit history.
+
+
+### Merge Conflicts
+
+A conflict happens when Git cannot automatically combine changes — most commonly, when two branches modify the SAME lines of the SAME file differently. Git pauses the merge/rebase and asks you to resolve it manually.
+
+```bash
+git merge feature/new
+# Auto-merging file.txt
+# CONFLICT (content): Merge conflict in file.txt
+# Automatic merge failed; fix conflicts and then commit the result.
+```
+
+Git marks the conflicting section directly in the file with conflict markers:
+
+```text
+<<<<<<< HEAD
+const greeting = "Hello";      # your current branch's version
+=======
+const greeting = "Hi there";   # the incoming branch's version
+>>>>>>> feature/new
+```
+
+**Resolving it**: edit the file to keep the correct content (one side, the other, or a manual combination of both), remove the `<<<<<<<`/`=======`/`>>>>>>>` markers entirely, then stage and continue:
+
+```bash
+git add file.txt              # marks the conflict as resolved
+git commit                    # completes the merge (pre-filled with a merge commit message)
+# or, if this happened during a rebase:
+git rebase --continue
+git merge --abort              # bail out entirely and return to the state before the merge started
+```
+
+**Rule of thumb**: pulling/rebasing frequently (rather than letting a feature branch diverge from `main` for weeks) keeps conflicts small and infrequent — the longer two branches diverge, the more likely and larger conflicts become.
+
+
+### Pull Requests and Code Reviews
+
+A Pull Request (PR — called a "Merge Request" on GitLab) is a request to merge one branch into another, opened on the hosting platform (GitHub/GitLab/Bitbucket) rather than in Git itself — Git has no native concept of a PR; it's a feature the platform builds on top of branches.
+
+A PR provides a dedicated space to: show a diff of all changes, let teammates leave inline comments (code review), run automated checks (CI — tests, linting, build), and require approval before the merge is allowed. See the Code Reviews chapter for what makes a good review; the workflow itself is: push a feature branch → open a PR against `main` → address review feedback with more commits → once approved and checks pass, merge (via a regular merge, squash, or rebase merge, depending on team convention).
+
+
+### Git Flow, GitHub Flow, and Trunk-Based Development
+
+These are three competing conventions for how a team organizes branches — none is enforced by Git itself, they're team agreements about workflow.
+
+**Git Flow**: a heavyweight model with several long-lived branch types — `main` (production), `develop` (integration), `feature/*`, `release/*`, `hotfix/*`. Features branch from and merge back into `develop`; periodic `release` branches stabilize before merging into both `main` and `develop`. Well-suited to projects with scheduled releases and multiple versions to support simultaneously, but heavier process than most modern web teams need.
+
+```text
+main ─────────────────●──────────●──────  (production releases only)
+                        \        /
+develop ──●────●────●────●──●──●───────  (integration branch)
+            \    \        /
+feature/a ───●────●──────/
+feature/b ────────●─────/
+```
+
+**GitHub Flow**: a much simpler model — one long-lived branch (`main`, always deployable), and every change is a short-lived feature branch that gets a PR and merges straight back into `main` once reviewed and tested. No `develop`, no `release` branches. Well-suited to teams that deploy continuously (every merge to `main` can go straight to production).
+
+```text
+main ──●───────●───────●───────●───────  (always deployable)
+        \     /  \     /  \     /
+         feature   feature   feature
+```
+
+**Trunk-Based Development**: similar spirit to GitHub Flow but pushed further — everyone commits directly (or via very short-lived branches, often merged within a day) to a single shared branch ("trunk"/`main`), avoiding long-lived feature branches almost entirely. Incomplete features are hidden behind feature flags rather than kept on a separate branch, which avoids large, painful merges later. Favored by teams practicing continuous integration/deployment at scale (this is how Google manages a single massive monorepo).
+
+**Rule of thumb**: Git Flow suits products with formal, versioned releases (desktop software, libraries with multiple supported versions); GitHub Flow suits most modern web apps deploying continuously; Trunk-Based Development suits large teams optimizing for minimal merge pain and true continuous integration, at the cost of needing feature-flag discipline.
 
 
 ## Common Workflow
@@ -7703,6 +11260,54 @@ Every SQL query is built by combining clauses. The database always executes them
 FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
 
 
+### Relational Databases: Tables, Rows, Columns, and Keys
+
+A relational database organizes data into **tables** (also called relations) — a grid with a fixed set of **columns** (also called fields or attributes, each with a declared data type) and any number of **rows** (also called records or tuples, each one entry).
+
+```text
+employees table
+┌────┬─────────┬──────────┬─────────────┐
+│ id │ name    │ salary   │ department  │  ← columns (fixed structure)
+├────┼─────────┼──────────┼─────────────┤
+│ 1  │ Ana     │ 50000    │ Engineering │  ← row (one record)
+│ 2  │ Beatriz │ 60000    │ Engineering │  ← row
+└────┴─────────┴──────────┴─────────────┘
+```
+
+**Primary Key (PK)**: a column (or combination of columns) that uniquely identifies each row in a table — no two rows can share the same primary key value, and it can never be NULL. Usually an auto-incrementing `id`, though it can be any naturally unique value.
+
+**Foreign Key (FK)**: a column in one table that references the Primary Key of another table — this is exactly what creates a RELATIONSHIP between tables, and the database enforces "referential integrity": you cannot insert a foreign key value that doesn't exist in the referenced table, and (depending on configuration) deleting a referenced row can be blocked, cascaded, or nulled out.
+
+```sql
+CREATE TABLE departments (
+    id   SERIAL PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE employees (
+    id            SERIAL PRIMARY KEY,
+    name          VARCHAR(100),
+    department_id INT REFERENCES departments(id)   -- foreign key: must match an existing departments.id
+);
+```
+
+**Relationships** between tables come in three shapes: one-to-one (a User has exactly one Profile), one-to-many (a Department has many Employees — the FK lives on the "many" side, exactly like JPA's `@ManyToOne` in the Spring Boot chapter), and many-to-many (Students and Courses — requires a separate JOIN/junction table with two foreign keys, since neither table alone can hold a repeating reference).
+
+**Normalization**: the process of organizing tables to minimize data duplication and avoid update anomalies, by splitting data into multiple related tables instead of one giant flat table.
+
+```text
+-- Un-normalized: department name repeated on every row — if "Engineering" is renamed,
+-- EVERY employee row needs to be updated, and rows could disagree with each other
+employees(id, name, department_name)
+
+-- Normalized: department name stored ONCE, referenced by id
+departments(id, name)
+employees(id, name, department_id)
+```
+
+The most commonly cited normal forms: **1NF** (each column holds a single, atomic value — no comma-separated lists in one field), **2NF** (1NF + every non-key column depends on the WHOLE primary key, not just part of it), **3NF** (2NF + no non-key column depends on another non-key column — every column depends only on the key). In practice, most well-designed schemas aim for 3NF, then deliberately denormalize specific parts later for performance if profiling shows it's needed.
+
+
 ### SELECT — Choosing Columns
 
 SELECT defines which columns (or expressions) the query returns.
@@ -8017,6 +11622,27 @@ WHERE o.status = 'completed';
 ```
 
 
+### UNION and UNION ALL
+
+While JOINs combine tables SIDE BY SIDE (adding columns), `UNION` combines the results of two queries VERTICALLY (stacking rows) — both queries must return the same number of columns, with compatible types.
+
+```sql
+-- All cities where we have either customers or suppliers, with no duplicates
+SELECT city FROM customers
+UNION
+SELECT city FROM suppliers;
+
+-- Same, but keeps duplicates (faster — skips the de-duplication step)
+SELECT city FROM customers
+UNION ALL
+SELECT city FROM suppliers;
+```
+
+**UNION** removes duplicate rows from the combined result (like an implicit `DISTINCT`) — this requires an extra sort/dedup step, making it slower. **UNION ALL** keeps every row, including duplicates, and is significantly faster since it skips that step.
+
+**Rule of thumb**: use `UNION ALL` by default unless you specifically need duplicates removed — many queries don't actually produce duplicates in practice (e.g. combining results from date-partitioned tables that can't overlap), making the extra cost of `UNION` pure waste.
+
+
 ### Subqueries — Queries Inside Queries
 
 A subquery is a SELECT statement nested inside another query.
@@ -8237,6 +11863,33 @@ SELECT * FROM employees WHERE id = 42;
 ```
 
 
+### Constraints
+
+Constraints are rules enforced by the database itself on column values — they reject invalid data at the database level, as a last line of defense even if application-level validation (see the Spring Boot chapter) is bypassed or buggy.
+
+```sql
+CREATE TABLE employees (
+    id       SERIAL PRIMARY KEY,              -- PRIMARY KEY: unique + not null, identifies each row
+    email    VARCHAR(255) UNIQUE NOT NULL,     -- UNIQUE: no two rows can share this value
+                                                 -- NOT NULL: this column can never be left empty
+    age      INT CHECK (age >= 18),             -- CHECK: an arbitrary boolean condition must hold
+    dept_id  INT REFERENCES departments(id),     -- FOREIGN KEY: must match an existing row elsewhere
+    status   VARCHAR(20) DEFAULT 'active'         -- DEFAULT: value used automatically if none is provided
+);
+```
+
+| Constraint | Purpose |
+|---|---|
+| `PRIMARY KEY` | uniquely identifies each row; implies `UNIQUE` + `NOT NULL` |
+| `FOREIGN KEY` | value must exist in another table's referenced column |
+| `UNIQUE` | no two rows may share this value (nulls are usually still allowed) |
+| `NOT NULL` | column cannot be left empty |
+| `CHECK` | custom condition every row must satisfy |
+| `DEFAULT` | fallback value used when none is explicitly provided |
+
+**Why enforce this in the database, not just the application?** Multiple applications/services might write to the same database, a bug could bypass application validation, and a database constraint is the single source of truth that's IMPOSSIBLE to accidentally skip — unlike application code, which must remember to validate on every code path.
+
+
 ### Indexes
 
 An index is a data structure (usually a B-tree) the database builds on one or more
@@ -8282,6 +11935,113 @@ SQL clauses execute in this logical order, which explains many common errors:
 This is why you CANNOT use a SELECT alias in a WHERE clause (WHERE runs before SELECT), but you CAN use it in ORDER BY (ORDER BY runs after SELECT).
 
 
+### Views
+
+A view is a saved, named SELECT query that behaves like a virtual, read-through table — it doesn't store data itself (unlike a Materialized View, see the PostgreSQL chapter), it just re-runs the underlying query every time it's queried.
+
+```sql
+CREATE VIEW active_customer_orders AS
+SELECT o.id, c.name, o.total, o.created_at
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE c.active = true;
+
+-- Query the view exactly like a table — the JOIN above is re-run under the hood
+SELECT * FROM active_customer_orders WHERE total > 100;
+```
+
+**Why use one**: hides complex JOIN/filter logic behind a simple name (so other queries/reports don't need to repeat it), and can restrict which columns/rows a group of users is allowed to see (e.g. a view that excludes a `salary` column, granted to users who shouldn't see raw employee data).
+
+
+### Stored Procedures and Functions
+
+Both let you save reusable logic INSIDE the database itself, rather than only in application code.
+
+**Function**: returns a value and can be used INSIDE a query (in a `SELECT`, `WHERE`, etc.) — must not have side effects in most databases.
+
+```sql
+CREATE FUNCTION calculate_tax(amount NUMERIC) RETURNS NUMERIC AS $$
+BEGIN
+    RETURN amount * 0.20;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT name, total, calculate_tax(total) AS tax FROM orders;   -- used directly inside a query
+```
+
+**Stored Procedure**: performs an action (can include multiple statements, transactions, side effects like INSERT/UPDATE) — called explicitly with `CALL`, not embedded inside another query.
+
+```sql
+CREATE PROCEDURE transfer_funds(from_id INT, to_id INT, amount NUMERIC)
+LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE accounts SET balance = balance - amount WHERE id = from_id;
+    UPDATE accounts SET balance = balance + amount WHERE id = to_id;
+    -- both updates succeed or fail together, as one transaction (see ACID in the MySQL chapter)
+END;
+$$;
+
+CALL transfer_funds(1, 2, 100);
+```
+
+**Trade-offs**: moving logic into the database can reduce network round-trips and keep business rules enforced centrally, but couples business logic to a specific database engine (procedures aren't portable across MySQL/PostgreSQL/Oracle the way application code is), and is harder to version-control, test, and debug than application code. Most modern teams keep the bulk of business logic in the application layer (e.g. the Spring Boot Service layer) and reserve stored procedures/functions for narrow, performance-critical, or data-integrity-critical cases.
+
+
+### Triggers
+
+A trigger is a piece of logic the database runs AUTOMATICALLY in response to an INSERT, UPDATE, or DELETE on a table — without the application needing to explicitly call anything.
+
+```sql
+CREATE TABLE audit_log (
+    id INT PRIMARY KEY, table_name TEXT, action TEXT, changed_at TIMESTAMP
+);
+
+CREATE FUNCTION log_employee_change() RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO audit_log (table_name, action, changed_at)
+    VALUES ('employees', TG_OP, NOW());   -- TG_OP is the operation: 'INSERT', 'UPDATE', or 'DELETE'
+    RETURN NEW;                            -- NEW refers to the row after the change
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER employees_audit
+AFTER INSERT OR UPDATE OR DELETE ON employees
+FOR EACH ROW EXECUTE FUNCTION log_employee_change();
+```
+
+**Common uses**: audit logging (who changed what, and when — as above), automatically maintaining a `updated_at` timestamp, enforcing complex validation that `CHECK` constraints can't express, or keeping a denormalized summary column in sync. **Downside**: triggers execute invisibly from the application's point of view — a developer reading the application code might have no idea a database write also fires side effects, which can make behavior surprising and harder to debug. Use them sparingly, and document them well.
+
+
+### Locks
+
+A lock prevents multiple transactions from making conflicting changes to the same data at the same time (see ACID/Isolation Levels in the MySQL chapter for the broader concurrency picture).
+
+```sql
+-- Row-level lock: blocks other transactions from modifying (or in some databases, reading) this row
+-- until the current transaction commits or rolls back
+BEGIN;
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE;   -- locks this specific row
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+COMMIT;   -- lock is released here
+```
+
+**Types**: a **shared lock** allows multiple transactions to read the same row concurrently, but blocks anyone from writing to it; an **exclusive lock** (like `FOR UPDATE` above) blocks both reads-for-update and writes from other transactions until released. Locks are usually acquired automatically by the database based on the isolation level and the statements you run — `FOR UPDATE` is one of the few cases where you request one explicitly, typically to prevent a classic race condition (e.g. two concurrent requests both reading a stock count of 1, and both deciding it's safe to sell).
+
+**Deadlocks**: if Transaction A locks row 1 and waits for row 2, while Transaction B locks row 2 and waits for row 1, neither can proceed — the database detects this and forcibly rolls back one of the transactions (the application must be prepared to retry it).
+
+
+### EXPLAIN and Query Optimization
+
+`EXPLAIN` shows the database's EXECUTION PLAN for a query — which indexes it will use (if any), the order tables are joined in, and the estimated number of rows at each step — without actually running the query. Most databases also support `EXPLAIN ANALYZE`, which actually runs the query and reports real timings alongside the estimates (see the PostgreSQL chapter for a full walkthrough of reading the output).
+
+```sql
+EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
+-- Look for: is an index being used (Index Scan) or is it scanning the whole table (Seq Scan / full table scan)?
+```
+
+**General optimization principles**: index columns used in `WHERE`/`JOIN`/`ORDER BY` (see Indexes above), avoid `SELECT *` when only specific columns are needed (less data transferred, and can enable a covering index), watch for functions applied to indexed columns in `WHERE` (`WHERE LOWER(email) = ...` usually can't use a plain index on `email` — see the Functional Index note in the PostgreSQL chapter), and always measure with `EXPLAIN`/`EXPLAIN ANALYZE` rather than guessing — intuition about what's "obviously" slow is frequently wrong.
+
+
 ## 5.02 MySQL
 
 
@@ -8295,6 +12055,45 @@ It enforces relationships between data using concepts like **primary keys and fo
 MySQL supports **ACID transactions** (Atomicity, Consistency, Isolation, Durability), which guarantee that database operations are reliable even in case of failures.
 
 Its default storage engine, **InnoDB**, provides support for transactions, foreign keys, and crash recovery.
+
+
+### Architecture
+
+MySQL follows a layered, client-server architecture:
+
+```text
+Client (application, mysql CLI)
+    ↓
+Connection Layer — authentication, thread handling per connection
+    ↓
+SQL Layer — parser, optimizer, query cache (removed in MySQL 8.0)
+    ↓
+Storage Engine Layer — pluggable! InnoDB, MyISAM, Memory, etc. (see below)
+    ↓
+Disk — data files, log files
+```
+
+The key architectural distinction from most other databases is the **pluggable storage engine layer**: the SQL syntax and query layer stay the same regardless of which engine you use, but the engine underneath determines how data is actually stored, indexed, locked, and whether transactions/foreign keys are even supported at all — you can even mix engines across different tables in the same database (though this is rarely done in practice).
+
+
+### InnoDB vs MyISAM
+
+MySQL's two main storage engines historically — InnoDB has been the default since MySQL 5.5 (2010), and MyISAM is now mostly legacy.
+
+**InnoDB** (default today): supports transactions (ACID), foreign key constraints, row-level locking (multiple transactions can write to different rows of the same table concurrently), and crash recovery via a Write-Ahead Log. The right choice for virtually all modern applications.
+
+**MyISAM** (legacy): no transactions, no foreign keys, table-level locking only (an entire table locks during a write, blocking other writes even to unrelated rows — a major concurrency bottleneck), but historically faster for read-heavy, write-rarely workloads and full-text search (before InnoDB gained full-text support in 5.6). Still occasionally seen in old codebases, but not recommended for new tables.
+
+```sql
+CREATE TABLE orders (
+    id INT PRIMARY KEY,
+    total DECIMAL(10,2)
+) ENGINE=InnoDB;    -- explicit, though InnoDB is the default and rarely needs stating
+
+SHOW TABLE STATUS WHERE Name = 'orders';   -- shows which engine a table actually uses
+```
+
+**Rule of thumb**: use InnoDB unless you have a specific, well-understood legacy reason not to — MyISAM's lack of transactions and foreign keys makes it a poor fit for almost any application that cares about data integrity.
 
 
 ### ACID Properties
@@ -8409,6 +12208,96 @@ CREATE INDEX idx_events_source ON events(source);
 See the **JSONB vs JSON** section under PostgreSQL below for how MySQL's JSON type compares to Postgres' json/jsonb.
 
 
+### Auto Increment
+
+`AUTO_INCREMENT` generates a unique, incrementing integer automatically for a column (typically the primary key) — you never need to compute or specify the next ID yourself.
+
+```sql
+CREATE TABLE users (
+    id   INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+INSERT INTO users (name) VALUES ('Ana');       -- id is generated automatically: 1
+INSERT INTO users (name) VALUES ('Beatriz');   -- id: 2
+
+SELECT LAST_INSERT_ID();    -- retrieve the ID generated by the most recent INSERT on this connection
+```
+
+**Things to know**: AUTO_INCREMENT values are never reused, even after a row is deleted (deleting id=2 does not mean the next insert reuses 2 — it continues from the highest value ever issued), which prevents a deleted row's ID from being silently reassigned to different data. It can be reset with `ALTER TABLE users AUTO_INCREMENT = 1`, but this is rarely necessary and risky if old IDs might still be referenced elsewhere.
+
+
+### Foreign Keys
+
+MySQL enforces foreign key constraints only when using a storage engine that supports them (InnoDB — see above; MyISAM silently ignores them). A foreign key guarantees referential integrity, and lets you define what happens on deletion/update of the referenced row.
+
+```sql
+CREATE TABLE orders (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+        ON DELETE CASCADE      -- deleting a customer automatically deletes their orders
+        ON UPDATE CASCADE      -- if a customer's id ever changes, orders.customer_id updates too
+);
+
+-- INSERT INTO orders (customer_id) VALUES (999);
+-- ERROR: Cannot add or update a child row: a foreign key constraint fails
+-- (999 doesn't exist in customers — MySQL rejects the insert)
+```
+
+**ON DELETE options**: `CASCADE` (delete dependent rows too), `SET NULL` (set the foreign key to NULL — column must be nullable), `RESTRICT`/`NO ACTION` (block the delete entirely if dependent rows exist — the default, and often the safest choice for data you don't want silently cascading away).
+
+
+### Replication
+
+Replication copies data from one MySQL server (the **primary**/source) to one or more other servers (**replicas**), which continuously apply the same changes — used for read scaling (send read queries to replicas, writes to the primary), high availability (promote a replica if the primary fails), and backups (backup from a replica without impacting production traffic).
+
+```text
+Primary (accepts writes)
+    │  binary log (records every data-changing statement/row change)
+    ▼
+Replica 1 (read-only)     Replica 2 (read-only)
+```
+
+**How it works**: the primary records every change in a **binary log**; each replica maintains a connection to the primary, streams that log, and re-applies the changes locally — replicas typically lag the primary by a small amount ("replication lag"), which is why reading from a replica immediately after writing to the primary can return stale data (a common source of confusing bugs — "I just saved this, why isn't it showing up?").
+
+**Modern setups** commonly use **semi-synchronous** or **group replication** to reduce the risk of data loss on failover, rather than plain asynchronous replication, though asynchronous remains the simplest and most common default.
+
+
+### Backup and Restore
+
+```bash
+# Logical backup — exports SQL statements that recreate the schema and data
+mysqldump -u root -p mydb > backup.sql
+
+# Restore from a logical backup
+mysql -u root -p mydb < backup.sql
+
+# Physical backup (via a tool like Percona XtraBackup) — copies the actual InnoDB data files.
+# Much faster to restore for large databases, since it skips re-running every INSERT statement.
+```
+
+**Logical backups** (`mysqldump`) are portable (plain SQL, can restore into a different MySQL version), human-readable, but slow for very large databases (both to create and restore, since it's replaying statements one at a time). **Physical backups** are fast to restore (just copy the files back) but tied to the same MySQL version/engine and not human-inspectable.
+
+**Point-in-time recovery**: combine a full backup with the binary log (see Replication above) — restore the full backup, then replay the binary log up to a specific timestamp, to recover to the exact moment just before an accidental `DELETE` or `DROP TABLE`.
+
+
+### Performance
+
+Beyond indexing (see above), common levers for MySQL performance:
+
+**Connection pooling**: opening a new database connection is expensive (TCP handshake, authentication) — applications keep a pool of already-open connections and reuse them (Spring Boot's default, HikariCP, does this automatically) instead of opening/closing a connection per query.
+
+**`EXPLAIN`** (see above): always check the query plan for slow queries before guessing at fixes — `type=ALL` (full table scan) on a large table is the most common red flag.
+
+**Buffer pool size** (`innodb_buffer_pool_size`): InnoDB caches data and indexes in memory here — on a dedicated database server, this is typically set to 60-80% of available RAM, since a cache hit avoids a disk read entirely.
+
+**Avoid `SELECT *`**: fetches every column even when only a few are needed, increasing network transfer and preventing the use of a covering index (see the SQL chapter).
+
+**Batch writes**: many single-row `INSERT`s each pay per-statement overhead; a single multi-row `INSERT INTO t VALUES (...), (...), (...)` (or a transaction wrapping many statements) is significantly faster for bulk loading.
+
+**Slow query log**: MySQL can log every query that takes longer than a configured threshold (`slow_query_log = 1`, `long_query_time = 1`) — the standard first step when hunting for what's actually slow in production, rather than guessing.
+
 
 ## 5.03 PostgreSQL
 
@@ -8430,6 +12319,27 @@ Compared to MySQL, PostgreSQL provides:
 Because of these features, PostgreSQL is often preferred for complex applications, analytics, and systems that require flexibility and advanced querying capabilities.
 
 It also fully supports **ACID transactions**, relational integrity (primary/foreign keys), and complex querying capabilities.
+
+
+### MVCC (Multi-Version Concurrency Control)
+
+MVCC is PostgreSQL's mechanism for letting readers and writers work on the same data concurrently WITHOUT blocking each other — a reader never has to wait for a writer, and vice versa (in most cases).
+
+**The core idea**: instead of updating a row in place, PostgreSQL creates a NEW VERSION of the row on every `UPDATE`, and marks the old version as no longer current — but keeps it around. Each transaction sees a consistent SNAPSHOT of the database as it existed when the transaction started, so it keeps reading the OLD version of a row until its own transaction ends, even while another transaction is concurrently writing a new version.
+
+```text
+Row (id=1) before UPDATE:  [xmin=100, xmax=∞,   name="Ana"]      ← visible to transactions started before 150
+UPDATE sets name="Ana Silva" (by transaction 150):
+Row (id=1) old version:    [xmin=100, xmax=150,  name="Ana"]      ← still visible to transactions started before 150
+Row (id=1) new version:    [xmin=150, xmax=∞,    name="Ana Silva"] ← visible to transactions started at/after 150
+```
+
+Every row internally stores `xmin` (the ID of the transaction that created this version) and `xmax` (the ID of the transaction that deleted/superseded it, if any) — a transaction determines which version of a row is "visible" to it by comparing these against its own transaction ID and snapshot.
+
+**Why this matters**:
+- **`SELECT` never blocks, and is never blocked by, a concurrent write** — a long-running read just keeps seeing its own consistent snapshot, unaffected by writes happening after it started.
+- **Old row versions accumulate as "dead tuples"** — since PostgreSQL doesn't overwrite data in place, every `UPDATE`/`DELETE` leaves behind a stale version that eventually needs to be reclaimed. This is exactly why `VACUUM` exists (see Performance below) — without it, tables and indexes grow indefinitely with dead, invisible-to-everyone row versions.
+- **Contrast with MySQL/InnoDB**, which uses a similar MVCC approach internally via undo logs rather than storing full old row versions in the table itself — the end-user behavior (non-blocking reads) is similar, but the storage mechanism differs, which is why PostgreSQL specifically needs regular `VACUUM`ing while InnoDB's cleanup process works differently.
 
 
 ### JSONB vs JSON
@@ -8720,6 +12630,65 @@ JOIN LATERAL (
 ```
 
 
+### Materialized Views
+
+Unlike a regular View (see the SQL chapter — a saved query re-run every time it's queried), a **materialized view** physically STORES the query's result on disk, like a real table — reads are fast (no re-computation), but the data goes stale until explicitly refreshed.
+
+```sql
+CREATE MATERIALIZED VIEW monthly_sales AS
+SELECT DATE_TRUNC('month', created_at) AS month, SUM(total) AS revenue
+FROM orders
+GROUP BY 1;
+
+SELECT * FROM monthly_sales;   -- instant — reads pre-computed, stored data, no re-aggregation
+
+-- Data is now stale (doesn't reflect new orders) until refreshed:
+REFRESH MATERIALIZED VIEW monthly_sales;
+REFRESH MATERIALIZED VIEW CONCURRENTLY monthly_sales;   -- refresh without blocking concurrent reads
+                                                          -- (requires a unique index on the view)
+```
+
+**Rule of thumb**: use a materialized view for expensive aggregations/reports that don't need up-to-the-second freshness (dashboards, analytics) — refresh it on a schedule (e.g. via `pg_cron` or an external job) rather than on every read. Use a regular view when the underlying data must always be current, or the query is cheap enough that recomputing it each time isn't a problem.
+
+
+### Replication
+
+PostgreSQL replication copies data from a **primary** server to one or more **standby/replica** servers, for read scaling, high availability, and disaster recovery.
+
+**Streaming replication** (the standard approach): the primary continuously streams its **Write-Ahead Log (WAL)** — see Durability in the MySQL chapter for the same underlying concept — to each standby, which replays those changes to stay in sync.
+
+- **Asynchronous** (default): the primary commits a transaction and returns success WITHOUT waiting for any standby to confirm receipt — fastest, but a small window of data loss is possible if the primary crashes before a standby catches up.
+- **Synchronous**: the primary waits for at least one standby to confirm it has received (and optionally applied) the WAL before considering the transaction committed — stronger durability guarantee, at the cost of added write latency.
+
+```text
+Primary (accepts writes)
+    │  WAL streaming
+    ├──▶ Standby 1 (can serve read-only queries — "hot standby")
+    └──▶ Standby 2
+```
+
+**Failover**: if the primary fails, a standby can be promoted to become the new primary — tools like Patroni or cloud-managed Postgres (RDS, Cloud SQL) automate this detection-and-promotion process, since doing it manually and correctly under pressure is error-prone.
+
+
+### Performance
+
+Beyond indexing (see Advanced Index Types above) and `EXPLAIN ANALYZE` (see Full-text Search/Explain Analyze above), PostgreSQL-specific performance considerations:
+
+**VACUUM** (see MVCC above for why this is necessary): reclaims space from dead row versions left behind by `UPDATE`/`DELETE`, and updates the query planner's statistics.
+
+```sql
+VACUUM users;                 -- reclaim dead tuples' space for reuse (does not shrink the file on disk)
+VACUUM FULL users;             -- also physically shrinks the table file — but takes an exclusive lock,
+                                 -- blocking all reads/writes for its duration; use sparingly, off-hours
+VACUUM ANALYZE users;          -- reclaim space AND refresh the planner's row-count/distribution statistics
+```
+
+**Autovacuum**: runs automatically in the background by default — in most workloads you should tune ITS settings (`autovacuum_vacuum_scale_factor`, etc.) rather than disabling it and vacuuming manually, since forgetting to vacuum a high-write table leads to severe "table bloat" (a table using far more disk space than its actual data needs) and eventually degraded query performance.
+
+**connection pooling**: PostgreSQL connections are relatively heavyweight (each is its own OS process) — high-concurrency applications typically sit a pooler like **PgBouncer** in front of PostgreSQL to multiplex many application connections onto fewer actual database connections, rather than opening one PostgreSQL connection per application thread/request directly.
+
+**`work_mem`**: controls how much memory a single query operation (a sort, a hash join) can use before spilling to disk — too low causes slow disk-based sorts/joins on complex queries; too high (multiplied across many concurrent connections) can exhaust server memory.
+
 
 ## 5.04 NoSQL
 
@@ -8735,6 +12704,20 @@ NoSQL databases were built to address limitations of relational databases at sca
 - Support for unstructured or semi-structured data
 
 NoSQL does not mean "no SQL at all" — it means SQL is not the primary interface, and the relational model is not enforced.
+
+
+### Why NoSQL Emerged
+
+Relational databases dominated for decades because most applications fit comfortably on a single, powerful server, and strict schemas/ACID transactions were exactly what businesses needed for reliable record-keeping (banking, inventory, orders).
+
+The shift came in the mid-to-late 2000s, when companies like Google, Amazon, and Facebook hit real limits with this model at "web scale":
+
+- **A single server can only get so powerful** — relational databases traditionally scale VERTICALLY (a bigger server — see Horizontal vs Vertical Scaling below), which has a hard ceiling and gets exponentially more expensive as you approach it. These companies needed to handle traffic and data volumes no single machine could serve.
+- **Rigid schemas slowed iteration** — a relational schema requires a migration for every structural change; fast-moving products with rapidly evolving, often irregular data (a product catalog where every category has different attributes) found this friction costly.
+- **JOINs don't distribute well** — relational JOINs assume all the data is reachable in one place; once data is spread across many machines (see sharding in the MongoDB chapter), JOINs become expensive or impossible to do efficiently.
+- **Not every problem needs strict consistency** — a social media "like" count being off by a few for a moment is harmless, but the ACID guarantees needed for that don't come free; NoSQL databases let you deliberately trade some consistency for availability and horizontal scalability (see CAP Theorem below) where the use case allows it.
+
+This led to purpose-built alternatives, each optimized for a specific access pattern rather than trying to be a general-purpose relational engine — this is why "NoSQL" isn't one thing, but an umbrella over several different data models (see Types below).
 
 
 ### Types of NoSQL Databases
@@ -8823,6 +12806,28 @@ Examples: **Neo4j**, **Amazon Neptune**, **ArangoDB**
 | Best for | Complex queries, integrity | High volume, varied data |
 
 
+### Horizontal vs Vertical Scaling
+
+Two fundamentally different strategies for handling more load (more data, more traffic):
+
+**Vertical scaling ("scale up")**: add more resources — CPU, RAM, faster disks — to a SINGLE existing server. Simple (no architectural changes needed, the application doesn't even need to know) but has a hard ceiling (the biggest machine a cloud provider offers) and gets disproportionately expensive as you approach it. This has traditionally been how relational databases scaled, since a JOIN across tables generally needs all the data in one place.
+
+**Horizontal scaling ("scale out")**: add MORE servers, and spread data/load across them. In principle has no hard ceiling (add another server when you need more capacity) and each individual server can be cheap/commodity hardware, but requires the application/database to be designed for distribution from the start — data needs to be partitioned across servers (sharding — see the MongoDB chapter), and operations that need data from multiple servers (like a JOIN) become significantly harder and slower.
+
+```text
+Vertical scaling:              Horizontal scaling:
+┌──────────────┐               ┌──────┐ ┌──────┐ ┌──────┐
+│   Bigger      │              │Server│ │Server│ │Server│
+│   Server      │      vs      │  1   │ │  2   │ │  3   │
+│ (more CPU/RAM)│               └──────┘ └──────┘ └──────┘
+└──────────────┘               (each holds a portion of the data)
+```
+
+**Why NoSQL databases favor horizontal scaling**: their data models (document, key-value, wide-column — see Types above) were specifically designed so that a single record/document is usually self-contained and doesn't need to be JOINed with data on another server, making it practical to split data across many machines by key (sharding) without most queries needing to reach across servers.
+
+**Rule of thumb**: vertical scaling is simpler and sufficient for most applications, up to a point; horizontal scaling is necessary once a single machine genuinely can't keep up (data volume or throughput exceeds what any single server can handle), but it's a real architectural commitment, not just a configuration change.
+
+
 ### ACID vs BASE
 
 Relational databases guarantee **ACID** properties for transactions:
@@ -8837,6 +12842,31 @@ Many NoSQL databases follow **BASE** instead:
 - **E**ventually consistent — the system will converge to a consistent state given enough time
 
 BASE trades strict consistency for availability and partition tolerance, following the trade-off described by the CAP theorem.
+
+
+### Eventual Consistency
+
+Eventual consistency means that after a write, the system does NOT guarantee every subsequent read sees it immediately — but GUARANTEES that if no new writes happen, all replicas will eventually converge to the same value.
+
+```text
+Write "name = Ana Silva" to Node A
+    │
+    ├──▶ Node A: "Ana Silva"   (updated immediately)
+    ├──▶ Node B: "Ana"          (not yet replicated — still stale)
+    └──▶ Node C: "Ana"          (not yet replicated — still stale)
+
+... a few milliseconds/seconds later, replication catches up ...
+
+    ├──▶ Node A: "Ana Silva"
+    ├──▶ Node B: "Ana Silva"    (now converged)
+    └──▶ Node C: "Ana Silva"    (now converged)
+```
+
+**Why accept this trade-off?** In a distributed system, requiring every node to confirm a write before it's considered successful (strong consistency) means every write is only as fast as the slowest node, and the whole system can't accept writes at all if any node is unreachable (see CAP Theorem below). Eventual consistency lets each node accept writes/serve reads independently and resync in the background — trading a temporary window of staleness for much higher availability and write throughput.
+
+**Where this is fine**: a social media like/follower count, a product view counter, a search index (briefly missing an update is harmless). **Where this is dangerous without extra care**: a bank balance, an inventory count you're about to sell against, anything where reading stale data leads to an incorrect real-world decision — these need either a strongly-consistent database, or extra application-level handling (idempotency, reconciliation jobs, conflict resolution).
+
+**Rule of thumb**: eventual consistency is a deliberate trade — it isn't "worse," it's the right choice specifically when availability and write throughput matter more than every single read being perfectly up to the millisecond.
 
 
 ### The CAP Theorem
@@ -8868,6 +12898,23 @@ Most NoSQL databases are designed as **AP systems** — they prioritise availabi
 - You need strong ACID transactions (financial systems, inventory management)
 - Complex ad-hoc queries are common
 - Data integrity and referential constraints are critical
+
+
+### Advantages and Disadvantages
+
+**Advantages**:
+- **Horizontal scalability**: designed from the ground up to spread data across many cheap servers (see Horizontal vs Vertical Scaling above), rather than needing an ever-bigger single machine.
+- **Flexible schema**: fields can vary per record and evolve without a formal migration — well-suited to fast-moving products or genuinely irregular data.
+- **High write throughput**: many NoSQL databases are optimized specifically for very high volumes of writes (IoT sensors, event logs, activity feeds).
+- **Natural fit for certain data shapes**: a document database maps naturally onto nested JSON-like application objects; a graph database makes relationship-heavy queries (recommendations, fraud detection) both simpler to write and faster to run than the equivalent SQL JOINs.
+
+**Disadvantages**:
+- **Weaker consistency guarantees by default**: many NoSQL databases trade strong consistency for availability (BASE/eventual consistency — see above), which requires extra care in the application for use cases that can't tolerate staleness.
+- **No standardized query language**: unlike SQL (portable across MySQL/PostgreSQL/Oracle with minor differences), each NoSQL database has its own query API — switching databases later means rewriting queries, not just connection strings.
+- **Joins are manual or avoided entirely**: relational, multi-entity queries that are trivial in SQL (a JOIN across 4 tables) require either denormalizing data upfront (duplication) or multiple round-trip queries/application-side joining.
+- **Less mature tooling for ad-hoc analysis**: SQL's decades of tooling (BI tools, ORMs, analysts who already know SQL) doesn't transfer automatically — many teams end up replicating NoSQL data into a SQL-queryable warehouse for analytics anyway.
+
+**Rule of thumb**: NoSQL isn't a strict upgrade over SQL — it's a different set of trade-offs, and many production systems use BOTH: a relational database for the transactional core (orders, payments, inventory) and a NoSQL database for the specific use cases it's better suited to (session storage in Redis, product search in Elasticsearch, activity feeds in Cassandra).
 
 
 ### Embedding vs Referencing in Document Databases
@@ -9280,6 +13327,158 @@ db.users.getIndexes()
 // Drop an index
 db.users.dropIndex("email_1")
 ```
+
+
+### Schema Design
+
+MongoDB doesn't enforce a schema, but that doesn't mean "no design" — it means the schema decisions move from the database (rigid, migration-driven) to the APPLICATION (flexible, but requiring discipline). The central design decision is Embedding vs Referencing (see the NoSQL chapter), driven by how the data is actually accessed.
+
+**Design around your queries, not your entities** — this is the single biggest mental shift coming from relational modeling (which normalizes based on the DATA'S structure, independent of how it's queried). In MongoDB, ask "what does my application read together most often?" first.
+
+```javascript
+// A blog post with comments, EMBEDDED — read together as one document, one query
+{
+  _id: "post_1",
+  title: "Understanding MongoDB",
+  content: "...",
+  comments: [
+    { author: "Ana", text: "Great post!", createdAt: ISODate("...") },
+    { author: "João", text: "Very helpful", createdAt: ISODate("...") }
+  ]
+}
+// One query (db.posts.findOne()) returns the post AND its comments — no $lookup needed.
+// Good here because comments are always displayed together with the post, and rarely
+// queried independently.
+```
+
+```javascript
+// A user's ORDERS, REFERENCED instead — orders grow unbounded and are queried independently
+{ _id: "user_1", name: "Ana" }
+{ _id: "order_1", userId: "user_1", total: 99.90, items: [...] }
+// Embedding orders directly inside the user document would make it grow indefinitely
+// (MongoDB has a 16MB per-document limit) and orders are frequently queried on their own
+// ("show me today's orders" has nothing to do with loading a specific user).
+```
+
+**Rule of thumb**: embed data that's always accessed TOGETHER and bounded in size (an address, a small list of tags); reference data that's large, unbounded, or frequently accessed INDEPENDENTLY of its "parent." Unlike a relational schema, it's normal and expected to duplicate some data across documents (e.g. storing a `userName` directly on an order, alongside `userId`) specifically to avoid extra queries — this is a deliberate trade-off, not a design mistake.
+
+
+### Replica Sets
+
+A replica set is a group of MongoDB servers that maintain the SAME data set, providing high availability and read scaling — MongoDB's equivalent of the replication covered in the MySQL/PostgreSQL chapters.
+
+```text
+Primary (accepts all writes)
+    │  replicates via the oplog (operation log)
+    ├──▶ Secondary 1 (read-only copy)
+    └──▶ Secondary 2 (read-only copy)
+```
+
+**How it works**: one member is elected **Primary** and accepts all writes; **Secondaries** continuously replicate the Primary's operations from its **oplog** (a capped collection recording every write) and apply them locally. If the Primary becomes unreachable, the remaining members automatically hold an election and promote a Secondary to be the new Primary — no manual intervention needed for common failure scenarios.
+
+```javascript
+// Reading from secondaries (accepting some staleness) to spread out read load
+db.collection.find().readPref("secondaryPreferred")
+
+// Write concern — how many members must acknowledge a write before it's considered successful
+db.collection.insertOne({ name: "Ana" }, { writeConcern: { w: "majority" } })
+// w: "majority" waits for most replica set members to confirm — safer, slightly slower
+// w: 1 (default) only waits for the Primary — faster, but a Primary crash right after
+// could lose that write before it replicates
+```
+
+**Rule of thumb**: a replica set (minimum 3 members, so an election can always get a majority) is the standard production baseline for MongoDB — even a single-server deployment is normally still configured as a 1-node "replica set" so it can be trivially expanded later.
+
+
+### Sharding
+
+Sharding is MongoDB's mechanism for horizontal scaling (see the NoSQL chapter) — splitting a single logical collection's data across MULTIPLE servers (shards), so no single server needs to hold or serve the entire data set.
+
+```text
+                    mongos (query router)
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+    Shard 1           Shard 2           Shard 3
+  (each shard is its own replica set, holding a portion of the data)
+```
+
+**Shard key**: the field(s) MongoDB uses to decide which shard a document belongs to — choosing a good shard key is the most consequential sharding decision, since it determines whether writes/reads spread evenly across shards or pile up on one ("hot shard").
+
+```javascript
+sh.shardCollection("mydb.orders", { userId: "hashed" })
+// hashed shard key: distributes documents evenly and randomly across shards —
+// great for write distribution, but range queries (e.g. "orders from last week")
+// can't target a single shard and must fan out to all of them
+
+sh.shardCollection("mydb.events", { region: 1, createdAt: 1 })
+// ranged shard key: keeps related data (same region) together on the same shard —
+// better for range queries, but risks a "hot shard" if data isn't evenly distributed
+// across region values
+```
+
+A query that includes the shard key can be routed directly to the relevant shard(s) by `mongos`; a query that doesn't must be broadcast to EVERY shard ("scatter-gather"), which is significantly slower — this is why shard key choice needs to match the application's actual query patterns.
+
+
+### Transactions
+
+Since MongoDB 4.0, multi-document ACID transactions are supported, letting you group multiple operations (potentially across multiple collections) into one atomic unit — something earlier MongoDB versions couldn't do (only single-document operations were atomic).
+
+```javascript
+const session = client.startSession();
+try {
+    session.startTransaction();
+    await accounts.updateOne({ _id: "acc_1" }, { $inc: { balance: -100 } }, { session });
+    await accounts.updateOne({ _id: "acc_2" }, { $inc: { balance: 100 } }, { session });
+    await session.commitTransaction();      // both updates succeed together
+} catch (error) {
+    await session.abortTransaction();       // both updates are rolled back together
+} finally {
+    session.endSession();
+}
+```
+
+**Important trade-off**: multi-document transactions in MongoDB carry a real performance cost (extra coordination overhead compared to normal writes) and go somewhat against the grain of the document model's design philosophy (where a well-designed schema, embedding related data into one document, keeps most operations naturally atomic already — see Schema Design above). **Rule of thumb**: prefer designing documents so single-document atomicity (which MongoDB always guarantees, with no special setup) covers your needs; reach for multi-document transactions only when an operation genuinely must span multiple documents/collections atomically (e.g. a funds transfer between two separate account documents, as above).
+
+
+### MongoDB Atlas
+
+Atlas is MongoDB's official fully-managed, cloud-hosted database service (available on AWS, Azure, and GCP) — it handles provisioning, replica set/sharding setup, backups, patching, and monitoring, so teams don't need to run and operate MongoDB servers themselves.
+
+**What it provides beyond self-hosted MongoDB**: automated backups with point-in-time recovery, built-in monitoring/alerting dashboards, automatic scaling (both storage and, on some tiers, compute), a free tier (M0) for learning/small projects, global cluster deployment (placing data closer to users across regions), and integrated full-text/vector search (Atlas Search) without needing a separate Elasticsearch deployment.
+
+```javascript
+// Connecting to an Atlas cluster looks the same as any MongoDB connection —
+// Atlas is still just MongoDB underneath, accessed via a connection string:
+mongodb+srv://user:password@cluster0.abcde.mongodb.net/mydb
+```
+
+**Rule of thumb**: for production workloads, a managed service like Atlas (or an equivalent from a cloud provider) removes a significant amount of the same undifferentiated operational burden that led teams to prefer managed relational databases (RDS, Cloud SQL) over self-hosting MySQL/PostgreSQL — most teams today don't run their own MongoDB servers for exactly this reason.
+
+
+### Performance
+
+Beyond indexing (see above), key MongoDB performance considerations:
+
+**`explain()`** — MongoDB's equivalent of SQL's `EXPLAIN` (see the SQL chapter) — shows whether a query used an index (`IXSCAN`) or scanned the whole collection (`COLLSCAN`, the MongoDB red flag equivalent to a SQL full table scan):
+
+```javascript
+db.orders.find({ userId: "u1" }).explain("executionStats")
+// executionStats.executionStages.stage: "IXSCAN" (good) or "COLLSCAN" (bad — add an index)
+// executionStats.totalDocsExamined vs nReturned — a large gap means the index isn't selective enough
+```
+
+**Projection**: fetch only the fields actually needed, reducing network transfer and memory use — especially important for large documents:
+
+```javascript
+db.users.find({ active: true }, { name: 1, email: 1 })   // only returns name, email, and _id
+```
+
+**Avoid unbounded document growth**: a document that keeps growing (e.g. appending to an embedded array indefinitely) causes MongoDB to relocate it on disk repeatedly as it outgrows its allocated space — this is exactly why unbounded, frequently-growing data (comments, logs, an ever-increasing order history) is usually a signal to reference instead of embed (see Schema Design above).
+
+**Connection pooling**: like any database, opening a new connection per request is expensive — drivers maintain a connection pool automatically, but its size (`maxPoolSize`) should be tuned to match expected concurrency.
+
+**Covered queries**: like the covering index concept in the SQL chapter, a query where the index alone contains every requested field (via projection) never has to touch the actual documents, making it especially fast.
 
 
 ## 5.06 Data Modelling
@@ -12025,6 +16224,649 @@ A blameless post-mortem analyses a production incident after resolution. It docu
 
 **Q: What is on-call and what are best practices for it?**
 On-call means being available to respond to production incidents outside business hours. Best practices: runbooks for known incidents, alerting on symptoms (latency, error rate) not just causes, meaningful alert thresholds to avoid fatigue, rotating schedules, shadow on-call for learning, post-mortems for every significant incident, and fixing toil that causes repeated pages.
+
+
+# Part 9 — Data Structures & Algorithms
+
+## 9.01 Data Structures
+
+
+### Overview
+
+Data structures are ways of organizing data in memory — the choice of data structure determines how efficiently a program can access, search, insert, and delete data. This chapter covers the core structures interviews expect you to know, from basic arrays up to graphs; the following chapter (9.02 Algorithms) builds on these to solve problems. Examples below use Java, consistent with the rest of this guide.
+
+
+### Big O Notation
+
+Big O describes how an algorithm's running time (or memory use) grows as the input size (`n`) grows — the growth RATE, not an exact operation count, which is why constants are dropped (`O(2n)` is written `O(n)`).
+
+```text
+O(1)         constant       — array index access, HashMap get/put (average case)
+O(log n)     logarithmic    — binary search, balanced tree operations
+O(n)         linear         — a single pass through a list
+O(n log n)   linearithmic   — efficient sorting (merge sort, quicksort average case)
+O(n²)        quadratic      — nested loops over the same collection
+O(2^n)       exponential    — naive recursive Fibonacci, brute-force subsets
+O(n!)        factorial      — brute-force permutations
+```
+
+**Best, average, worst case**: an algorithm can have different complexities depending on the input — e.g. searching an unsorted array for a value near the start is fast (best case O(1)) but the same algorithm is O(n) in general (the value could be last, or absent — worst case). Interviews almost always want the WORST case unless stated otherwise.
+
+**Space complexity** works the same way, but measures extra memory used (not counting the input itself) — e.g. an in-place sort is O(1) space; one that builds a new array is O(n) space.
+
+**Time/space trade-off**: a very common pattern is spending O(n) extra space (a `HashSet`/`HashMap`) to bring an O(n²) nested-loop solution down to O(n) time, since hash lookups are O(1) average (see Hash Tables below).
+
+
+### Arrays
+
+A fixed-size (in most languages), contiguous block of memory holding elements of the same type, accessed by index.
+
+| Operation | Complexity | Why |
+|---|---|---|
+| Access by index | O(1) | direct memory address calculation |
+| Search (unsorted) | O(n) | must check every element |
+| Search (sorted) | O(log n) | binary search applies |
+| Insert/delete at end | O(1) amortised | no shifting needed |
+| Insert/delete at start/middle | O(n) | every following element must shift |
+
+```java
+int[] arr = {1, 2, 3, 4, 5};
+int x = arr[2];              // O(1) — direct index access
+
+// Java's ArrayList — a dynamic array (see the Java chapter's Collections Framework)
+List<Integer> list = new ArrayList<>();
+list.add(6);                  // O(1) amortised — occasionally the backing array must be resized and copied, O(n)
+list.add(0, 0);                // O(n) — every element must shift right by one
+```
+
+**Why arrays matter as a foundation**: most other data structures below (hash tables, heaps, and even stacks/queues) are commonly IMPLEMENTED using an array internally, precisely because of its O(1) index access.
+
+
+### Strings
+
+In Java, a String is an immutable array of characters under the hood (see String vs StringBuilder vs StringBuffer and Immutability in the Java chapter) — most string algorithm problems reduce to array/two-pointer techniques (see below) applied to `char[]`.
+
+```java
+String s = "hello";
+char c = s.charAt(1);              // O(1) — 'e'
+char[] chars = s.toCharArray();     // O(n) — get a mutable copy to work with
+
+// Common pattern: character frequency counting
+int[] freq = new int[26];
+for (char ch : s.toCharArray()) {
+    freq[ch - 'a']++;                // O(1) per character — O(n) total
+}
+
+// Reversing a string — since Strings are immutable, build via StringBuilder (O(n)), not += in a loop (O(n²))
+String reversed = new StringBuilder(s).reverse().toString();
+```
+
+**Common string problems**: palindrome checking (two pointers, see below), anagram detection (character frequency count, above), substring search (sliding window, see below).
+
+
+### Linked Lists
+
+A sequence of nodes where each node holds a value and a reference (pointer) to the next node — unlike an array, elements are NOT contiguous in memory, so there's no direct index access.
+
+```java
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int val) { this.val = val; }
+}
+
+// Building a list: 1 -> 2 -> 3
+ListNode head = new ListNode(1);
+head.next = new ListNode(2);
+head.next.next = new ListNode(3);
+
+// Traversal — O(n)
+ListNode curr = head;
+while (curr != null) {
+    System.out.println(curr.val);
+    curr = curr.next;
+}
+
+// Reversing a singly linked list — a very common interview question
+ListNode reverse(ListNode head) {
+    ListNode prev = null;
+    while (head != null) {
+        ListNode next = head.next;   // save the next node before overwriting the pointer
+        head.next = prev;             // reverse the pointer
+        prev = head;
+        head = next;
+    }
+    return prev;                       // prev is now the new head
+}
+```
+
+| Operation | Array | Linked List |
+|---|---|---|
+| Access by index | O(1) | O(n) — must walk from the head |
+| Insert/delete at start | O(n) — shift everything | O(1) — just relink |
+| Insert/delete at end | O(1) amortised | O(1) if a tail pointer is kept, else O(n) |
+| Insert/delete in middle (with a reference to the node) | O(n) | O(1) — just relink |
+
+**Doubly linked list**: each node also holds a `prev` pointer, allowing O(1) traversal/removal in both directions — this is exactly what Java's `LinkedList` (see the Java chapter) implements.
+
+**Fast/slow pointers ("tortoise and hare")**: a classic linked-list technique — advance one pointer by 1 node and another by 2 nodes per step; if there's a cycle, the fast pointer eventually laps the slow one; if there's no cycle, it reaches `null` first. Also used to find the middle of a list in one pass (when the fast pointer reaches the end, the slow pointer is at the middle).
+
+
+### Stacks
+
+LIFO (Last In, First Out) — think of a stack of plates: you can only add/remove from the top.
+
+```java
+Deque<Integer> stack = new ArrayDeque<>();   // ArrayDeque is the preferred implementation (see the Java chapter)
+stack.push(1);
+stack.push(2);
+stack.push(3);
+stack.pop();          // 3 — removes and returns the top
+stack.peek();          // 2 — looks at the top without removing it
+```
+
+All operations (`push`, `pop`, `peek`) are O(1). **Common uses**: undo functionality, expression evaluation (matching parentheses, evaluating postfix notation), tracking function calls (the Call Stack itself — see the JavaScript chapter's Event Loop section), and DFS (see below), which can be implemented either recursively (using the actual call stack) or iteratively (using an explicit stack).
+
+```java
+// Classic interview problem: valid parentheses
+boolean isValid(String s) {
+    Deque<Character> stack = new ArrayDeque<>();
+    for (char c : s.toCharArray()) {
+        if (c == '(' || c == '[' || c == '{') {
+            stack.push(c);
+        } else {
+            if (stack.isEmpty()) return false;
+            char open = stack.pop();
+            if ((c == ')' && open != '(') || (c == ']' && open != '[') || (c == '}' && open != '{')) return false;
+        }
+    }
+    return stack.isEmpty();   // true only if every opening bracket was matched and closed
+}
+```
+
+
+### Queues
+
+FIFO (First In, First Out) — think of a line at a store: whoever arrived first is served first.
+
+```java
+Deque<Integer> queue = new ArrayDeque<>();   // ArrayDeque again — see Queue and Deque in the Java chapter
+queue.offer(1);
+queue.offer(2);
+queue.offer(3);
+queue.poll();          // 1 — removes and returns the front
+queue.peek();           // 2 — looks at the front without removing it
+```
+
+All operations are O(1). **Common uses**: task scheduling, request processing in order of arrival, and BFS (see below), which is ALWAYS implemented with a queue (this is what makes it explore level-by-level, unlike DFS's stack-based depth-first exploration).
+
+**Priority Queue**: not FIFO — always dequeues the highest-priority (smallest, by default) element next. Backed by a Heap internally (see below) — O(log n) insertion/removal instead of O(1), in exchange for always giving you the min/max element instantly.
+
+
+### Hash Tables
+
+Maps keys to values using a **hash function** to compute an array index from the key, giving O(1) average-case lookup/insert/delete — see Hashmap Internals in the Java chapter for the full bucket/collision mechanism (this section covers the general concept; that one covers Java's specific `HashMap` implementation).
+
+```java
+Map<String, Integer> map = new HashMap<>();
+map.put("apple", 3);       // O(1) average — hash("apple") determines which bucket to store it in
+map.get("apple");           // O(1) average — hash again, jump straight to the bucket
+map.containsKey("apple");   // O(1) average
+```
+
+**Collisions**: two different keys can hash to the same bucket — Java's `HashMap` resolves this by storing a linked list (or, since Java 8, a balanced tree once a bucket gets large) of entries per bucket, so a collision degrades that bucket's lookup toward O(n) in the worst case, but this remains rare with a good hash function and appropriate table size.
+
+**Why hash tables are the single most common tool in interview problems**: an O(n²) brute-force nested loop ("for each element, check every other element") can almost always be reduced to O(n) by trading O(n) space for a `HashSet`/`HashMap` that remembers what's already been seen.
+
+```java
+// Classic example: Two Sum — find two numbers in an array that add up to a target
+int[] twoSum(int[] nums, int target) {
+    Map<Integer, Integer> seen = new HashMap<>();   // value -> index
+    for (int i = 0; i < nums.length; i++) {
+        int complement = target - nums[i];
+        if (seen.containsKey(complement)) {           // O(1) lookup instead of an inner O(n) loop
+            return new int[]{seen.get(complement), i};
+        }
+        seen.put(nums[i], i);
+    }
+    return new int[]{};
+}
+// O(n) time, O(n) space — vs. O(n²) time, O(1) space for the brute-force nested-loop version
+```
+
+**Hash Set**: like a hash map but stores only keys (no values) — used purely to track "have I seen this before?" in O(1) average, as in the deduplication and "seen" patterns throughout this chapter.
+
+
+### Trees
+
+A hierarchical structure of nodes, where each node has a value and references to CHILD nodes, starting from a single **root** node, with no cycles (each node has exactly one parent, except the root, which has none).
+
+```text
+        A          ← root
+       / \
+      B   C        ← children of A
+     / \
+    D   E          ← leaves (no children)
+```
+
+**Terminology**: root (top node), leaf (a node with no children), parent/child, depth (distance from the root to a node), height (distance from a node to its deepest leaf). A **general tree** allows any number of children per node; a **Binary Tree** (below) restricts this to at most two.
+
+
+### Binary Trees
+
+A tree where each node has at most two children, conventionally called `left` and `right`.
+
+```java
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
+```
+
+**Traversal orders** — the order in which nodes are visited; all are O(n) since every node must be visited:
+
+```java
+// Inorder (left, node, right) — visits nodes in ASCENDING order for a Binary Search Tree (see below)
+void inorder(TreeNode node, List<Integer> result) {
+    if (node == null) return;
+    inorder(node.left, result);
+    result.add(node.val);
+    inorder(node.right, result);
+}
+
+// Preorder (node, left, right) — useful for copying/serializing a tree (visits parent before children)
+void preorder(TreeNode node, List<Integer> result) {
+    if (node == null) return;
+    result.add(node.val);
+    preorder(node.left, result);
+    preorder(node.right, result);
+}
+
+// Postorder (left, right, node) — useful for deleting a tree (visits children before the parent)
+void postorder(TreeNode node, List<Integer> result) {
+    if (node == null) return;
+    postorder(node.left, result);
+    postorder(node.right, result);
+    result.add(node.val);
+}
+
+// Level-order (BFS, level by level) — the only traversal that isn't naturally recursive; needs a Queue
+void levelOrder(TreeNode root) {
+    if (root == null) return;
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.offer(root);
+    while (!queue.isEmpty()) {
+        TreeNode node = queue.poll();
+        System.out.println(node.val);
+        if (node.left != null) queue.offer(node.left);
+        if (node.right != null) queue.offer(node.right);
+    }
+}
+```
+
+**Balanced vs unbalanced**: a balanced tree keeps its height close to `O(log n)` (roughly evenly distributing nodes across both subtrees); an unbalanced tree can degrade toward a straight line (height `O(n)`) — this distinction is exactly why Binary Search Trees (below) need self-balancing variants for guaranteed performance.
+
+
+### Binary Search Trees (BST)
+
+A Binary Tree with an ordering invariant: for every node, ALL values in its left subtree are smaller, and ALL values in its right subtree are larger. This invariant is what makes search, insert, and delete all O(log n) — on a BALANCED tree.
+
+```java
+TreeNode search(TreeNode node, int target) {
+    if (node == null || node.val == target) return node;
+    return target < node.val ? search(node.left, target) : search(node.right, target);
+    // at each step, an entire half of the remaining tree is eliminated — just like binary search on an array
+}
+
+TreeNode insert(TreeNode node, int val) {
+    if (node == null) return new TreeNode(val);
+    if (val < node.val) node.left = insert(node.left, val);
+    else node.right = insert(node.right, val);
+    return node;
+}
+```
+
+**The catch**: if values are inserted in already-sorted order (1, 2, 3, 4, 5...), a plain BST degenerates into a straight line — effectively a linked list, with O(n) operations instead of O(log n). **Self-balancing BSTs** (Red-Black Trees, AVL Trees) automatically re-balance after every insert/delete to guarantee `O(log n)` height regardless of insertion order — this is exactly what backs Java's `TreeMap`/`TreeSet` (Red-Black Tree, see the Java chapter's Collections Framework).
+
+**Rule of thumb**: an inorder traversal of a BST always visits values in ascending order — a very common interview technique ("is this a valid BST?" can be checked by confirming the inorder traversal is strictly increasing).
+
+
+### Heaps
+
+A specialized tree-based structure satisfying the **heap property**: in a MIN-heap, every parent is smaller than or equal to its children (so the smallest element is always at the root); a MAX-heap is the reverse. Unlike a BST, a heap only guarantees ordering between parent and child, NOT across siblings — this weaker guarantee is exactly what makes insert/removeMin both `O(log n)`, versus a sorted structure needing `O(n)` to insert.
+
+```java
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();               // min-heap by default in Java
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());  // max-heap
+
+minHeap.offer(5); minHeap.offer(1); minHeap.offer(3);
+minHeap.poll();     // 1 — always removes the smallest — O(log n)
+minHeap.peek();      // look at the smallest without removing — O(1)
+```
+
+**Array representation**: a heap is typically stored as a plain array (not actual node/pointer objects) — for a node at index `i`, its children are at `2i+1` and `2i+2`, and its parent is at `(i-1)/2`. This is why heap operations don't need pointers at all, and why building a heap from scratch is memory-efficient.
+
+**Common use — "top K" problems**: keep a heap of size K while scanning n elements, giving O(n log k) instead of sorting everything (O(n log n)) — a very common interview pattern for "find the K largest/smallest/most frequent elements."
+
+
+### Graphs
+
+A set of **nodes (vertices)** connected by **edges** — the most general data structure covered here; a tree is actually just a special case of a graph (one with no cycles and exactly one path between any two nodes).
+
+**Representations**:
+
+```java
+// Adjacency list — most common; efficient for sparse graphs (relatively few edges)
+Map<Integer, List<Integer>> graph = new HashMap<>();
+graph.put(0, List.of(1, 2));    // node 0 connects to nodes 1 and 2
+graph.put(1, List.of(0, 3));
+
+// Adjacency matrix — a 2D array; O(1) "is there an edge?" check, but O(V²) space regardless of edge count
+boolean[][] matrix = new boolean[n][n];
+matrix[0][1] = true;    // edge between node 0 and node 1
+```
+
+**Directed vs undirected**: a directed edge only goes one way (A → B does not imply B → A, e.g. a "follows" relationship); an undirected edge implies both directions (e.g. a "friendship").
+
+**Weighted vs unweighted**: a weighted edge carries a cost/distance (used by algorithms like Dijkstra's shortest path); an unweighted graph treats every edge as equal cost (which is exactly what makes plain BFS suffice for shortest-path in an unweighted graph — see below).
+
+**Rule of thumb**: use an adjacency list for most interview problems (sparse graphs, and matches how DFS/BFS naturally iterate "neighbors of this node"); an adjacency matrix is worth it only when edge lookups ("is there a direct edge between A and B?") are frequent and the graph is dense.
+
+
+## 9.02 Algorithms
+
+
+### Overview
+
+An algorithm is a step-by-step procedure for solving a problem, independent of any particular data structure — though, as the examples below show, the right choice of data structure (Part 9.01) is often exactly what makes an algorithm efficient. This chapter covers the core algorithmic techniques and search/graph/sorting algorithms that recur across interview problems. Examples use Java, consistent with the rest of this guide.
+
+
+### DFS (Depth-First Search)
+
+Explores as far as possible down one path before backtracking — implemented either recursively (using the actual call stack, see Recursion below) or iteratively with an explicit Stack (see Stacks above).
+
+```java
+void dfs(int node, Map<Integer, List<Integer>> graph, Set<Integer> visited) {
+    if (visited.contains(node)) return;
+    visited.add(node);
+    System.out.println(node);                    // process the node
+    for (int neighbor : graph.getOrDefault(node, List.of())) {
+        dfs(neighbor, graph, visited);              // recurse into each unvisited neighbor
+    }
+}
+```
+
+**Complexity**: O(V + E) — every vertex and every edge is visited once. **The `visited` set is essential** — without it, a cycle in the graph causes infinite recursion. **Common uses**: detecting cycles, finding connected components, topological sorting, and exploring all paths/combinations (which is exactly what Backtracking, below, builds on).
+
+
+### BFS (Breadth-First Search)
+
+Explores level by level — all neighbors of the start node first, then all THEIR neighbors, and so on. Always implemented with a Queue (see Queues above), never recursively.
+
+```java
+void bfs(int start, Map<Integer, List<Integer>> graph) {
+    Set<Integer> visited = new HashSet<>();
+    Queue<Integer> queue = new LinkedList<>();
+    queue.offer(start);
+    visited.add(start);
+
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+        System.out.println(node);                     // process the node
+        for (int neighbor : graph.getOrDefault(node, List.of())) {
+            if (!visited.contains(neighbor)) {
+                visited.add(neighbor);                    // mark visited when ENQUEUED, not when dequeued —
+                queue.offer(neighbor);                     // avoids adding the same node to the queue multiple times
+            }
+        }
+    }
+}
+```
+
+**Complexity**: O(V + E), same as DFS. **Key property**: BFS finds the SHORTEST PATH (fewest edges) from the start node to any other node in an UNWEIGHTED graph — this is precisely why BFS, not DFS, is the standard choice for shortest-path/"minimum steps" problems (e.g. "minimum number of moves to reach the goal"). For weighted graphs, Dijkstra's algorithm (a BFS variant using a min-heap instead of a plain queue) is needed instead.
+
+**DFS vs BFS — when to use which**: DFS for exploring ALL paths/combinations, detecting cycles, or when memory is a concern with a wide-but-shallow graph (DFS's stack only holds one path at a time; BFS's queue can hold an entire level, which may be huge). BFS for shortest path in an unweighted graph, or level-by-level processing.
+
+
+### Recursion
+
+A function that calls itself to solve smaller instances of the same problem, until reaching a **base case** that can be answered directly without further recursion.
+
+```java
+int factorial(int n) {
+    if (n <= 1) return 1;              // base case — stops the recursion
+    return n * factorial(n - 1);        // recursive case — solves a smaller sub-problem, and combines the result
+}
+```
+
+**Every recursive call adds a frame to the Call Stack** (see the JavaScript chapter's Event Loop and the Java chapter's Stack vs Heap) — this is why recursion without a reachable base case causes a `StackOverflowError`, and why very deep recursion (thousands of levels) can be risky even WITH a correct base case, since the call stack has a fixed size limit.
+
+**Recursion vs iteration**: anything recursive can be rewritten iteratively (usually with an explicit Stack replacing the implicit call stack — exactly the DFS example above), and vice versa. Recursion tends to produce cleaner, more directly-readable code for naturally recursive structures (trees, nested/hierarchical data), at the cost of call-stack overhead that a loop doesn't have.
+
+**Memoization** (caching results of previous calls) transforms recursion from potentially exponential to polynomial time for problems with overlapping sub-problems — this is the bridge to Dynamic Programming below.
+
+
+### Backtracking
+
+A refinement of DFS/recursion for exploring ALL possible solutions to a problem, by building a solution incrementally and abandoning ("backtracking" from) any partial solution that can't possibly lead to a valid one.
+
+```java
+// Generate all permutations of an array — the canonical backtracking example
+void backtrack(List<Integer> current, int[] nums, boolean[] used, List<List<Integer>> result) {
+    if (current.size() == nums.length) {
+        result.add(new ArrayList<>(current));   // a complete, valid permutation — save a copy
+        return;
+    }
+    for (int i = 0; i < nums.length; i++) {
+        if (used[i]) continue;                    // skip numbers already placed in this permutation
+        current.add(nums[i]);                       // CHOOSE
+        used[i] = true;
+        backtrack(current, nums, used, result);      // EXPLORE further with this choice made
+        current.remove(current.size() - 1);           // UNCHOOSE — backtrack, try the next option
+        used[i] = false;
+    }
+}
+```
+
+**The "choose, explore, unchoose" pattern** shown above is the template for virtually every backtracking problem: N-Queens, Sudoku solving, generating subsets/combinations, and word search on a grid all follow this exact shape. **Pruning**: the real power of backtracking over pure brute force is abandoning a branch EARLY the moment it's known to be invalid (e.g. in N-Queens, stop placing further queens on a row as soon as the current partial placement already has a conflict), avoiding wasted exploration of doomed branches.
+
+
+### Dynamic Programming (DP)
+
+An optimization technique for problems with two properties: **overlapping sub-problems** (the same smaller sub-problem is solved repeatedly) and **optimal substructure** (the optimal solution can be built from optimal solutions to sub-problems). DP avoids recomputing the same sub-problem over and over, trading extra memory for dramatically less time.
+
+```java
+// Naive recursive Fibonacci — O(2^n), because fib(3) is recomputed independently
+// inside both fib(4) and fib(5), and this duplication compounds at every level
+int fibNaive(int n) {
+    if (n <= 1) return n;
+    return fibNaive(n - 1) + fibNaive(n - 2);
+}
+
+// Memoization (top-down DP) — cache results of sub-problems already solved
+int fibMemo(int n, Map<Integer, Integer> cache) {
+    if (n <= 1) return n;
+    if (cache.containsKey(n)) return cache.get(n);      // already solved — O(1) lookup instead of recomputing
+    int result = fibMemo(n - 1, cache) + fibMemo(n - 2, cache);
+    cache.put(n, result);
+    return result;
+}
+// O(n) time, O(n) space — each sub-problem is now solved exactly once
+
+// Tabulation (bottom-up DP) — build up from the base cases iteratively, no recursion/call-stack overhead
+int fibTab(int n) {
+    if (n <= 1) return n;
+    int[] dp = new int[n + 1];
+    dp[0] = 0; dp[1] = 1;
+    for (int i = 2; i <= n; i++) {
+        dp[i] = dp[i - 1] + dp[i - 2];      // build each answer from previously computed answers
+    }
+    return dp[n];
+}
+```
+
+**Memoization (top-down)** vs **Tabulation (bottom-up)**: memoization keeps the natural recursive structure and adds caching (easier to write directly from a recursive brute-force solution); tabulation builds the answer iteratively from the smallest sub-problems upward (avoids recursion/call-stack overhead entirely, and often allows further space optimization — e.g. `fibTab` only actually needs the last two values, not the whole `dp` array).
+
+**Classic DP problems**: 0/1 Knapsack, Longest Common Subsequence, Coin Change, Longest Increasing Subsequence — all share the same shape: identify the sub-problem, find the recurrence relating it to smaller sub-problems, then decide whether the state space is small enough to tabulate directly.
+
+
+### Greedy Algorithms
+
+Makes the LOCALLY optimal choice at each step, without reconsidering previous choices, hoping (and for specific problems, PROVING) this leads to a globally optimal solution — much simpler and faster than DP, but only correct for problems where the greedy choice property actually holds.
+
+```java
+// Classic example: minimum number of coins to make change, given specific denominations
+int coinChangeGreedy(int[] coins, int amount) {   // coins assumed sorted descending, e.g. [25, 10, 5, 1]
+    int count = 0;
+    for (int coin : coins) {
+        count += amount / coin;      // take as many of the largest coin as possible
+        amount %= coin;
+    }
+    return amount == 0 ? count : -1;
+}
+// Works correctly for standard currency denominations (like US coins),
+// but greedy does NOT always give the optimal answer for arbitrary coin sets —
+// e.g. coins = [1, 3, 4], amount = 6: greedy picks 4+1+1 (3 coins),
+// but the optimal answer is 3+3 (2 coins). This is exactly why some
+// "coin change" variants require full Dynamic Programming (above) instead.
+```
+
+**When greedy actually works**: interval scheduling (picking the maximum number of non-overlapping intervals — always take the one that finishes earliest), Huffman coding, Dijkstra's shortest path (see BFS above). **Rule of thumb**: greedy is faster and simpler when it applies, but always verify (or be given) that the greedy choice property holds for the specific problem — otherwise it silently produces a wrong, sub-optimal answer instead of erroring, which makes it a dangerous default without justification.
+
+
+### Sliding Window
+
+A technique for problems involving a contiguous subarray/substring, avoiding the O(n²)/O(n³) cost of recomputing a sum/count from scratch for every possible window — instead, slide the window by one position and incrementally update.
+
+```java
+// Maximum sum of any contiguous subarray of size k
+int maxSubarraySum(int[] nums, int k) {
+    int windowSum = 0;
+    for (int i = 0; i < k; i++) windowSum += nums[i];    // sum of the FIRST window — O(k)
+
+    int maxSum = windowSum;
+    for (int i = k; i < nums.length; i++) {
+        windowSum += nums[i] - nums[i - k];    // slide: add the new element, remove the one leaving the window — O(1)
+        maxSum = Math.max(maxSum, windowSum);
+    }
+    return maxSum;
+}
+// O(n) total, vs. O(n*k) recomputing every window's sum from scratch
+```
+
+**Fixed vs variable window**: the example above uses a FIXED-size window (always exactly `k` elements). A VARIABLE window (e.g. "smallest subarray with sum ≥ target") instead grows the window by moving a right pointer forward, and shrinks it by moving a left pointer forward whenever a condition is satisfied — both pointers only ever move forward, which is what keeps the technique O(n) instead of O(n²).
+
+
+### Two Pointers
+
+Uses two index variables that traverse a (usually sorted) array/string, moving toward each other or in the same direction, to avoid a nested loop.
+
+```java
+// Classic example: does a sorted array contain two numbers that sum to a target?
+boolean twoSum(int[] sortedNums, int target) {
+    int left = 0, right = sortedNums.length - 1;
+    while (left < right) {
+        int sum = sortedNums[left] + sortedNums[right];
+        if (sum == target) return true;
+        else if (sum < target) left++;     // sum too small — move left pointer right to increase it
+        else right--;                        // sum too large — move right pointer left to decrease it
+    }
+    return false;
+}
+// O(n) time, O(1) space — vs O(n²) checking every pair, or O(n) time + O(n) space with a HashSet
+```
+
+```java
+// Classic example: is a string a palindrome?
+boolean isPalindrome(String s) {
+    int left = 0, right = s.length() - 1;
+    while (left < right) {
+        if (s.charAt(left) != s.charAt(right)) return false;
+        left++; right--;
+    }
+    return true;
+}
+```
+
+**Rule of thumb**: two pointers moving toward each other from both ends works great on SORTED data (as in the two-sum example); two pointers moving in the same direction (one fast, one slow) is the same underlying idea used in linked-list cycle detection (see Linked Lists above) and in-place array de-duplication.
+
+
+### Binary Search
+
+Repeatedly halves the search space in a SORTED array by comparing the target to the middle element — O(log n), dramatically faster than a linear O(n) scan.
+
+```java
+int binarySearch(int[] sortedNums, int target) {
+    int left = 0, right = sortedNums.length - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;    // avoids integer overflow vs (left + right) / 2
+        if (sortedNums[mid] == target) return mid;
+        else if (sortedNums[mid] < target) left = mid + 1;   // target is in the right half — discard the left half
+        else right = mid - 1;                                   // target is in the left half — discard the right half
+    }
+    return -1;    // not found
+}
+```
+
+**Precondition**: the array/search space MUST be sorted (or otherwise monotonic) — binary search on unsorted data gives incorrect results silently. **Beyond plain array search**: binary search also applies to any monotonic decision problem — e.g. "find the minimum value of X such that condition(X) is true," searching over a range of possible ANSWERS rather than array indices (a common advanced pattern: "binary search the answer").
+
+
+### Sorting Algorithms
+
+| Algorithm | Time (avg) | Time (worst) | Space | Stable? | Notes |
+|---|---|---|---|---|---|
+| Bubble Sort | O(n²) | O(n²) | O(1) | Yes | repeatedly swaps adjacent out-of-order pairs; simple but rarely used in practice |
+| Insertion Sort | O(n²) | O(n²) | O(1) | Yes | builds the sorted portion one element at a time; fast for nearly-sorted/small data |
+| Selection Sort | O(n²) | O(n²) | O(1) | No | repeatedly selects the minimum remaining element |
+| Merge Sort | O(n log n) | O(n log n) | O(n) | Yes | divide-and-conquer; consistent performance, needs extra space |
+| Quick Sort | O(n log n) | O(n²) | O(log n) | No | divide-and-conquer via a pivot; fast in practice, worst case on already-sorted/adversarial input |
+| Heap Sort | O(n log n) | O(n log n) | O(1) | No | builds a heap (see above), repeatedly extracts the max |
+
+**Merge Sort**: splits the array in half recursively until each piece has 1 element (trivially sorted), then merges sorted halves back together.
+
+```java
+void mergeSort(int[] arr, int left, int right) {
+    if (left >= right) return;
+    int mid = (left + right) / 2;
+    mergeSort(arr, left, mid);
+    mergeSort(arr, mid + 1, right);
+    merge(arr, left, mid, right);   // merge the two now-sorted halves — O(n) per merge
+}
+```
+
+**Quick Sort**: picks a pivot, partitions the array so smaller elements are left of the pivot and larger are right, then recursively sorts each side.
+
+```java
+void quickSort(int[] arr, int low, int high) {
+    if (low >= high) return;
+    int pivotIndex = partition(arr, low, high);   // places the pivot in its final sorted position
+    quickSort(arr, low, pivotIndex - 1);
+    quickSort(arr, pivotIndex + 1, high);
+}
+```
+
+**Stability**: a stable sort preserves the relative order of equal elements — important when sorting objects by one field while wanting ties broken by original order (e.g. sorting orders by date, keeping same-date orders in their original insertion order).
+
+**Rule of thumb**: `Collections.sort()`/`Arrays.sort()` (for objects) in Java use a stable, tuned merge sort/Timsort variant; `Arrays.sort()` for PRIMITIVES uses a dual-pivot quicksort (faster, but not stable — irrelevant for primitives since there's no "other data" attached to preserve order for). In interviews, know merge sort and quick sort's mechanics and trade-offs — actual production code should almost never hand-roll a sort.
+
+
+### Searching Algorithms
+
+**Linear Search**: check every element one by one — O(n), works on ANY data (sorted or not), no precondition.
+
+```java
+int linearSearch(int[] arr, int target) {
+    for (int i = 0; i < arr.length; i++) {
+        if (arr[i] == target) return i;
+    }
+    return -1;
+}
+```
+
+**Binary Search** (see above): O(log n), but requires sorted data.
+
+**Rule of thumb**: use linear search on small or unsorted data, or when the cost of sorting first (O(n log n)) outweighs the benefit for a one-off search; use binary search whenever data is already sorted, or will be searched repeatedly enough that sorting once up front pays for itself. Hash table lookup (see above) beats both at O(1) average when only membership/key-lookup is needed and order doesn't matter.
 
 
 ### End of Guide
