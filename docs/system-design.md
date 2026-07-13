@@ -20,11 +20,12 @@
 
 **Part 3 — Data Storage**
 - 3.01 Database Fundamentals
-- 3.02 SQL at Scale
-- 3.03 NoSQL at Scale
-- 3.04 Caching
-- 3.05 Object Storage
-- 3.06 Search Engines
+- 3.02 ID Generation Strategies
+- 3.03 SQL at Scale
+- 3.04 NoSQL at Scale
+- 3.05 Caching
+- 3.06 Object Storage
+- 3.07 Search Engines
 
 **Part 4 — Communication Patterns**
 - 4.01 APIs — REST vs GraphQL vs gRPC
@@ -632,7 +633,8 @@ Used for:
 - **Compression** — the proxy compresses responses (using gzip or brotli) before sending them to the client, reducing the amount of data transferred over the network. Backend servers send uncompressed data to the proxy; the proxy handles compression in one place so every backend benefits.
 - **Security** — backend server IPs are never exposed to the internet; all traffic must go through the proxy. The proxy can reject malicious requests (SQL injection patterns, oversized payloads, requests from blocked IPs) before they ever reach your application code.
 
-**Nginx and HAProxy are the most common reverse proxies.** AWS CloudFront and Cloudflare act as reverse proxy + CDN.
+
+Nginx and HAProxy are the most common reverse proxies. AWS CloudFront and Cloudflare act as reverse proxy + CDN.
 
 
 ## 2.04 Content Delivery Network (CDN)
@@ -926,7 +928,117 @@ This applies to any database accessed over a network:
 - **Redis** — clients like `ioredis` (Node.js) and `Jedis` (Java) maintain a connection pool internally
 
 
-## 3.02 SQL at Scale
+## 3.02 ID Generation Strategies
+
+Every table needs a primary key — a value that uniquely identifies each row. How that ID is generated seems like a small implementation detail, but it has real consequences for index performance, security, and how easily a system can later be sharded (see Sharding in 3.01) or run across multiple database instances. This chapter covers the main strategies and when to reach for each.
+
+
+### What Makes a Good ID
+
+Before comparing strategies, it helps to be explicit about what's actually being optimized for:
+
+- **Uniqueness** — no two rows, ever, anywhere, can share an ID (this gets much harder to guarantee once more than one machine can generate IDs independently).
+- **Immutability** — an ID should never need to change once assigned; other tables reference it via foreign keys, and changing it would require updating every reference.
+- **Index-friendliness** — primary keys are usually backed by a B-tree index (see Indexes in the technical study guide). IDs that arrive in roughly ASCENDING order let the database append new entries to the end of the index; IDs that arrive in random order force insertions all over the index tree, which is slower and fragments the index on disk.
+- **No coordination required (ideally)** — in a distributed system, an ID scheme that requires asking a central authority "what's the next ID?" before every insert becomes a bottleneck and a single point of failure (see Load Balancing and Scalability in Parts 2 and 5 for the general problem this maps to).
+- **Compactness** — a smaller ID takes less storage per row AND per foreign key reference across every other table that points to it, and fits more entries per index page in memory.
+
+No single strategy wins on all five — this is a genuine trade-off, not a "one correct answer."
+
+
+### Auto-Increment / Sequential IDs
+
+The traditional default: the database itself assigns the next integer in sequence (`SERIAL`/`BIGSERIAL` in PostgreSQL, `AUTO_INCREMENT` in MySQL — see the technical study guide's MySQL chapter).
+
+```sql
+CREATE TABLE orders (
+    id BIGSERIAL PRIMARY KEY,   -- 1, 2, 3, 4, ...
+    ...
+);
+```
+
+**Strengths**: compact (8 bytes for a `BIGINT`), always ascending (excellent index locality — new rows are always appended at the end of the B-tree, never inserted in the middle), human-readable, and trivial to implement — the database does all the work.
+
+**Weaknesses**:
+- **Requires coordination**: the database must serialize "what's the next value?" across all concurrent inserts, which becomes a bottleneck at very high write throughput, and simply doesn't work if you have MULTIPLE independent database instances (see Sharding in 3.01) each trying to generate IDs — two shards would both hand out `id=1, 2, 3...`, colliding the moment you try to merge or reference data across shards.
+- **Leaks information**: a sequential order ID publicly exposed in a URL (`/orders/4821`) tells a competitor roughly how many orders you process per day, and lets anyone enumerate every record by incrementing the number (`/orders/4822`, `/orders/4823`...) — an actual security/privacy issue known as Insecure Direct Object Reference (IDOR), see Security in 5.06.
+- **Not globally unique**: fine for a single database, but meaningless as a cross-system identifier once your architecture involves multiple services or databases (see Microservices vs Monolith in 5.04).
+
+**Rule of thumb**: still a perfectly good default for a single-database system with no current sharding plans and no need to hide row counts from users.
+
+
+### UUID (Universally Unique Identifier)
+
+A 128-bit value, conventionally written as 32 hex digits in 5 groups (`f47ac10b-58cc-4372-a567-0e02b2c3d479`), designed to be generated independently by ANY machine, at ANY time, with a collision probability so low it's treated as zero in practice — no coordination with a central authority needed.
+
+```sql
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),   -- PostgreSQL
+    ...
+);
+```
+
+**UUID v4 (random)** is the most common variant — every one of its 122 non-fixed bits is randomly generated. This randomness is exactly its strength AND its weakness:
+
+**Strengths**: no coordination required at all — any service, any client, even an offline mobile app, can generate a valid ID with zero risk of collision, making it the natural fit for distributed systems and sharded databases (each shard generates its own IDs independently with no risk of overlap). Doesn't leak information about record count or order.
+
+**Weaknesses**:
+- **Terrible index locality**: because v4 UUIDs are completely random, each new row inserts at a RANDOM position in the primary key's B-tree index, instead of always appending at the end — this causes far more disk I/O, cache misses, and index fragmentation than sequential IDs, and is a well-known real-world performance problem at scale.
+- **Larger**: 16 bytes vs. 8 bytes for a `BIGINT` — doubles the storage for the column itself, and for every foreign key column referencing it across every other table, and reduces how many index entries fit in a memory page.
+- **Not human-friendly**: `f47ac10b-58cc-4372-a567-0e02b2c3d479` is painful to read aloud, type, or debug compared to `4821`.
+
+
+### Time-Ordered UUIDs (UUID v7, ULID)
+
+A newer approach that keeps UUID's "no coordination needed" property while fixing its index-locality problem: the first bits of the ID encode a **timestamp** (millisecond precision), and only the remaining bits are random.
+
+```text
+UUID v4 (random):      f47ac10b-58cc-4372-a567-0e02b2c3d479   ← no ordering, random position in index
+UUID v7 (time-ordered): 018f4d2a-7c3e-7a21-9c4e-1b2c3d4e5f6a   ← first ~48 bits = timestamp, sorts ascending
+```
+
+Because the timestamp occupies the leading bits, sorting these IDs lexicographically (byte-by-byte, exactly how a database index compares them) is equivalent to sorting by creation time — new rows are again appended near the end of the index, just like auto-increment, while still being generatable independently on any machine with no coordination.
+
+**ULID** (Universally Unique Lexicographically Sortable Identifier) is a closely related, slightly older standard with the same core idea (48-bit timestamp + 80 bits of randomness), commonly encoded in Base32 instead of hex for a shorter string representation.
+
+**Rule of thumb**: UUID v7 (or ULID) is increasingly the recommended default for NEW systems that need distributed ID generation — it gets UUID v4's "no coordination" benefit without eating the index-locality penalty. UUID v4 is still fine for lower-write-volume tables, or when the timestamp-in-the-ID property is undesirable (e.g. it reveals roughly when a record was created, which matters for some privacy-sensitive identifiers).
+
+
+### Snowflake IDs (Twitter Snowflake)
+
+A distributed ID scheme originally built at Twitter, still widely used (Discord, Instagram, and others use variants of it) for systems that need IDs to be both globally unique AND compact, sortable 64-bit integers rather than 128-bit UUIDs.
+
+A Snowflake ID packs three pieces into a single 64-bit integer:
+
+```text
+ 1 bit          41 bits              10 bits          12 bits
+(unused)   (timestamp, ms since epoch)  (machine/worker ID)   (sequence number within that millisecond)
+```
+
+**How it avoids coordination**: each generating machine/service is assigned a unique worker ID upfront (e.g. via configuration or a lightweight registration step) — after that, it can generate IDs completely independently, since uniqueness comes from the COMBINATION of "this millisecond" + "this worker" + "this sequence number within the millisecond," never requiring a round-trip to a shared counter.
+
+**Strengths**: fits in a standard 64-bit integer (same storage cost as auto-increment, half the size of a UUID), roughly time-ordered (good index locality, like UUID v7), globally unique across many machines with no coordination after initial setup, and the embedded timestamp can be extracted directly from the ID for debugging/analytics without a separate `created_at` lookup.
+
+**Weaknesses**: requires running (or depending on) an ID-generation SERVICE or library, and requires managing worker ID assignment (two workers accidentally sharing a worker ID CAN collide) — meaningfully more operational complexity than "just let the database auto-increment" or "just call a UUID library."
+
+
+### Comparison
+
+| Strategy | Size | Coordination needed? | Index locality | Human-readable? | Best for |
+|---|---|---|---|---|---|
+| Auto-increment | 8 bytes | Yes (single DB) | Excellent (always ascending) | Yes | single-database systems, internal/admin-facing IDs |
+| UUID v4 (random) | 16 bytes | No | Poor (random inserts) | No | distributed systems where write volume/index performance isn't critical |
+| UUID v7 / ULID | 16 bytes | No | Good (time-ordered) | No | distributed/sharded systems, the modern default for new designs |
+| Snowflake | 8 bytes | No (after worker-ID setup) | Good (time-ordered) | Somewhat (decodable) | high-throughput distributed systems wanting compact, sortable IDs |
+
+**Practical guidance**:
+- Building a straightforward system on one database, with no sharding on the horizon? Auto-increment is simpler and faster — don't reach for UUIDs "just in case."
+- Building a system that's sharded, or spans multiple services that each need to generate IDs independently (see Microservices vs Monolith in 5.04)? UUID v7/ULID is the simplest correct choice.
+- Exposing IDs in a public API/URL where enumerable sequential IDs would be a security concern (see Security in 5.06)? Use a UUID (any version) or Snowflake ID regardless of database size, or keep the internal auto-increment `id` private and expose a separate random public-facing token instead.
+- Extremely high write throughput across many nodes, where every byte and every bit of index performance matters? Snowflake-style IDs (or a similar custom scheme) are worth the added operational complexity.
+
+
+## 3.03 SQL at Scale
 
 
 ### When to Choose SQL
@@ -957,7 +1069,7 @@ Key rules:
 - **Too many indexes kills write performance** — every INSERT, UPDATE, or DELETE must also update all indexes on that table. A table with 10 indexes pays 10× the write overhead.
 
 
-## 3.03 NoSQL at Scale
+## 3.04 NoSQL at Scale
 
 
 ### What is a NoSQL Database?
@@ -1090,7 +1202,7 @@ Graph databases are optimised for traversing relationships — following edges f
 **Amazon Neptune** — managed graph database on AWS.
 
 
-## 3.04 Caching
+## 3.05 Caching
 
 
 ### What is a Cache?
@@ -1326,7 +1438,7 @@ SET user:456 → hashes to slot 7891 → goes to Node B
 ```
 
 
-## 3.05 Object Storage
+## 3.06 Object Storage
 
 
 ### What is Object Storage?
@@ -1385,7 +1497,7 @@ A **pre-signed URL** is a temporary, time-limited URL that grants direct access 
 Your API servers never touch the file data. Uploads scale independently of your application.
 
 
-## 3.06 Search Engines
+## 3.07 Search Engines
 
 
 ### When Do You Need a Search Engine?
@@ -2708,7 +2820,7 @@ Rather than memorising every service, understand the categories and their primar
 
 | Service | What it does | When to use |
 |---|---|---|
-| **S3** | Object storage for files (covered in 3.04) | Images, videos, backups, static assets |
+| **S3** | Object storage for files (covered in 3.06) | Images, videos, backups, static assets |
 | **EBS** (Elastic Block Store) | Persistent disk attached to an EC2 instance | Database storage, anything requiring a traditional filesystem |
 | **EFS** (Elastic File System) | Shared network filesystem multiple instances can mount simultaneously | When multiple servers need access to the same files |
 

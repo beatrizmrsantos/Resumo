@@ -11,6 +11,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/doc/:docId" element={<DocumentPage />} />
+          <Route path="/doc/:docId/:partId" element={<DocumentPage />} />
         </Routes>
       </main>
     </div>

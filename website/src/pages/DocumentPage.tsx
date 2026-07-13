@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams, useNavigate, Navigate, Link } from 'react-router-dom'
 import { Search, X, ChevronUp, ChevronDown, ArrowLeft, ChevronRight } from 'lucide-react'
 import { documents, documentContents } from '../content'
 import { parseDocument, buildToc, searchDocument } from '../utils/parser'
@@ -9,18 +9,13 @@ import { useMobile } from '../hooks/useMobile'
 import type { SearchMatch } from '../types'
 
 export default function DocumentPage() {
-  const { docId } = useParams<{ docId: string }>()
+  const { docId, partId } = useParams<{ docId: string; partId?: string }>()
+  const navigate = useNavigate()
   const isMobile = useMobile()
   const [showTop, setShowTop] = useState(false)
-  const [selectedPartId, setSelectedPartId] = useState<string | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const pendingScrollRef = useRef<string | null>(null)
   const navLockRef = useRef(false)
-
-  useEffect(() => {
-    setSelectedPartId(null)
-    window.scrollTo(0, 0)
-  }, [docId])
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 320)
@@ -36,6 +31,13 @@ export default function DocumentPage() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
+  // Runs whenever the document OR the part changes — covers normal link clicks,
+  // browser Back/Forward, and direct/deep links opened straight to a part.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    setActiveId('')
+  }, [docId, partId])
+
   const meta = documents.find(d => d.id === docId)
   const rawContent = docId ? documentContents[docId] : undefined
 
@@ -45,16 +47,16 @@ export default function DocumentPage() {
   }, [rawContent])
 
   const selectedPart = useMemo(() => {
-    if (!parsed || !selectedPartId) return null
-    return parsed.parts.find(p => p.id === selectedPartId) ?? null
-  }, [parsed, selectedPartId])
+    if (!parsed || !partId) return null
+    return parsed.parts.find(p => p.id === partId) ?? null
+  }, [parsed, partId])
 
   const toc = useMemo(() => {
     if (!parsed) return []
     const full = buildToc(parsed)
-    if (!selectedPartId) return full
-    return full.filter(e => e.id === selectedPartId)
-  }, [parsed, selectedPartId])
+    if (!partId) return full
+    return full.filter(e => e.id === partId)
+  }, [parsed, partId])
 
   const allSections = useMemo(() => {
     if (!parsed) return []
@@ -92,7 +94,7 @@ export default function DocumentPage() {
 
   // Scroll to pending target after a part renders
   useEffect(() => {
-    if (!pendingScrollRef.current || !selectedPartId) return
+    if (!pendingScrollRef.current || !partId) return
     const target = pendingScrollRef.current
     pendingScrollRef.current = null
     setTimeout(() => {
@@ -102,7 +104,7 @@ export default function DocumentPage() {
         setActiveId(target)
       }
     }, 80)
-  }, [selectedPartId])
+  }, [partId])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -146,11 +148,11 @@ export default function DocumentPage() {
   const navigateTo = useCallback((id: string) => {
     if (!parsed) return
     const part = parsed.parts.find(p => p.sections.some(s => s.id === id))
-    if (part && part.id !== selectedPartId) {
-      // Target is in a different (or unloaded) part — switch first, then scroll
+    if (part && part.id !== partId) {
+      // Target is in a different (or unloaded) part — navigate there (pushes real
+      // browser history so Back/Forward and opening in a new tab both work), then scroll
       pendingScrollRef.current = id
-      setSelectedPartId(part.id)
-      window.scrollTo(0, 0)
+      navigate(`/doc/${docId}/${part.id}`)
       return
     }
     const el = document.getElementById(id)
@@ -158,7 +160,7 @@ export default function DocumentPage() {
       lockNav(id)
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }, [selectedPartId, parsed, lockNav])
+  }, [partId, parsed, lockNav, navigate, docId])
 
   const navigateToMatch = (direction: 'next' | 'prev') => {
     if (!searchResults.length) return
@@ -167,13 +169,6 @@ export default function DocumentPage() {
       : (matchIndex - 1 + searchResults.length) % searchResults.length
     setMatchIndex(next)
     navigateTo(searchResults[next].sectionId)
-  }
-
-  const goBackToOverview = () => {
-    setSelectedPartId(null)
-    setActiveId('')
-    setMobileNavOpen(false)
-    window.scrollTo(0, 0)
   }
 
   const navigateToAndClose = useCallback((id: string) => {
@@ -322,8 +317,9 @@ export default function DocumentPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {selectedPart && (
-            <button
-              onClick={goBackToOverview}
+            <Link
+              to={`/doc/${docId}`}
+              onClick={() => setMobileNavOpen(false)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '6px 12px', borderRadius: 8,
@@ -333,6 +329,7 @@ export default function DocumentPage() {
                 fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 transition: 'all 0.15s',
                 fontFamily: 'var(--font-sans)',
+                textDecoration: 'none',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.background = `${selectedPart.color}20`
@@ -345,7 +342,7 @@ export default function DocumentPage() {
             >
               <ArrowLeft size={13} strokeWidth={2.5} />
               {isMobile ? '' : 'All Parts'}
-            </button>
+            </Link>
           )}
 
           <span style={{ fontSize: 20 }}>{meta.icon}</span>
@@ -570,7 +567,7 @@ export default function DocumentPage() {
                   key={part.id}
                   part={part}
                   chapters={chapters}
-                  onClick={() => { setSelectedPartId(part.id); window.scrollTo(0, 0) }}
+                  to={`/doc/${docId}/${part.id}`}
                 />
               )
             })}
@@ -744,17 +741,17 @@ import type { Part, Section } from '../types'
 interface PartCardProps {
   part: Part
   chapters: Section[]
-  onClick: () => void
+  to: string
 }
 
-function PartCard({ part, chapters, onClick }: PartCardProps) {
+function PartCard({ part, chapters, to }: PartCardProps) {
   const [hovered, setHovered] = useState(false)
   const preview = chapters.slice(0, 7)
   const extra = chapters.length - preview.length
 
   return (
-    <button
-      onClick={onClick}
+    <Link
+      to={to}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -775,6 +772,7 @@ function PartCard({ part, chapters, onClick }: PartCardProps) {
           : '0 2px 8px rgba(0,0,0,0.04)',
         width: '100%',
         fontFamily: 'var(--font-sans)',
+        textDecoration: 'none',
       }}
     >
       {/* Part badge */}
@@ -838,6 +836,6 @@ function PartCard({ part, chapters, onClick }: PartCardProps) {
           Open →
         </span>
       </div>
-    </button>
+    </Link>
   )
 }
