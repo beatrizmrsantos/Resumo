@@ -217,6 +217,16 @@ export function parseDocument(rawContent: string): ParsedDocument {
       continue
     }
 
+    // ##### Sub-sub-heading → subheading block within current section
+    // (must be checked before #### since "##### " also starts with "####")
+    if (/^##### /.test(trimmed) && currentSection) {
+      flushPara()
+      const content = trimmed.replace(/^##### /, '').trim()
+      currentSection.blocks.push({ type: 'subheading', content, spacingBefore: blankCount })
+      blankCount = 0
+      continue
+    }
+
     // #### Sub-heading → heading block within current section
     if (/^#### /.test(trimmed) && currentSection) {
       flushPara()

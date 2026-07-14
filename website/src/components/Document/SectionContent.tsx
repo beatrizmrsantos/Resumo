@@ -255,6 +255,18 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
             )
           }
 
+          if (block.type === 'subheading') {
+            return (
+              <h5 key={i} style={{
+                fontSize: 12.5, fontWeight: 700, color: section.partColor,
+                letterSpacing: '0.2px',
+                marginTop: Math.max(mt, 12), marginBottom: 3,
+              }}>
+                {highlightText(block.content, searchQuery)}
+              </h5>
+            )
+          }
+
           if (block.type === 'detail') {
             const renderDetailBody = (raw: string): React.ReactNode[] => {
               const segments: React.ReactNode[] = []

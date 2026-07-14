@@ -1,5 +1,5 @@
 export interface Block {
-  type: 'paragraph' | 'code' | 'heading' | 'table' | 'detail';
+  type: 'paragraph' | 'code' | 'heading' | 'subheading' | 'table' | 'detail';
   content: string;
   language?: string;
   spacingBefore?: number;
