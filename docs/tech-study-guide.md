@@ -541,6 +541,32 @@ System.out.println(map.get(p2));   // if hashCode() isn't overridden: null! (p2 
 **Rule of thumb**: always override `equals()` and `hashCode()` together (most IDEs generate both at once), never just one.
 
 
+### hashCode() vs equals() — Two Different Jobs
+
+It's easy to think of `hashCode()` and `equals()` as "basically the same thing" since they're always overridden together, but they answer two DIFFERENT questions and are used by DIFFERENT code paths:
+
+| | `equals()` | `hashCode()` |
+|---|---|---|
+| Answers | "Are these two objects logically the same value?" | "Which bucket/slot should this object go in?" |
+| Return type | `boolean` | `int` |
+| Used by | `.equals()` calls, `List.contains()`, `List.indexOf()`, `==` is NEVER this — see == vs .equals() above | `HashMap`, `HashSet`, `Hashtable` — anything hash-based, to locate the right bucket BEFORE it even calls `equals()` |
+| Comparing two objects | compares actual field VALUES | compares two `int`s — much cheaper than comparing every field |
+
+**How a `HashMap` actually uses both, together, in sequence**: when you call `map.get(key)`, Java does NOT scan every entry calling `.equals()` on each one — that would be O(n), defeating the entire purpose of a hash map. Instead:
+
+```java
+// map.get(key) internally does roughly this:
+int bucketIndex = key.hashCode() % numberOfBuckets;   // 1. hashCode() narrows it down to ONE bucket — O(1)
+for (Entry e : buckets[bucketIndex]) {                 // 2. only within that bucket (usually 0-1 entries)...
+    if (e.key.equals(key)) return e.value;               // 3. ...does it fall back to equals() to confirm the exact match
+}
+```
+
+This is exactly why the equals()/hashCode() contract (above) matters so much: `hashCode()` is a cheap, coarse FILTER that narrows the search down to a small bucket; `equals()` is the precise, more expensive CONFIRMATION within that bucket. If `hashCode()` is wrong (e.g. not overridden), step 1 sends the search to the WRONG bucket entirely, and `equals()` in step 3 never even gets a chance to run — this is why a broken `hashCode()` causes `map.get()` to return `null` for a key that IS logically present, even though `equals()` itself is perfectly correct.
+
+**Rule of thumb**: `equals()` is about correctness (are these the same value?); `hashCode()` is about performance (which bucket can I skip straight to?) — a hash-based collection needs BOTH, used together, to be both correct AND fast.
+
+
 ### Pass by Value
 
 Java is ALWAYS pass-by-value — there is no pass-by-reference in Java, which surprises many developers coming from other languages. The nuance is in WHAT value gets passed for objects.
@@ -862,6 +888,13 @@ Wildcards:
 ### Exceptions
 
 
+**Compile time vs runtime**: a Java program's life has two distinct phases (see Compilation vs Execution above), and problems can occur in either one.
+
+- **Compile time**: happens when `javac` translates your `.java` source into bytecode. Compile-time problems are caught BEFORE the program ever runs — a typo, a missing semicolon, calling a method that doesn't exist, or (as we'll see below) failing to handle a checked exception. The program simply refuses to compile until fixed, so this class of bug can never reach a user in production.
+- **Runtime**: happens while the compiled bytecode is actually EXECUTING on the JVM. A runtime problem compiles perfectly fine — the code is syntactically and structurally valid — but something goes wrong while it's running: dividing by zero, accessing a `null` reference, an array index out of bounds, a file that turns out not to exist on disk.
+
+This distinction is exactly what separates Java's two big categories of "something went wrong": **checked exceptions** are Java's mechanism for forcing you to acknowledge certain RUNTIME risks at COMPILE time (the compiler won't let you ignore them); **unchecked exceptions** and **errors** are only ever discovered at runtime, with no compile-time safety net.
+
 In Java, exceptions are objects that represent errors or exceptional conditions.
 
 ```
@@ -882,6 +915,8 @@ Throwable
             ├── IllegalArgumentException
             └── IndexOutOfBoundsException
 ```
+
+**What is an Error?** An `Error` represents a SERIOUS problem that a normal application should not try to catch or recover from — it signals that something has gone wrong at a level below your own code's logic, typically in the JVM itself or the environment it's running in. `OutOfMemoryError` means the JVM has run out of heap space to allocate new objects (see Garbage Collector above); `StackOverflowError` means the call stack has exceeded its size limit, almost always from unbounded/infinite recursion (see Recursion in the Data Structures & Algorithms chapter). Both indicate the application is in a state it likely cannot safely continue from — you can technically `catch (Error e)`, but doing so rarely helps, since the underlying resource problem (no memory, no stack space) is still there.
 
 **Checked Exceptions**: extend Exception (but not RuntimeException). 
 The compiler FORCES you to handle them or declare with throws. They represent recoverable conditions — file not found, database connection failed.
@@ -904,6 +939,21 @@ try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"))) {
 ```
 
 **General rule**: use unchecked exceptions for programming errors (bugs) and checked exceptions for conditions the caller can reasonably try to recover from.
+
+
+### Errors vs Exceptions
+
+Both extend `Throwable` (see the diagram above), and both CAN be thrown/caught with the same `try`/`catch` syntax — but they represent fundamentally different kinds of problem, and Java's convention treats them very differently in practice:
+
+| | Error | Exception |
+|---|---|---|
+| Represents | a serious problem in the JVM/environment, outside the application's control | a problem the APPLICATION itself can reasonably anticipate or cause |
+| Examples | `OutOfMemoryError`, `StackOverflowError` | `NullPointerException`, `IOException`, `SQLException` |
+| Should you catch it? | Generally no — the program usually cannot safely recover | Yes — this is exactly what exceptions are for |
+| Checked or unchecked? | Unchecked (never forced by the compiler) | Can be either (see Checked vs Unchecked above) |
+| Typical cause | resource exhaustion, JVM-level failure | invalid input, a bug in your code, an external system failing |
+
+**Rule of thumb**: write `catch` blocks for `Exception`s (and its subtypes) as part of normal, expected error handling — that's their entire purpose. Leave `Error`s alone in almost all cases; catching an `OutOfMemoryError` and trying to "handle" it rarely works, because the JVM itself is already in trouble, and the correct fix is almost always addressing the ROOT CAUSE (a memory leak — see Garbage Collector above — or genuinely needing more heap) rather than adding a catch block around the symptom.
 
 
 ### Interfaces vs Abstract Classes
@@ -1080,6 +1130,30 @@ List<String> result = names.stream()
     .collect(Collectors.toList());           // collect back into a list
 ```
 
+#### What is a Stream?
+
+A `Stream` is NOT a data structure — unlike a `List` or `Map`, it doesn't store any elements itself, and it holds no place in memory for "all the data at once." Instead, a Stream is a PIPELINE that describes a sequence of computations to run over a SOURCE of data (a collection, an array, a range of numbers, even a file's lines) — conceptually closer to a recipe than to a container.
+
+```java
+List<String> names = List.of("Ana", "Beatriz", "Carlos");
+
+Stream<String> stream = names.stream();          // from a Collection — the most common source
+Stream<Integer> stream2 = Stream.of(1, 2, 3);     // from individual values
+IntStream range = IntStream.range(0, 10);         // from a numeric range (0 to 9)
+Stream<String> arrStream = Arrays.stream(new String[]{"a", "b"});  // from an array
+```
+
+**A stream pipeline has three parts**: a SOURCE (where the data comes from), zero or more INTERMEDIATE operations (transformations, always lazy — see below), and exactly one TERMINAL operation (which actually triggers the whole pipeline to run — see below). Without a terminal operation at the end, nothing in the pipeline ever executes at all — the intermediate operations are just a description of work, not the work itself.
+
+**A stream can only be consumed ONCE**: once a terminal operation runs, that stream is "closed" — calling another operation on the same stream instance throws `IllegalStateException`. If you need to process the same source twice, you must create a NEW stream from it (e.g. call `.stream()` on the collection again).
+
+```java
+Stream<String> s = names.stream();
+s.forEach(System.out::println);   // terminal operation — consumes the stream
+// s.count();                     // IllegalStateException: stream has already been operated upon or closed
+```
+
+
 #### Intermediate operations 
 lazy — only execute when there is a terminal operation
 
@@ -1095,12 +1169,39 @@ peek(consumer)      — inspect without transforming (useful for debugging)
 
 #### Terminal operations (trigger execution)
 
+A terminal operation is what actually PULLS data through the whole pipeline and produces a final result — a value, a collection, or a side effect — instead of another Stream. Because intermediate operations (above) are lazy, NOTHING in a stream pipeline runs at all until a terminal operation is called; this also means a stream, once a terminal operation has run, is considered consumed and cannot be reused (see above).
 
-collect(collector)  — collect into a list, set, or map
-forEach(consumer)   — execute side effect for each element
-count()             — count elements
-findFirst()         — return the first element as Optional
-anyMatch/allMatch   — boolean checks
+```java
+List<String> names = List.of("Ana", "Beatriz", "Carlos");
+
+collect(collector)   — collect into a list, set, map, or any custom container (e.g. Collectors.toList())
+toList()             — shorthand for collect(Collectors.toList()) (Java 16+) — returns an immutable List
+toArray()            — collect into an array instead of a List
+forEach(consumer)    — execute a side effect for each element; returns nothing (void)
+reduce(...)          — combine all elements into a single value (a sum, a concatenation, a running total)
+count()              — count elements — a long
+sum()/average()      — numeric aggregation, available on IntStream/LongStream/DoubleStream specifically
+min()/max()          — the smallest/largest element, given a Comparator
+findFirst()          — return the first element as an Optional (see the Optional section above)
+findAny()            — return ANY matching element as an Optional — can be faster than findFirst() in a parallel stream
+anyMatch/allMatch/noneMatch — boolean checks against a predicate
+```
+
+```java
+// toList() (Java 16+) — the modern, concise way to end a stream pipeline
+List<String> upper = names.stream()
+    .map(String::toUpperCase)
+    .toList();                       // equivalent to .collect(Collectors.toList()), but shorter
+
+// reduce() — combining every element into one value
+int totalLength = names.stream()
+    .map(String::length)
+    .reduce(0, Integer::sum);        // 0 is the starting value; Integer::sum combines two values at a time
+```
+
+**`toList()` vs `collect(Collectors.toList())`**: `toList()` is newer (Java 16+), more concise, and returns an UNMODIFIABLE list; `Collectors.toList()` makes no guarantee about mutability (in practice it's usually mutable) and is needed when targeting an older Java version, or when using a more specific collector like `Collectors.toSet()`, `Collectors.joining()`, or `Collectors.groupingBy()` — `toList()` only ever covers the plain "collect into a List" case.
+
+**Rule of thumb**: every stream pipeline needs exactly one terminal operation to do anything at all — if you write a chain of `.filter()`/`.map()`/`.sorted()` and forget to end it with `.toList()`, `.forEach()`, `.collect()`, or similar, the code compiles fine but silently does nothing when run, since none of the lazy intermediate operations ever actually execute.
 
 
 #### Functional Interfaces
@@ -1194,7 +1295,9 @@ Concurrency in Java is complex because multiple threads share memory.
 **Deadlock**: Thread A waits for the lock that Thread B holds, and Thread B waits for the lock that Thread A holds. Both block forever.
 
 
-- **synchronized**
+
+
+#### synchronized
 
 Every object in Java has an intrinsic lock (also called a monitor). `synchronized` makes a thread acquire that lock before entering the block, and releases it automatically when the block exits (even if an exception is thrown). While one thread holds the lock, any other thread that tries to enter a block synchronized on the same object simply blocks and waits — this is what makes the block **mutually exclusive**, fixing both the visibility problem (like volatile) AND atomicity, since the whole block runs as one uninterruptible unit.
 
@@ -1232,7 +1335,9 @@ public void increment() {
 **Rule of thumb**: use `synchronized` when you need atomicity for compound operations or multi-step invariants across shared state; use `volatile` only for simple single-variable visibility (like a flag), since it's cheaper and never blocks.
 
 
-- **volatile**
+
+
+#### volatile
 
 For performance, each CPU core may keep its own cached copy of a variable (e.g. in a register or CPU cache) instead of always reading/writing straight to main memory. This means one thread can update a variable and another thread — running on a different core — may keep seeing a stale, cached value indefinitely, a problem called a **visibility** issue.
 
@@ -1265,7 +1370,11 @@ public void increment() { count++; }   // STILL a race condition!
 
 **Rule of thumb**: use `volatile` for simple flags or single variables that are only ever written by one thread and read by others (like a shutdown flag). For compound operations (increment, check-then-act), you need `synchronized` or an atomic class like `AtomicInteger` instead.
 
-- **ExecutorService**- pool of reusable threads. You don't create threads manually:
+
+
+#### Executor Service
+
+Pool of reusable threads. You don't create threads manually:
 
 ```java
 ExecutorService pool = Executors.newFixedThreadPool(4);
@@ -1273,7 +1382,10 @@ Future<Integer> future = pool.submit(() -> heavyComputation());
 Integer result = future.get();    // blocks until result is ready
 ```
 
-**CompletableFuture** (Java 8+)- non-blocking async, with chaining:
+
+#### Completable Future (Java 8+)
+
+Non-blocking async, with chaining:
 
 
 ```java
@@ -1413,9 +1525,9 @@ Object result = method.invoke(userInstance);
 
 ### Design Patterns
 
-Reusable, named solutions to recurring software design problems — a shared vocabulary for discussing architecture.
+Reusable, named solutions to recurring software design problems — a shared vocabulary for discussing architecture. The classic "Gang of Four" patterns are grouped into three categories: **Creational** (how objects are created — Singleton, Factory, Builder below), **Structural** (how objects are composed into larger structures — Decorator, Adapter, Facade below), and **Behavioral** (how objects communicate and share responsibility — Strategy, Observer below).
 
-**Singleton** — ensures a class has exactly ONE instance, with a single global access point. Common for shared resources like configuration or a connection pool.
+**Singleton** (creational) — ensures a class has exactly ONE instance, with a single global access point. Common for shared resources like configuration or a connection pool.
 
 ```java
 class DatabaseConnection {
@@ -1426,7 +1538,7 @@ class DatabaseConnection {
 DatabaseConnection.getInstance();     // always returns the SAME instance
 ```
 
-**Factory** — centralizes object creation logic behind a method, so the caller doesn't need to know which concrete class to instantiate.
+**Factory** (creational) — centralizes object creation logic behind a method, so the caller doesn't need to know which concrete class to instantiate.
 
 ```java
 interface Payment { }
@@ -1445,7 +1557,7 @@ class PaymentFactory {
 Payment payment = PaymentFactory.create("paypal");    // caller doesn't need to know the concrete class
 ```
 
-**Builder** — constructs a complex object step by step, avoiding a constructor with many (often optional) parameters ("telescoping constructor" problem).
+**Builder** (creational) — constructs a complex object step by step, avoiding a constructor with many (often optional) parameters ("telescoping constructor" problem).
 
 ```java
 class Pizza {
@@ -1468,7 +1580,7 @@ class Pizza {
 Pizza pizza = new Pizza.Builder().size("large").cheese(true).build();
 ```
 
-**Strategy** — defines a family of interchangeable algorithms behind a common interface, letting the algorithm be swapped at runtime (this is exactly the shape of the PaymentGateway example in the Abstraction section above).
+**Strategy** (behavioral) — defines a family of interchangeable algorithms behind a common interface, letting the algorithm be swapped at runtime (this is exactly the shape of the PaymentGateway example in the Abstraction section above).
 
 ```java
 interface DiscountStrategy { double apply(double price); }
@@ -1482,6 +1594,122 @@ class Order {
 }
 new Order(new TenPercentOff()).total(100);   // 90.0
 ```
+
+**Decorator** (structural) — wraps an object with another object implementing the SAME interface, adding new behavior BEFORE/AFTER delegating to the wrapped object — without touching the original class's code, and without the subclass-explosion that inheriting a new class for every combination of features would cause.
+
+```java
+interface Coffee { double cost(); String description(); }
+
+class SimpleCoffee implements Coffee {
+    public double cost() { return 2.0; }
+    public String description() { return "Coffee"; }
+}
+
+abstract class CoffeeDecorator implements Coffee {           // implements the SAME interface it wraps
+    protected final Coffee wrapped;
+    CoffeeDecorator(Coffee wrapped) { this.wrapped = wrapped; }
+}
+
+class MilkDecorator extends CoffeeDecorator {
+    MilkDecorator(Coffee wrapped) { super(wrapped); }
+    public double cost() { return wrapped.cost() + 0.5; }               // adds behavior, then delegates
+    public String description() { return wrapped.description() + " + Milk"; }
+}
+
+class SugarDecorator extends CoffeeDecorator {
+    SugarDecorator(Coffee wrapped) { super(wrapped); }
+    public double cost() { return wrapped.cost() + 0.2; }
+    public String description() { return wrapped.description() + " + Sugar"; }
+}
+
+// Decorators can be stacked/combined freely at runtime, in any order —
+// no need for a MilkAndSugarCoffee subclass, or one class per combination:
+Coffee order = new SugarDecorator(new MilkDecorator(new SimpleCoffee()));
+System.out.println(order.description() + " = $" + order.cost());   // "Coffee + Milk + Sugar = $2.7"
+```
+
+This is exactly the pattern Java I/O streams are built on (`new BufferedReader(new FileReader("file.txt"))` — each layer wraps the previous one, adding buffering, decoding, etc.), and it's also the conceptual model behind Spring's AOP-based features like `@Transactional` (see @TRANSACTIONAL below) — Spring generates a proxy that "decorates" your bean with transaction-management behavior around your actual method call.
+
+**Observer** (behavioral) — defines a one-to-many dependency: when one object (the "subject") changes state, all its registered "observers" are notified automatically, without the subject needing to know any concrete detail about them beyond the shared interface.
+
+```java
+interface OrderObserver { void onOrderPlaced(String orderId); }
+
+class EmailNotifier implements OrderObserver {
+    public void onOrderPlaced(String orderId) { System.out.println("Email sent for " + orderId); }
+}
+class InventoryUpdater implements OrderObserver {
+    public void onOrderPlaced(String orderId) { System.out.println("Inventory updated for " + orderId); }
+}
+
+class OrderService {
+    private final List<OrderObserver> observers = new ArrayList<>();
+    void subscribe(OrderObserver o) { observers.add(o); }
+
+    void placeOrder(String orderId) {
+        // ... save the order ...
+        for (OrderObserver o : observers) o.onOrderPlaced(orderId);   // notify everyone, without knowing who they are
+    }
+}
+
+OrderService service = new OrderService();
+service.subscribe(new EmailNotifier());
+service.subscribe(new InventoryUpdater());
+service.placeOrder("order-123");   // both observers react, independently
+```
+
+This is the same underlying idea as GUI event listeners (`button.addEventListener` in the JavaScript chapter), Java's own `PropertyChangeListener`, and — at a larger architectural scale — the publish/subscribe messaging pattern used by message queues (see the Message Queues section in the system design guide).
+
+**Adapter** (structural) — converts the interface of an existing class into another interface that client code expects, letting incompatible interfaces work together without modifying either side.
+
+```java
+// A third-party/legacy class with an interface you cannot change
+class LegacyPrinter { void printOldFormat(String text) { System.out.println("[Legacy] " + text); } }
+
+// The interface YOUR application actually expects
+interface ModernPrinter { void print(String text); }
+
+// Adapter bridges the two — translates calls from one interface to the other
+class PrinterAdapter implements ModernPrinter {
+    private final LegacyPrinter legacyPrinter;
+    PrinterAdapter(LegacyPrinter legacyPrinter) { this.legacyPrinter = legacyPrinter; }
+    public void print(String text) { legacyPrinter.printOldFormat(text); }   // translates the call
+}
+
+ModernPrinter printer = new PrinterAdapter(new LegacyPrinter());
+printer.print("Hello");   // application code only ever talks to ModernPrinter
+```
+
+A very common real-world example: wrapping a third-party payment SDK (with its own vendor-specific method names) behind YOUR OWN `PaymentGateway` interface (see the Abstraction section above), so the rest of the application never depends directly on that vendor's specific API — swapping vendors later only means writing a new Adapter, not touching every caller.
+
+**Facade** (structural) — provides a single, simplified interface in front of a complex subsystem made of many interacting classes, hiding that complexity from client code.
+
+```java
+// A complex subsystem with several classes that must be coordinated correctly
+class InventoryService { boolean reserve(String sku, int qty) { return true; } }
+class PaymentService { boolean charge(String cardToken, double amount) { return true; } }
+class ShippingService { void scheduleDelivery(String orderId) { } }
+
+// Facade — one simple method hides the coordination between three subsystems
+class OrderFacade {
+    private final InventoryService inventory = new InventoryService();
+    private final PaymentService payment = new PaymentService();
+    private final ShippingService shipping = new ShippingService();
+
+    void placeOrder(String sku, int qty, String cardToken, double amount, String orderId) {
+        if (!inventory.reserve(sku, qty)) throw new IllegalStateException("Out of stock");
+        if (!payment.charge(cardToken, amount)) throw new IllegalStateException("Payment failed");
+        shipping.scheduleDelivery(orderId);
+    }
+}
+
+new OrderFacade().placeOrder("SKU-1", 1, "tok_123", 49.99, "order-123");
+// Caller doesn't need to know inventory/payment/shipping exist, or in what order to call them
+```
+
+The Service layer in the Spring Boot chapter's layered architecture is effectively this pattern in practice — Controllers call a simple Service method, which internally coordinates multiple Repositories and other collaborators.
+
+**Rule of thumb**: reach for Decorator when you need to add optional, stackable behavior to an object without subclassing for every combination; Observer when multiple parts of a system need to react to an event without being tightly coupled to whoever triggers it; Adapter when integrating a class whose interface doesn't match what your code expects; Facade when you want to hide a genuinely complex subsystem behind one simple entry point.
 
 
 ### SOLID Principles
@@ -12138,26 +12366,43 @@ SHOW TABLE STATUS WHERE Name = 'orders';   -- shows which engine a table actuall
 
 ### ACID Properties
 
+ACID is a set of four guarantees a database makes about how transactions behave — the whole point is RELIABILITY: even when multiple transactions run at the same time, or the server crashes mid-write, or a power outage hits at the worst possible moment, the database must never be left in a broken, half-updated, or inconsistent state. Without these guarantees, applications would need to defend against data corruption themselves, in every single piece of code that touches the database — ACID means that defense is built into the database engine itself, once, correctly, instead of being re-implemented (and likely gotten wrong) by every application that uses it.
 
 **Atomicity** — a transaction is all-or-nothing. If you transfer €100 between accounts, both the debit and the credit happen together, or neither does. No partial updates.
 
 
-**Consistency** — a transaction brings the database from one valid state to another. All constraints (NOT NULL, FOREIGN KEY, UNIQUE, CHECK) are enforced. A transaction that would violate a constraint is rolled back entirely.
+**Consistency** — a transaction can only take the database from one VALID state to another valid state; it can never leave the data in a state that breaks the rules the schema defines. "Valid" here means every constraint holds: `NOT NULL`, `FOREIGN KEY`, `UNIQUE`, `CHECK` (see Constraints in the SQL chapter), plus any triggers or cascading rules the schema defines. If even one statement inside a transaction would violate any of these rules, the ENTIRE transaction is rolled back — none of it is allowed to commit, not just the offending statement.
+
+```sql
+-- accounts.balance has a CHECK (balance >= 0) constraint
+BEGIN;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;   -- say this makes balance = -20
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+COMMIT;
+-- The CHECK constraint fails on the first UPDATE, so Consistency guarantees
+-- the WHOLE transaction is rejected — account 2 never gets credited either,
+-- and the database is left exactly as it was before BEGIN, not in some
+-- partially-updated state that happens to violate the balance >= 0 rule.
+```
+
+**Consistency vs Atomicity — a common point of confusion**: they sound similar but guarantee different things. Atomicity is about the TRANSACTION itself — did every statement in it run, or none of them? Consistency is about the DATA — after the transaction, does it still satisfy every rule the schema defines? A transaction can be perfectly atomic (all its statements ran, or none did) and still be rejected for breaking consistency (e.g. the example above: both UPDATEs technically "could" run atomically, but the database refuses to commit them because the result would violate a `CHECK` constraint). In practice the two work together: the database uses atomicity (all-or-nothing execution) as the MECHANISM to guarantee consistency (never committing an invalid end state).
+
+**Don't confuse this with the "C" in the CAP theorem** (see CAP Theorem in the NoSQL chapter) — that's a completely different meaning of "consistency," despite the same word. ACID's Consistency is about data always satisfying schema-defined RULES/constraints. CAP's Consistency is about every read seeing the most recent WRITE, especially across multiple replicas/nodes in a distributed system. A database can satisfy one without the other — this naming collision is a well-known source of confusion in interviews, so it's worth being explicit about which "consistency" is meant.
 
 
 **Isolation** — concurrent transactions do not interfere with each other. Each transaction sees a snapshot of the database, as if it were running alone. Isolation levels trade off between data accuracy and concurrency:
 
 
-**Read Uncommitted** — can read another transaction's uncommitted changes (dirty read)
+- **Read Uncommitted** — can read another transaction's uncommitted changes (dirty read)
 
 
-**Read Committed** — only reads committed data (most databases' default)
+- **Read Committed** — only reads committed data (most databases' default)
 
 
-**Repeatable Read** — same row always returns same value within a transaction (MySQL default)
+- **Repeatable Read** — same row always returns same value within a transaction (MySQL default)
 
 
-**Serializable** — fully isolated, as if transactions ran one at a time (slowest)
+- **Serializable** — fully isolated, as if transactions ran one at a time (slowest)
 
 
 **Durability** — once a transaction commits, it is permanent. Even if the server crashes, the data survives. InnoDB achieves this with a Write-Ahead Log (WAL): changes are written to the log before the data files, so they can be replayed on recovery.
