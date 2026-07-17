@@ -2803,62 +2803,64 @@ Deploying across multiple AZs protects against a single data centre failure. Dep
 
 ### Core Service Categories
 
-Rather than memorising every service, understand the categories and their primary AWS equivalents — other clouds (GCP, Azure) have equivalent services with different names.
+Rather than memorising every service, understand the categories — the underlying PROBLEM each one solves is what actually matters in an interview, not the brand name. AWS and Microsoft Azure are the two clouds referenced most often in interviews, so each table below lists both side by side; GCP has equivalents too (see the Google Cloud Platform chapter), just with yet another set of names.
 
 **Compute — running your code:**
 
-| Service | What it does | When to use |
-|---|---|---|
-| **EC2** (Elastic Compute Cloud) | Virtual machines you fully control | You need full OS control, custom runtimes, or are lifting-and-shifting an existing app |
-| **ECS / EKS** | Run Docker containers (ECS = AWS-managed, EKS = Kubernetes) | Containerised microservices at scale |
-| **Lambda** | Serverless functions — run code without managing servers | Event-driven, short-lived tasks (image resize on upload, webhook handler, scheduled jobs) |
-| **Fargate** | Run containers without managing the underlying EC2 instances | Containers without the EC2 management overhead |
+| AWS Service | Azure Equivalent | What it does | When to use |
+|---|---|---|---|
+| **EC2** (Elastic Compute Cloud) | **Virtual Machines (VMs)** | Virtual machines you fully control | You need full OS control, custom runtimes, or are lifting-and-shifting an existing app |
+| **ECS / EKS** | **Container Instances (ACI) / Azure Kubernetes Service (AKS)** | Run Docker containers (ECS/ACI = simpler managed containers, EKS/AKS = full Kubernetes) | Containerised microservices at scale |
+| **Lambda** | **Azure Functions** | Serverless functions — run code without managing servers | Event-driven, short-lived tasks (image resize on upload, webhook handler, scheduled jobs) |
+| **Fargate** | **Container Apps** | Run containers without managing the underlying VMs | Containers without the server management overhead |
 
 
 
 **Storage:**
 
-| Service | What it does | When to use |
-|---|---|---|
-| **S3** | Object storage for files (covered in 3.06) | Images, videos, backups, static assets |
-| **EBS** (Elastic Block Store) | Persistent disk attached to an EC2 instance | Database storage, anything requiring a traditional filesystem |
-| **EFS** (Elastic File System) | Shared network filesystem multiple instances can mount simultaneously | When multiple servers need access to the same files |
+| AWS Service | Azure Equivalent | What it does | When to use |
+|---|---|---|---|
+| **S3** | **Blob Storage** | Object storage for files (covered in 3.06) | Images, videos, backups, static assets |
+| **EBS** (Elastic Block Store) | **Managed Disks** | Persistent disk attached to a VM | Database storage, anything requiring a traditional filesystem |
+| **EFS** (Elastic File System) | **Azure Files** | Shared network filesystem multiple instances can mount simultaneously | When multiple servers need access to the same files |
 
 
 
 **Database:**
 
-| Service | What it is | Underlying engine |
-|---|---|---|
-| **RDS** | Managed relational database | PostgreSQL, MySQL, MariaDB |
-| **Aurora** | AWS-optimised relational DB, faster and more available than RDS | MySQL or PostgreSQL compatible |
-| **DynamoDB** | Managed NoSQL key-value / document store | AWS proprietary |
-| **ElastiCache** | Managed in-memory cache | Redis or Memcached |
-| **Redshift** | Managed data warehouse for analytics | PostgreSQL-based, columnar storage |
+| AWS Service | Azure Equivalent | What it is | Underlying engine |
+|---|---|---|---|
+| **RDS** | **Azure Database for PostgreSQL/MySQL, or Azure SQL Database** | Managed relational database | PostgreSQL, MySQL, MariaDB (SQL Server on Azure's own SQL Database) |
+| **Aurora** | **Azure SQL Database Hyperscale** | Cloud-optimised relational DB, faster and more available than the standard managed offering | MySQL or PostgreSQL compatible (Aurora) |
+| **DynamoDB** | **Cosmos DB** | Managed NoSQL database | AWS proprietary (DynamoDB is key-value/document only; Cosmos DB additionally supports multiple APIs — document, graph, column-family) |
+| **ElastiCache** | **Azure Cache for Redis** | Managed in-memory cache | Redis or Memcached (ElastiCache); Redis (Azure Cache for Redis) |
+| **Redshift** | **Azure Synapse Analytics** | Managed data warehouse for analytics | PostgreSQL-based, columnar storage (Redshift) |
 
 
 
 **Networking:**
 
-| Service | What it does |
-|---|---|
-| **VPC** | Your private isolated network inside AWS — subnets, security groups, routing |
-| **ALB** (Application Load Balancer) | Layer 7 HTTP/HTTPS load balancer with path-based routing |
-| **NLB** (Network Load Balancer) | Layer 4 TCP/UDP load balancer, extreme throughput |
-| **Route 53** | DNS service — domain registration, routing policies (latency, failover, geolocation) |
-| **CloudFront** | AWS CDN — covered in 2.04 |
-| **API Gateway** | Managed API gateway — covered in 2.05 |
+| AWS Service | Azure Equivalent | What it does |
+|---|---|---|
+| **VPC** | **Virtual Network (VNet)** | Your private isolated network inside the cloud — subnets, security groups/NSGs, routing |
+| **ALB** (Application Load Balancer) | **Application Gateway** | Layer 7 HTTP/HTTPS load balancer with path-based routing |
+| **NLB** (Network Load Balancer) | **Azure Load Balancer (Standard tier)** | Layer 4 TCP/UDP load balancer, extreme throughput |
+| **Route 53** | **Azure DNS / Traffic Manager** | DNS service — domain registration, routing policies (latency, failover, geolocation) |
+| **CloudFront** | **Azure Front Door / Azure CDN** | CDN — covered in 2.04 |
+| **API Gateway** | **API Management** | Managed API gateway — covered in 2.05 |
 
 
 
 **Messaging & events:**
 
-| Service | What it does |
-|---|---|
-| **SQS** (Simple Queue Service) | Managed message queue — equivalent to RabbitMQ |
-| **SNS** (Simple Notification Service) | Pub/sub fan-out — one message, many subscribers (email, SMS, SQS, Lambda) |
-| **MSK** (Managed Streaming for Kafka) | Managed Apache Kafka |
-| **EventBridge** | Event bus for routing events between AWS services and external SaaS apps |
+| AWS Service | Azure Equivalent | What it does |
+|---|---|---|
+| **SQS** (Simple Queue Service) | **Azure Queue Storage / Service Bus (Queues)** | Managed message queue — equivalent to RabbitMQ |
+| **SNS** (Simple Notification Service) | **Service Bus (Topics) / Event Grid** | Pub/sub fan-out — one message, many subscribers (email, SMS, SQS/Queue Storage, Lambda/Functions) |
+| **MSK** (Managed Streaming for Kafka) | **Event Hubs** | Managed Kafka-compatible event streaming |
+| **EventBridge** | **Event Grid** | Event bus for routing events between cloud services and external SaaS apps |
+
+**Rule of thumb**: don't memorise this table for its own sake — in an interview, naming EITHER the AWS or the Azure service for a given need (managed relational database, object storage, serverless functions) is equally valid. What interviewers actually listen for is whether you reach for the RIGHT CATEGORY of service (e.g. recognizing you need a managed NoSQL store, or a CDN, or a pub/sub event bus) — the specific brand name is secondary to understanding what problem that category of service solves.
 
 
 ### Serverless — Lambda & FaaS
@@ -2967,7 +2969,41 @@ services:
 ```
 
 
-The key difference between Docker and a virtual machine: a VM virtualises an entire computer including the OS kernel — gigabytes of disk, seconds to start. A container shares the host OS kernel and only packages the application layer — images are megabytes and containers start in milliseconds.
+**What is a Virtual Machine?**
+
+A Virtual Machine (VM) is a full, self-contained emulation of a computer, running on top of a physical machine. A **hypervisor** sits between the physical hardware and the VMs, dividing that hardware's CPU, memory, and disk into isolated slices — each slice runs its OWN complete operating system (its own kernel), as if it had the machine entirely to itself. This is exactly what AWS EC2 gives you (see IaaS, PaaS, SaaS above): each EC2 instance is a VM with its own guest OS running on AWS's shared physical hardware.
+
+Because each VM boots a full OS from scratch, it takes real disk space (gigabytes) and real time to start (seconds to minutes) — but the isolation is strong: a VM behaves like a genuinely separate computer, so a problem in one VM can't directly reach another sharing the same hardware.
+
+
+**Docker (Containers) vs Virtual Machines**
+
+A container takes a fundamentally different approach: instead of emulating a whole computer per app, every container on a machine SHARES the host machine's one running OS kernel, and Docker uses OS-level isolation features (Linux namespaces and cgroups) to make each container believe it has an isolated filesystem, network, and process space — without actually booting a separate operating system for each one.
+
+```text
+┌─────────────────────────────────────────────────┐
+│                  Physical Server                    │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐        │
+│  │ Container 1 │  │ Container 2 │  │ Container 3 │        │
+│  │   App A      │  │   App B      │  │   App C      │        │
+│  └───────────┘  └───────────┘  └───────────┘        │
+│  ───────────────── Docker Engine ───────────────────── │
+│  ───────────────── Host OS (shared kernel) ─────────── │
+│  ───────────────────── Hardware ───────────────────── │
+└─────────────────────────────────────────────────┘
+```
+
+| | Virtual Machine | Container (Docker) |
+|---|---|---|
+| What's virtualised | the hardware — each VM runs its own full OS kernel | the OS — containers share the host's one kernel |
+| Image/disk size | gigabytes (a whole OS is included) | megabytes (just the app + its dependencies) |
+| Startup time | seconds to minutes (boots a full OS) | milliseconds (just starts a process) |
+| Isolation strength | strong — a separate kernel per VM | weaker — a kernel-level exploit could in theory affect containers sharing that kernel |
+| Density per host | fewer VMs per machine (each carries full OS overhead) | many more containers per machine (minimal per-container overhead) |
+
+This is exactly why the "Image" and "Container" concepts above are so lightweight compared to spinning up a new EC2 instance for every service: a Docker image only needs to package YOUR application and its direct dependencies, not an entire guest operating system, and starting a container is just starting an isolated process on a kernel that's already running — not booting a computer.
+
+**Rule of thumb**: reach for VMs when you need strong isolation between untrusted workloads (e.g. running code from different customers on shared hardware) or need to run a different OS entirely than the host; reach for containers for packaging and deploying your OWN application code, where speed, density, and "build once, run anywhere" consistency matter more than kernel-level isolation. In practice, most cloud infrastructure today is containers running INSIDE VMs — e.g. Kubernetes nodes (see below) are themselves usually EC2 instances, combining a VM's isolation boundary around a group of tenants with a container's speed and density within it.
 
 
 
