@@ -3114,20 +3114,10 @@ Functional:
 - Optional: custom alias, expiry date
 
 Non-Functional:
-- 100M new URLs/day (~1,160 writes/second)
-- 10B redirects/day (~116,000 reads/second) → read-heavy (100:1 ratio)
-- Redirect latency < 100ms (p99)
-- 99.99% availability
-- Short codes not guessable
-
-
-#### Estimates
-
-```text
-Storage per URL: ~500 bytes
-100M URLs/day × 500 bytes = 50 GB/day
-5 years: ~91 TB
-```
+- Extremely read-heavy — redirects happen far more often than new URLs are created, so the read path is what must scale (see Scalability, 5.01)
+- Low-latency redirects — a slow redirect is a slow page load for every link shared anywhere on the web
+- Highly available — this is infrastructure other services silently depend on; an outage breaks every shared link at once (see Availability & Fault Tolerance, 5.03)
+- Short codes must not be guessable — a user should never be able to enumerate other people's links by incrementing a code
 
 
 #### High-Level Design
@@ -3145,18 +3135,24 @@ Cache       Database
 (Redis)     (PostgreSQL)
 ```
 
+This is the standard read-heavy shape from Scalability (5.01): stateless API servers behind a Load Balancer (2.02) so capacity scales horizontally, a cache in front of the database to absorb the bulk of read traffic (see Caching, 3.05), and a CDN (2.04) caching the most popular redirects at the edge, closer to users and further from the origin entirely.
+
 
 #### Short Code Generation
 
-Use a **distributed counter + Base62 encoding**:
+The core design decision is how to generate the `short_code` — this is really an ID Generation problem (see 3.02), just with an unusual extra constraint: the ID is public and must not be guessable.
+
+**Option A — distributed counter + Base62 encoding**:
 
 ```text
 1. Atomic counter in Redis: INCR global_counter → returns 1234567
-2. Encode 1234567 in Base62 → "5E7" (6 chars = 56B combinations)
+2. Encode 1234567 in Base62 (a-z, A-Z, 0-9) → "5E7"
 3. Store: short_code="5E7", long_url="https://..."
 ```
 
-This is collision-free and compact.
+Compact and collision-free by construction — but a plain incrementing counter, even Base62-encoded, is still SEQUENTIAL: two URLs created moments apart get adjacent codes, which leaks creation order and volume, and makes codes somewhat guessable by walking nearby values (the same IDOR-style concern raised in 3.02).
+
+**Option B — random code, checked for collisions**: generate a random string (or hash-and-truncate the long URL) and check the database for a collision before saving, retrying with a new random value on the rare occasion one occurs. Not sequential, so nothing about a code reveals when or in what order it was created — the better choice when unguessability is a hard requirement, as it is here.
 
 
 #### Database Schema
@@ -3182,19 +3178,127 @@ GET /abc123
 1. Check Redis cache for key "abc123"
 2. Cache hit → return 301/302 redirect to long_url
 3. Cache miss → SELECT long_url FROM urls WHERE short_code='abc123'
-4. Store in Redis (TTL: 24h)
+4. Store in Redis
 5. Return 301 redirect
 ```
+
+This is the cache-aside pattern from the Caching chapter (3.05): the cache is checked first, and only a miss falls through to the database, which then populates the cache for next time.
 
 Use **301 (Permanent)** if the redirect never changes — browsers cache it and stop hitting your server. Use **302 (Temporary)** if you want every redirect to hit your server (for analytics tracking).
 
 
 #### Bottlenecks & Solutions
 
-- **Read bottleneck** → Redis cache + CDN edge caching of 301s
-- **DB scale** → shard by short_code hash when reaching hundreds of TB
-- **Viral URL spike** → CDN absorbs it; edge serves redirect without hitting origin
-- **Counter SPOF** → shard the counter (multiple Redis nodes, each owns a range)
+- **Read bottleneck** → Redis cache + CDN edge caching of 301s (see 2.04 and 3.05)
+- **DB scale** → shard by short_code hash as the dataset grows (see Sharding under Database Fundamentals, 3.01)
+- **Viral URL spike** → CDN absorbs it; edge serves the redirect without hitting the origin at all
+- **Counter SPOF** → if using Option A, shard the counter itself (multiple Redis nodes, each owning a range) so it isn't a single point of failure
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — What happens if two requests try to create the same custom alias at the same time?</summary>
+
+This is a race condition on `short_code` uniqueness. The `UNIQUE` constraint on `urls.short_code` (see Constraints in the SQL chapter) is the actual source of truth — whichever INSERT reaches the database first wins, and the second one fails the constraint. The API should catch that failure and return a "this alias is already taken" error to the second requester, rather than trying to coordinate the check-then-insert in application code, which would have the same race window.
+
+</details>
+
+<details>
+<summary>Show Answer — How do you stop the service being used for phishing (redirecting to malicious sites)?</summary>
+
+**Why this is a real risk specific to a URL shortener**: the whole point of the service is to hide a long URL behind a short one — which means it also hides the ACTUAL destination from the user until they've already clicked. A phishing link disguised as `short.ly/abc123` carries whatever trust users place in your domain, and the user has no way to see it actually leads to a fake banking site until it's too late. This is exactly why no single check is considered sufficient — the standard approach is several layers of defense, each catching what the others miss:
+
+- **Check at creation time**: look up the destination URL against a threat-intelligence blocklist (e.g. Google Safe Browsing, PhishTank) before the short link is even created, and reject or flag known-malicious destinations immediately.
+
+- **Re-check periodically, not just once**: a destination that was clean when the link was created can be compromised later (a legitimate site gets hacked, or a domain is abandoned and re-registered by a bad actor). A background job that re-scans existing URLs against the blocklist catches this drift — a one-time check at creation is not enough on its own.
+
+- **Rate-limit link creation per account**: a bad actor's playbook is usually to mass-generate many malicious short links quickly, hoping some slip past detection before being caught and removed. Rate-limiting creation per user/API key (see API Gateway & Rate Limiting, 2.05) caps the blast radius of any single compromised or malicious account.
+
+- **An interstitial warning page for unverified or suspicious links**: rather than redirecting instantly, show a brief "you are leaving short.ly and going to X — continue?" page for links that are new, from a low-reputation account, or that a scan flagged as uncertain (not confirmed malicious, but not fully trusted either). This trades a small amount of friction for a real safety net, and is standard practice on major link shorteners.
+
+- **A fast reporting and takedown path**: users WILL click a phishing link that slipped through every automated check — so a simple "report this link" action that a human or automated system can act on quickly is a necessary last line of defense, not an optional extra.
+
+- **Anomaly monitoring on click patterns**: a sudden, sharp spike in clicks on a link created moments ago (typical of a phishing campaign blasted out over email/SMS) is a strong signal worth alerting on even before any content-based check flags it — pattern-based detection catches malicious links that a content blocklist has simply never seen before.
+
+**The underlying principle**: no single layer here is bulletproof (blocklists lag behind new threats, rate limiting doesn't stop a single well-behaved-looking malicious link, warning pages can be dismissed) — the defense works because the layers cover each other's blind spots, which is the same defense-in-depth reasoning used throughout the Security chapter (5.06).
+
+</details>
+
+<details>
+<summary>Show Answer — How would you add click analytics without slowing down the redirect path?</summary>
+
+Never write analytics synchronously on the hot redirect path — that would add latency to every single redirect for the sake of a background concern. Instead, publish a lightweight "click" event to a message queue (see Message Queues & Event-Driven Architecture, 4.02) and return the redirect immediately; a separate consumer aggregates click events into an analytics store asynchronously, fully decoupled from redirect latency.
+
+</details>
+
+<details>
+<summary>Show Answer — What happens if the Redis cache goes down?</summary>
+
+The system should degrade, not fail outright: every request simply falls through to the database on a cache miss (see the cache-aside pattern in 3.05), so redirects keep working, just slower and with more load hitting the database directly. This is why the database must be sized to survive a full cache outage, at least temporarily, rather than treating the cache as load-bearing for correctness.
+
+</details>
+
+<details>
+<summary>Show Answer — Why a relational database here instead of a NoSQL store?</summary>
+
+The access pattern is a single, simple lookup by `short_code` — no joins, no complex queries — which a NoSQL key-value store would actually serve well too. PostgreSQL is a perfectly reasonable choice specifically because the DATA is simple and relationships are minimal (see SQL vs NoSQL trade-offs in 3.04): each row stands alone, nothing needs to be queried together across tables, and the strict schema of a relational table (`short_code`, `long_url`, `expires_at`, ...) is a natural fit for data that's already uniform and well-structured.
+
+Where PostgreSQL pulls ahead is the `UNIQUE` constraint on `short_code` (see Constraints in the SQL chapter) — it gives a hard, database-enforced correctness guarantee against two different long URLs ending up mapped from the same code, exactly the race condition discussed in the first Follow-Up Question above. A key-value store like DynamoDB is an equally valid answer, since it would serve the read-by-key pattern just as fast and would scale writes more easily — you'd just need to re-implement that uniqueness guarantee yourself (a conditional write) instead of getting it from the database for free. Naming that alternative, and WHY the access pattern makes either one reasonable, is what an interviewer is really listening for.
+
+</details>
+
+<details>
+<summary>Show Answer — What type of load balancer, and which algorithm, would you put in front of the API servers?</summary>
+
+An **L7 (Application) load balancer** — one that reads the actual HTTP request (path, headers, cookies) rather than just forwarding raw packets, unlike a lower-level L4 balancer that only sees IP/port (see Layer 4 vs Layer 7 Load Balancing, 2.02) — is the natural fit: it can terminate TLS once at the edge, and — even though this service is simple — L7 gives you path-based routing for free if creation (`POST /urls`) and redirect (`GET /{code}`) ever need different backend pools or different rate limits. For the algorithm, **Round Robin** — cycling through servers in fixed order, 1→2→3→1→2→3... (2.02) — is enough: the API servers are stateless, every redirect lookup costs roughly the same amount of work, and there's no session affinity to preserve — the harder cases for Round Robin (wildly uneven request cost, server-held session state) don't apply here.
+
+</details>
+
+<details>
+<summary>Show Answer — What authentication/authorization would you use, and where?</summary>
+
+The redirect path (`GET /{code}`) stays fully public and unauthenticated — anyone with the link must be able to use it, that's the whole point of the service. Creating a link is where auth becomes a design choice: allow fully anonymous creation (simplest, but rate-limited harder per IP since there's no account to rate-limit against), or require an API key/account for a higher rate limit, custom aliases, and a "my links" dashboard. If accounts exist, authorization is a simple ownership check — "does this link belong to this account?" — rather than full **RBAC** (Role-Based Access Control: users get assigned roles like admin/editor/viewer, and permissions attach to the role rather than the individual user — see Authentication & Authorisation in the Security chapter, 5.06); a role system only becomes relevant if you later add admin/moderation capabilities (e.g. staff who can take down reported links).
+
+</details>
+
+<details>
+<summary>Show Answer — How do you keep this system secure and maintainable in production, beyond the phishing defenses already discussed?</summary>
+
+**Security:**
+
+- **HTTPS on every public endpoint** — no plain HTTP, ever, in production.
+- **Database in a private subnet** — a part of the network with no direct internet route in or out, reachable only from the API servers (see Network Security, 5.06).
+- **Least-privilege database user for the API** — a dedicated PostgreSQL role for the API, not the database's admin/superuser account, granted only `SELECT`, `INSERT`, and `UPDATE` on the `urls` table specifically (see the Principle of Least Privilege, 5.06): no `DROP`/`ALTER` rights, no access to any other table or schema that might exist in the same database instance.
+  - The point is limiting the BLAST RADIUS if the API is ever compromised — say, through a SQL injection bug (see the OWASP Top 10, 5.06) or a leaked credential: an attacker who gets hold of this user's credentials can still only read and write short URLs. They cannot drop the table, exfiltrate unrelated data, or create new database users, because the account they've compromised was never capable of any of that in the first place.
+- **Secrets pulled from a secrets manager** — this DB user's credentials, any threat-intel API keys, etc. come from a dedicated store like AWS Secrets Manager or Vault that the app fetches from at runtime, instead of ever living in source code.
+
+
+**Maintainability:**
+
+- **Dashboards and alerts on cache hit rate, redirect latency, and error rate** (see Monitoring & Observability, 5.05) — a dropping cache hit rate is often the first sign something's wrong (a bad deploy invalidating the cache, or a traffic pattern change) well before users notice.
+
+</details>
+
+<details>
+<summary>Show Answer — Would you run this on managed cloud services, or self-host the components?</summary>
+
+Managed cloud services are the clear default here (see Cloud & Infrastructure, 5.07) — a managed Postgres (RDS) and managed Redis (ElastiCache), fronted by a managed CDN and load balancer. Nothing about this system's logic is unusual enough to justify the operational overhead of running your own database or cache cluster; that overhead (patching, backups, failover, on-call) is exactly what "undifferentiated heavy lifting" means, and it buys the product nothing extra here. Self-hosting would only become worth discussing at a scale where the managed-service cost itself becomes the dominant expense — a very different conversation than the one this design is solving.
+
+</details>
+
+<details>
+<summary>Show Answer — Would you reach for sharding, replication, both, or neither — and in what order?</summary>
+
+Start with **replication**, not sharding: since the workload is overwhelmingly read-heavy, adding read replicas (see Replication under Database Fundamentals, 3.01) scales the redirect path's read capacity without touching the data model at all, and it's far simpler to operate. Reach for **sharding** only once a single primary genuinely can't hold the dataset or absorb the write volume of new URLs.
+
+Hashing `short_code` to pick the shard spreads codes evenly across shards, even if the codes themselves are sequential or clustered — this avoids a "hot shard" that a naive split (e.g. by first letter) could cause. The lookup stays fast because the shard is computable from the code alone: `hash(code) % number_of_shards` tells the app exactly which single shard to query, with no need to check every shard first.
+
+The simplest way to turn a hash into a shard number is the **modulo**: `hash("abc123") % 4` (for 4 shards) always gives a number from 0-3, and since the hash is uniformly distributed, so is the resulting shard assignment. The catch is that adding or removing a shard changes the modulo result for almost every key, forcing a massive reshuffle of data — which is why real systems typically use **consistent hashing** instead: shards and keys are placed on a conceptual ring, and each key belongs to the next shard found going around it, so adding/removing a shard only reassigns the keys near that one point on the ring, not everything.
+
+Doing this in the wrong order — sharding before you've exhausted what replication and caching can give you — adds real operational complexity (cross-shard rebalancing, more moving parts) for a problem caching and replicas would have solved more simply.
+
+</details>
 
 
 ## 6.02 Design a Social Media Feed
@@ -3221,10 +3325,9 @@ Functional:
 - User sees a feed of posts from followed users, newest first
 
 Non-Functional:
-- 500M users, 10M DAU (daily active users)
-- Feed load < 200ms (p99)
-- Posts visible in feeds within 5 seconds of publishing (eventual consistency acceptable)
-- Read-heavy: 100:1 read to write ratio
+- Read-heavy — a feed is opened far more often than a post is published, so the read path is the one that must scale (see Scalability, 5.01)
+- Fast feed loads — the feed is the first thing a user sees on opening the app
+- Eventual consistency is acceptable — a brand-new post doesn't need to appear in every follower's feed instantly (see CAP Theorem & Consistency Models, 5.02)
 
 
 #### Two Approaches: Fan-Out on Write vs Fan-Out on Read
@@ -3234,13 +3337,12 @@ When user A posts, immediately write the post to the feed cache of every followe
 
 ```text
 User A posts
-  → Get all followers of A (could be millions for celebrities)
+  → Get all followers of A
   → For each follower, append post to their feed cache
   → When follower opens feed, read directly from their pre-built feed cache
 ```
 
-Pro: feed reads are instant (pre-computed).
-Con: celebrities with millions of followers make a single post trigger millions of cache writes. Huge write amplification.
+Pro: feed reads are instant (pre-computed). Con: an account with a very large following turns a single post into a massive burst of cache writes — huge write amplification concentrated on one event.
 
 **Fan-Out on Read (Pull model):**
 When a user opens their feed, fetch recent posts from all people they follow.
@@ -3248,18 +3350,19 @@ When a user opens their feed, fetch recent posts from all people they follow.
 ```text
 User opens feed
   → Get list of followed users
-  → For each: SELECT last 20 posts WHERE user_id = ?
+  → For each: SELECT recent posts WHERE user_id = ?
   → Merge and sort by time
-  → Return top 20
+  → Return the most recent
 ```
 
-Pro: no write amplification, simple.
-Con: slow for users who follow thousands of accounts — many queries at read time.
+Pro: no write amplification, simple. Con: slow for users who follow a large number of accounts — many queries fan out at read time instead.
 
 **Hybrid approach (used by Twitter/Instagram):**
-- Regular users (<10K followers): fan-out on write (pre-compute feed)
-- Celebrities (>10K followers): fan-out on read, merged at read time
-- Read path: merge pre-built feed + fresh celebrity posts at load time
+- Regular accounts: fan-out on write (pre-compute the feed, since their follower count is manageable)
+- Accounts with a very large following ("celebrities"): fan-out on read instead, to avoid the write-amplification problem above
+- Read path: merge the pre-built feed with freshly-fetched celebrity posts at load time
+
+This mirrors the general read-heavy vs write-heavy trade-off from Scalability (5.01) — push work to write time when reads dominate and writes are cheap to amplify, fall back to read time for the specific accounts where that amplification would itself become the bottleneck.
 
 
 #### High-Level Design
@@ -3274,6 +3377,8 @@ Feed Fanout Worker
 Feed Cache (Redis)
   ←── read ── Feed API ← Client
 ```
+
+The Post Service doesn't fan out synchronously — it publishes an event and returns immediately, exactly the decoupling pattern from Message Queues & Event-Driven Architecture (4.02). A separate Fanout Worker consumes the event and does the (potentially slow, high-fan-out) work of updating follower feed caches, so a viral post never makes the act of posting itself feel slow.
 
 
 #### Database Schema (simplified)
@@ -3301,9 +3406,89 @@ CREATE INDEX idx_posts_user_time ON posts(user_id, created_at DESC);
 #### Bottlenecks & Solutions
 
 - **Celebrity problem** → hybrid fanout; merge at read time
-- **Feed cache size** → keep only last 200 posts per user in cache; older posts fetched from DB on scroll
-- **New follower** → on follow, backfill recent posts into feed cache asynchronously
-- **Deleted post** → tombstone record; filter at read time
+- **Feed cache size** → keep only a bounded window of recent posts per user in cache; older posts are fetched from the database on scroll instead
+- **New follower** → on follow, backfill recent posts into the new follower's feed cache asynchronously (another job for the Message Queue, 4.02)
+- **Deleted post** → tombstone record; filter at read time, rather than trying to purge it from every follower's cache synchronously
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — A user unfollows someone. Does that person's content disappear from their cached feed immediately?</summary>
+
+Not necessarily, and that's usually fine — the feed cache reflects the follow graph as of the last fanout, and a brief window where an unfollowed account's older posts linger is a reasonable trade-off for **eventual consistency** (accepting that different parts of the system may briefly disagree, trusting they'll converge shortly, in exchange for not blocking on making everything agree immediately — see CAP Theorem & Consistency Models, 5.02). Going forward, no NEW posts from that account will be fanned out to this user, and the feed naturally "self-heals" as the cache rotates. Filtering the cache retroactively on every unfollow would add real complexity and cost for a cosmetic edge case.
+
+</details>
+
+<details>
+<summary>Show Answer — What happens if the Fanout Worker crashes mid-fanout for a post?</summary>
+
+Because the Post Service publishes the "new post" event to a durable message queue rather than fanning out synchronously (see Message Queues & Event-Driven Architecture, 4.02), the event isn't lost if a worker crashes partway — it's redelivered and fanout resumes (or restarts) from the queue, not from application memory. The fanout operation should be **idempotent** — running it twice with the same input produces the same end result as running it once, e.g. appending the same post ID twice to a follower's feed cache should be harmless — so a retried, partially-completed fanout doesn't cause duplicate feed entries.
+
+</details>
+
+<details>
+<summary>Show Answer — How would you change the design to rank posts by relevance instead of pure reverse-chronological order?</summary>
+
+The fanout and caching infrastructure stays largely the same — what changes is what gets stored alongside each post ID in the feed cache (engagement signals, recency, an affinity score between the viewer and poster) and how the read path sorts before returning results, instead of a straight chronological sort. This typically becomes a separate ranking/scoring service the Feed API calls before returning results, keeping the core fanout pipeline unaware of ranking logic (see Microservices vs Monolith, 5.04, on isolating a concern like this behind its own service).
+
+</details>
+
+<details>
+<summary>Show Answer — What's the risk of keeping the whole feed in Redis, and how do you mitigate it?</summary>
+
+Redis is an in-memory store, so keeping unbounded feed history for every user indefinitely grows memory cost without bound and risks evicting hot data to make room. This is exactly why the design caps the cache to a bounded window of recent posts per user and falls back to the database (durable, disk-backed) for anything older — the cache holds only what's likely to actually be read again soon (see Caching, 3.05, on cache eviction and sizing trade-offs).
+
+</details>
+
+<details>
+<summary>Show Answer — How would you support "stories" (content that expires after a set time)?</summary>
+
+Stories are a good fit for a separate, TTL-based cache entry rather than reusing the permanent feed-cache/database path built for regular posts — write the story with an expiration, and let the cache or database natively drop it once it lapses (a Redis key TTL, or a scheduled cleanup job) rather than relying on the read path to filter out expired content. Keeping this as a parallel, simpler system (rather than bolting expiry logic onto the main feed) avoids complicating the write-heavy fanout path for a fundamentally different access pattern.
+
+</details>
+
+<details>
+<summary>Show Answer — What type of load balancer, and which algorithm, would you use for the Feed API?</summary>
+
+An **L7 load balancer** — one that reads the actual HTTP request rather than just IP/port, see 2.02 — the Feed API benefits from content-aware routing (e.g. separating the read-heavy feed endpoint from the write endpoints for posting/following, which have very different load profiles). For the algorithm, **Least Connections** — send each new request to whichever backend currently has the fewest requests still in flight, rather than blindly cycling through servers — is a better fit than plain Round Robin (fixed 1→2→3→1→2→3 rotation): assembling a feed can take noticeably longer for some requests than others (merging in celebrity posts at read time, see the hybrid fanout approach above), so routing to whichever server currently has the fewest open requests avoids piling slow requests onto one instance the way Round Robin could. No sticky sessions are needed — the Feed API is stateless, with all real state living in the feed cache and database, not in server memory.
+
+</details>
+
+<details>
+<summary>Show Answer — What authentication/authorization approach fits this system?</summary>
+
+Standard **JWT access token + refresh token** — a compact, signed token (JSON Web Token) the server can verify without a database lookup, paired with a longer-lived token used only to obtain a new one once it expires (see Authentication & Authorisation, 5.06) — for the API: short-lived access tokens keep the auth check on every request cheap and stateless, which matters given how often the feed and its related endpoints are called. Authorization is mostly ownership-based (a user can delete their own post, edit their own profile, but not someone else's) rather than full **RBAC** (Role-Based Access Control — permissions attached to roles like admin/editor/viewer rather than checked per resource) — RBAC becomes relevant only if the platform adds staff roles like moderators, who need broader permissions (e.g. removing any post) than a regular user.
+
+</details>
+
+<details>
+<summary>Show Answer — What security and moderation concerns are specific to a feed of user-generated content?</summary>
+
+Because posts are user-generated content rendered back to OTHER users, this system is a textbook target for stored **XSS (Cross-Site Scripting)** — an attacker submits a post containing malicious JavaScript, which then runs in every other user's browser when they view it (see the OWASP Top 10, 5.06) — so post content must be escaped/sanitised before rendering, never inserted as raw HTML. Rate-limit posting per account to blunt spam and bot-driven content floods (see API Gateway & Rate Limiting, 2.05), and validate/authorize every write server-side — never trust a client-supplied `user_id` on a post, always derive it from the authenticated session. A moderation/reporting pipeline (flagging content for review, an admin takedown path) is also expected in any real answer once user-generated content is involved.
+
+</details>
+
+<details>
+<summary>Show Answer — Would you self-host Kafka and Cassandra-style infrastructure, or use managed cloud services?</summary>
+
+Managed services are the sensible default (see Cloud & Infrastructure, 5.07) — a managed Kafka (e.g. AWS MSK) and managed Redis remove the very real operational burden of running distributed, stateful infrastructure yourself (patching, rebalancing, failure recovery). The real-world companies that self-host at this scale (Twitter's own Kafka/storage stack, for instance) do so only once their scale and cost profile makes the trade-off worth the dedicated infrastructure teams required — not a starting point, a destination reached after outgrowing managed options.
+
+</details>
+
+<details>
+<summary>Show Answer — Where would you use sharding vs replication in this design?</summary>
+
+**Replication** covers durability and read scaling for both the posts database and the follow-graph — read replicas absorb the read-heavy load without changing how data is organized. **Sharding** becomes relevant once a single database can no longer hold the growing volume of posts — sharding the posts table by `user_id` keeps a single user's posts together (so "get this user's own posts" never needs a cross-shard query), which matters since the read path already fans out across many users' data at query/fanout time — you don't want individual USER data ALSO split across shards on top of that. The Redis feed cache is naturally sharded already, since `feed:{user_id}` keys distribute across a Redis Cluster by key, requiring no extra design work beyond choosing that key shape.
+
+</details>
+
+<details>
+<summary>Show Answer — Would REST or GraphQL suit the Feed API better?</summary>
+
+GraphQL (see APIs — REST vs GraphQL vs gRPC, 4.01) is a genuinely strong fit here: a single feed screen typically needs a POST plus its author's name/avatar plus like/comment counts — nested, related data that a REST API would either return via multiple round-trips or via a large, over-fetched endpoint tailored to exactly one screen. GraphQL lets the client ask for exactly that shape in one request, which is especially valuable across different clients (mobile vs web) that may want different subsets of the same underlying data. REST remains a perfectly reasonable answer too — the trade-off is GraphQL's flexibility against the added complexity of running a GraphQL layer (query cost limiting, resolver N+1 issues) versus REST's simplicity.
+
+</details>
 
 
 ## 6.03 Design a Real-Time Chat Application
@@ -3327,21 +3512,21 @@ Take 5 minutes to think about this before reading the answer.
 Functional:
 - 1:1 messaging and group chats
 - Real-time message delivery
-- Message history (last 30 days)
+- Persisted message history
 - Message status: sent, delivered, read
 
 Non-Functional:
-- 500M users, 50M concurrent connections
-- Message delivery < 200ms
-- Messages must not be lost (at-least-once delivery)
-- Eventual consistency acceptable (minor delay before all recipients see a message)
+- A very large number of simultaneous, long-lived connections — this shapes the connection model more than anything else (see below)
+- Fast message delivery — chat feels broken if messages visibly lag
+- Messages must not be lost — at-least-once delivery, with the client/consumer responsible for handling duplicates (see Availability & Fault Tolerance, 5.03)
+- Eventual consistency is acceptable — a brief delay before every recipient's device reflects a message is fine (see CAP Theorem & Consistency Models, 5.02)
 
 
 #### Connection Model
 
-With 50M concurrent users, you cannot use HTTP polling — too slow and expensive. Use **WebSockets** for persistent connections.
+At this scale, repeatedly polling over HTTP for new messages is far too wasteful — each client would need to keep re-opening connections just to ask "anything new?", most of the time getting "no" back. **WebSockets** (see 4.03) solve this with one persistent, bidirectional connection per client that the server can push messages down the moment they arrive, instead of the client having to keep asking.
 
-Each chat server manages thousands of WebSocket connections. Since a message sender and recipient may be on different servers, you need a shared pub/sub layer.
+Each chat server manages many WebSocket connections at once. Since a message's sender and recipient may be connected to two DIFFERENT chat servers, you need a shared pub/sub layer so servers can hand messages off to each other.
 
 ```text
 User A (connected to Chat Server 1)
@@ -3365,6 +3550,8 @@ Client A ─── WebSocket ──▶ Chat Server 1 ──▶ Redis Pub/Sub ─
                           Push Notification Service (for offline users)
 ```
 
+Every message is also written to Kafka as a durable, ordered log BEFORE the client is told it succeeded — this is what makes "at-least-once delivery" a real guarantee rather than a hope: if a chat server crashes right after publishing to Pub/Sub but before persisting, the message still exists in the log and can be replayed (see Message Queues & Event-Driven Architecture, 4.02). Each `message_id` is generated client-side or at the edge as a UUID (see ID Generation Strategies, 3.02) specifically because message creation is fully distributed across many chat servers with no central counter to coordinate through — exactly the scenario 3.02 recommends a UUID for.
+
 
 #### Message Delivery for Offline Users
 
@@ -3380,7 +3567,7 @@ Chat Server → check if User B is online (presence service)
 
 #### Database Choice
 
-Chat is write-heavy with simple access patterns (fetch messages for a conversation by time). **Apache Cassandra** is ideal:
+Chat is write-heavy with a simple, predictable access pattern (fetch messages for a conversation by time) rather than complex relational queries — exactly the profile NoSQL at Scale (3.04) describes as a good fit for a wide-column store. **Apache Cassandra** is a common choice:
 
 ```sql
 -- Cassandra table (partition by conversation, cluster by time)
@@ -3408,6 +3595,79 @@ Read      → recipient opened the conversation (client sends read receipt)
 ```
 
 
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — How do you guarantee message ordering within a conversation, especially when sender and recipient are on different chat servers?</summary>
+
+Ordering is anchored to the DATABASE, not to the order events happen to arrive through Pub/Sub — the Cassandra schema clusters messages by `created_at` within each `conversation_id` partition (see Database Choice above), so the persisted order is always well-defined regardless of which chat server relayed which message. Real-time delivery via Pub/Sub is a best-effort, low-latency path; a client's definitive view of a conversation on reconnect or scroll-back comes from re-reading that ordered log, not from remembering the order messages arrived over the WebSocket.
+
+</details>
+
+<details>
+<summary>Show Answer — A chat server crashes while a client is connected. How does the client recover?</summary>
+
+The client's WebSocket connection drops, and the client detects this and reconnects — typically to a different chat server behind the load balancer (see Load Balancing, 2.02). On reconnect, rather than assuming it received everything up to the disconnect, the client asks for any messages since its last known message ID/timestamp, pulling from the durable message log (Kafka/Cassandra) rather than trusting in-memory state that died with the crashed server.
+
+</details>
+
+<details>
+<summary>Show Answer — How do you scale the Redis Pub/Sub layer itself as the number of chat servers grows?</summary>
+
+Plain Redis Pub/Sub runs on a single node's capacity, so as the number of chat servers (and channels) grows, that one node becomes the bottleneck and single point of failure — the same shared-nothing-vs-shared-coordinator tension covered in the Scalability chapter (5.01). In practice this gets addressed either by moving to a clustered pub/sub layer (Redis Cluster, or a dedicated system like NATS), or by routing through Kafka directly (already in the design for durability) instead of relying on Redis for the real-time fan-out path too.
+
+</details>
+
+<details>
+<summary>Show Answer — How would "typing…" indicators work without persisting them as real messages?</summary>
+
+Typing indicators are ephemeral, low-stakes, and lossy-tolerant — exactly the opposite of the durability guarantees the message pipeline (Kafka + Cassandra) is built for. They're sent straight over the same WebSocket / Pub/Sub path used for real-time delivery, but WITHOUT writing to Kafka or the message database at all — if one is dropped, the next one (sent moments later, as the user keeps typing) simply supersedes it, so nothing is lost that actually matters.
+
+</details>
+
+<details>
+<summary>Show Answer — Why Cassandra instead of PostgreSQL or MongoDB for message storage?</summary>
+
+The access pattern is narrow and predictable — write a message once, read a conversation's messages ordered by time — with very high write volume and no need for joins or ad-hoc queries, which is exactly the profile NoSQL at Scale (3.04) describes Cassandra's partition-and-cluster model as being built for. PostgreSQL would work too at a smaller scale, but Cassandra's write-optimized architecture and native horizontal scaling (see Sharding under Database Fundamentals, 3.01) make it a more natural fit as conversation volume grows very large; MongoDB is also a reasonable answer here, and naming it as an alternative with the trade-off (Cassandra favors write throughput and horizontal scale, MongoDB favors query flexibility) shows the same underlying understanding.
+
+</details>
+
+<details>
+<summary>Show Answer — What type of load balancer would you use for WebSocket connections, and does it need to work differently from a normal HTTP load balancer?</summary>
+
+Yes — this is the one place in these five exercises where load balancer choice really changes shape. A WebSocket connection is long-lived: once a client is upgraded to a WebSocket and connected to Chat Server 1, it must keep talking to THAT SAME server for the life of the connection — the load balancer can't freely rebalance individual messages the way it would separate stateless HTTP requests. This calls for **session affinity ("sticky sessions")** at the load balancer, commonly done at **L7** — the load balancer level that reads the actual HTTP request instead of just IP/port, see 2.02 — by routing based on a cookie or connection ID set at the initial handshake, so every subsequent frame from that client is pinned to the same backend chat server. Round Robin (cycling through servers in fixed order) or Least Connections (routing to whichever server has the fewest active requests) still decides which server a NEW connection lands on — the stickiness only applies once a connection exists.
+
+</details>
+
+<details>
+<summary>Show Answer — How and when do you authenticate a WebSocket connection?</summary>
+
+Authenticate once, at the WebSocket handshake — the client presents a **JWT** (JSON Web Token — a compact, signed token the server can verify without a database lookup; see Authentication & Authorisation, 5.06) as part of the initial connection request (e.g. a query parameter or header before the upgrade completes), the chat server validates it and attaches the resulting identity to that connection for its entire lifetime. Re-validating a token on every individual message would add needless overhead to a connection that's supposed to be lightweight and persistent; instead, a token nearing expiry can trigger the SERVER to close the connection and require the client to reconnect with a fresh token. Authorization matters per-action too — before relaying a message, the server must verify the sender is actually a participant in that conversation/group, not just that they're logged in as someone.
+
+</details>
+
+<details>
+<summary>Show Answer — What security considerations are specific to a chat system?</summary>
+
+Connections must run over **WSS** (WebSocket over TLS) — never a plain, unencrypted `ws://` connection, for exactly the same reason HTTPS is non-negotiable elsewhere (see Encryption, 5.06). For a privacy-focused product, **end-to-end encryption** is worth naming as an extension: the server would relay only ciphertext it cannot itself read, which changes its role from "reads and routes messages" to "blindly relays opaque bytes between clients who hold the actual encryption keys" — a meaningfully different (and harder) design than the one built above. Message content should also still be treated as untrusted input if it's ever rendered as rich text/markdown on the client — the same XSS concern as the Social Media Feed exercise applies wherever user content gets displayed back to other users.
+
+</details>
+
+<details>
+<summary>Show Answer — Would you run this on managed cloud infrastructure, or self-host?</summary>
+
+Cloud-managed is the default answer (see Cloud & Infrastructure, 5.07) — managed Kafka, managed Cassandra-compatible stores (or a managed Cassandra offering), and auto-scaling groups for the chat server fleet remove a large amount of operational burden. It's worth knowing, though, that extremely large real-time messaging systems have historically leaned toward self-hosting specifically for this workload — WhatsApp famously ran a lean, largely self-managed Erlang stack for years — because at truly massive persistent-connection scale, the cost and control trade-offs shift; this is a good "it depends on scale" answer to give if pushed on the question.
+
+</details>
+
+<details>
+<summary>Show Answer — Where does sharding vs replication show up in this design?</summary>
+
+Cassandra gives you both, largely for free, through the same mechanism: its **replication factor** copies each piece of data across multiple nodes automatically for durability and read availability (no separate "set up a read replica" step the way PostgreSQL requires), while its **partition key** — `conversation_id` in the schema above — is effectively the shard key, determining which nodes own a given conversation's data. This is a good example of NoSQL at Scale's (3.04) point that wide-column stores are BUILT around partitioning as a first-class concept, rather than sharding being something bolted on afterward the way it often is for a relational database (see Sharding under 3.01, which is exactly the retrofit Cassandra avoids needing).
+
+</details>
+
+
 ## 6.04 Design a File Storage System
 
 
@@ -3430,19 +3690,18 @@ Functional:
 - Upload, download, delete files
 - Sync files across devices
 - Share files with other users
-- Support large files (up to 5 GB)
+- Support large file uploads
 
 Non-Functional:
-- 50M users, 10M DAU
-- Files should be available within seconds of upload
-- Durability: files must never be lost (99.999999999% — "eleven nines" — like S3)
-- Availability: 99.99%
-- Bandwidth: efficient sync (do not re-upload unchanged files)
+- Files should become available quickly after upload
+- Durability — files must never be lost, even in the face of hardware failure (see Object Storage, 3.06, for how object stores like S3 achieve this through replication)
+- Highly available — see Availability & Fault Tolerance, 5.03
+- Bandwidth-efficient sync — don't re-upload a file's unchanged parts
 
 
 #### Core Insight: Split Metadata from File Data
 
-Never store binary file data in your database. Store file metadata (name, size, owner, path) in a relational database, and file data in object storage (S3, GCS).
+Never store binary file data in your database. Store file metadata (name, size, owner, path) in a relational database, and file data in object storage (see 3.06) such as S3 or GCS.
 
 ```text
 Database stores:  file_id, name, size, owner, created_at, s3_key
@@ -3455,20 +3714,22 @@ S3 stores:        the actual file bytes
 ```text
 1. Client calls API: POST /files (filename, size)
    → API creates file record in DB (status: "uploading")
-   → API returns pre-signed S3 URL (valid 15 min)
+   → API returns a time-limited, pre-signed S3 URL
 
-2. Client uploads file directly to S3 using pre-signed URL
+2. Client uploads file directly to S3 using the pre-signed URL
    → Bypasses your API servers entirely (no bottleneck)
 
 3. S3 emits event (S3 Event → SQS → Worker)
    → Worker updates DB: status = "ready", s3_key = "..."
-   → Worker notifies other user devices via WebSocket/push
+   → Worker notifies other user devices via WebSocket/push (see 4.03)
 ```
+
+Uploading directly to S3 via a pre-signed URL, instead of routing the file through your own API servers, is the same idea as the CDN chapter's (2.04) push toward moving bulk data transfer as far away from your origin servers as possible — your servers only ever handle small metadata requests, never the file bytes themselves.
 
 
 #### Efficient Sync: Block-Level Deduplication
 
-For large files, sending the whole file on every change is wasteful. Dropbox splits files into **chunks (blocks)** of ~4 MB:
+For large files, sending the whole file on every change is wasteful. Dropbox splits files into fixed-size **chunks (blocks)**:
 
 ```text
 File → split into blocks [B1, B2, B3, B4]
@@ -3510,8 +3771,81 @@ CREATE TABLE file_shares (
 
 - **Large file uploads** → pre-signed S3 URLs (client uploads directly; no server bottleneck)
 - **Sync bandwidth** → block-level deduplication
-- **Durability** → S3 stores multiple copies across AZs automatically (eleven nines durability)
+- **Durability** → object storage replicates each file across multiple facilities automatically (see 3.06) — a single hardware failure never means data loss
 - **Slow metadata queries** → index `files(owner_id)` and `files(s3_key)`
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — Two devices edit/upload the same file at the same time. How do you resolve the conflict?</summary>
+
+Detect the conflict by versioning: each file (or block set) carries a version identifier, and a client syncing changes must state which version it's updating FROM. If a device tries to push changes based on a version that's no longer current (someone else updated it first), the server rejects the write, and the client either merges (for compatible changes at the block level — see Block-Level Deduplication above) or, when a true conflict exists, keeps both versions as separate files (Dropbox's familiar "filename (conflicted copy).ext") rather than silently discarding one user's changes.
+
+</details>
+
+<details>
+<summary>Show Answer — How do you stop someone uploading a virus or malware through the service?</summary>
+
+Scan uploaded files asynchronously after they land in object storage, not synchronously in the upload path — the upload flow already decouples the client from your servers via a pre-signed URL (see Upload Flow above), so a malware scan is another consumer of the same "file uploaded" event (see Message Queues & Event-Driven Architecture, 4.02), flagging or quarantining a file after the fact rather than adding scan latency to every upload.
+
+</details>
+
+<details>
+<summary>Show Answer — How would you support version history for a file?</summary>
+
+Instead of overwriting a file's `s3_key` in place on every change, write each new version as a new, immutable object in object storage, and keep a `file_versions` table (or an array on the file record) mapping version numbers to `s3_key`s. This is a natural extension of the metadata/data split already in the design (see Core Insight above) — the metadata layer tracks history, while object storage itself just accumulates immutable blobs.
+
+</details>
+
+<details>
+<summary>Show Answer — What happens if an upload is interrupted halfway through?</summary>
+
+Because the client uploads directly to object storage using a pre-signed URL, an interrupted upload simply leaves an incomplete object (or none at all, depending on the storage provider's multipart-upload semantics) — the file record in the database stays in `"uploading"` status and is never marked `"ready"`, since that transition only happens when the completion event fires (see Upload Flow above). The client can safely retry the upload against a fresh pre-signed URL; a background job can also periodically clean up file records stuck in `"uploading"` past a reasonable point, treating them as abandoned.
+
+</details>
+
+<details>
+<summary>Show Answer — How do you let someone without an account access a shared file?</summary>
+
+Generate a signed, time-limited public link — the URL itself embeds a token to look up the file, rather than requiring an authenticated session (see Authentication & Authorisation, 5.06, for the difference between authenticating a user and authorizing a specific action). The `file_shares` table can support this style of share, in addition to per-user permissions, by allowing a share record keyed on a token rather than a `user_id`.
+
+</details>
+
+<details>
+<summary>Show Answer — What type of load balancer sits in front of this system, and does it handle the actual file transfers?</summary>
+
+An **L7 load balancer** — the kind that reads the actual HTTP request rather than just IP/port, see 2.02 — in front of the metadata API makes sense — it needs to inspect requests to authenticate them and route appropriately. The important design point, though, is that it deliberately does NOT handle file transfers at all: uploads and downloads go directly between the client and object storage via pre-signed URLs (see Upload Flow above), completely bypassing your load balancer and API tier. This is worth stating explicitly in an interview — it shows you've recognized that the load balancer's job here is narrow on purpose, not an oversight.
+
+</details>
+
+<details>
+<summary>Show Answer — What authentication/authorization model fits file sharing with different permission levels?</summary>
+
+Standard session/JWT authentication (a signed token identifying the user, see 5.06) identifies the user for the metadata API; authorization is where this system gets more interesting, since it needs PER-RESOURCE, per-user permissions rather than a single global role. That's closer to **ABAC (Attribute-Based Access Control)** than **RBAC (Role-Based Access Control — a fixed role like "admin" or "editor" applying uniformly across every resource)** (see Authentication & Authorisation, 5.06) — with ABAC, access to a specific file depends on an attribute check ("is this user's ID present in `file_shares` for this specific `file_id`, and what `permission` value do they have — view or edit?") evaluated per resource, rather than one role granting the same access everywhere. Every file operation must re-check this server-side on each request — never assume a client that could see a file once is still authorized to see it now.
+
+</details>
+
+<details>
+<summary>Show Answer — What security measures matter specifically for a file storage system?</summary>
+
+Encryption at rest for the object storage bucket — **SSE-S3/KMS**, server-side encryption where the storage provider encrypts the data on disk automatically — and in transit (pre-signed URLs are HTTPS-only) are the baseline (see Encryption, 5.06). Beyond that: the object storage bucket must never be configured as publicly readable — "an accidentally public S3 bucket" is one of the most common real-world breach causes cited in the Security chapter's Network Security section — access should flow only through your application's pre-signed URLs, never a public bucket policy. The API's **IAM role** (the cloud identity/permission set an application runs under) should have the minimum permissions needed to generate pre-signed URLs and read/write metadata, not broad account-wide storage access (**principle of least privilege** — grant only the access a component actually needs to do its job, nothing more — 5.06), and malware scanning (already discussed above) closes the remaining gap of users uploading harmful content.
+
+</details>
+
+<details>
+<summary>Show Answer — Cloud-managed object storage, or self-hosted?</summary>
+
+This is one of the clearest "always cloud" answers among these five exercises (see Cloud & Infrastructure, 5.07): object storage's durability guarantees come from replicating data across multiple physically separate facilities, infrastructure that would be extraordinarily expensive and operationally demanding to replicate yourself. Essentially no team builds this layer from scratch today — the entire value proposition of the Core Insight (splitting metadata from file data) above depends on offloading file storage to a provider that has already solved durability at this scale.
+
+</details>
+
+<details>
+<summary>Show Answer — Where would sharding or replication apply here?</summary>
+
+The file bytes themselves need neither — object storage already distributes and replicates data across its own infrastructure transparently (see 3.06), which is precisely why splitting metadata from file data (see Core Insight above) is the right call architecturally, not just for cost reasons. The METADATA database is the piece that follows the usual pattern: replicate for read scaling first (file listings and lookups are frequent), and shard by `owner_id` only once metadata volume genuinely outgrows a single primary (see Database Fundamentals, 3.01) — sharding by owner keeps "list all of this user's files" a single-shard query, avoiding a fan-out across shards for one of the most common operations in the system.
+
+</details>
 
 
 ## 6.05 Design a Notification System
@@ -3535,10 +3869,9 @@ Functional:
 - Users can set preferences (opt out of marketing emails, receive push only)
 
 Non-Functional:
-- 10M notifications/day across all channels
-- Transactional notifications: deliver within 5 seconds
-- Marketing notifications: deliver within 30 minutes (bulk, lower priority)
-- At-least-once delivery (retry on failure; consumers must be idempotent)
+- Transactional notifications (order confirmed, password reset) need to arrive quickly — they're part of a user's active flow
+- Marketing notifications are bulk and lower priority — some delay before delivery is acceptable
+- At-least-once delivery — retry on failure, with consumers responsible for handling duplicates (idempotency)
 
 
 #### High-Level Design
@@ -3555,6 +3888,8 @@ Message Queue (Kafka — separate topics per channel)
   ↓
 Delivery Status Tracker (DB + cache)
 ```
+
+Splitting the queue into one topic per channel (see Message Queues & Event-Driven Architecture, 4.02) means a slowdown or outage in one provider (say, the SMS gateway) only backs up its own topic — push and email keep flowing through their own topics unaffected. A separate priority split (below) applies the same isolation principle to transactional vs marketing traffic.
 
 
 #### User Preference Filtering
@@ -3578,17 +3913,9 @@ Store preferences in a fast-read store (Redis hash per user).
 
 #### Retry & Idempotency
 
-Delivery can fail (APNs returns 503, email provider times out). The worker retries with exponential backoff:
+Delivery can fail (APNs returns 503, email provider times out). The worker retries with exponential backoff — each retry waits longer than the last, so a struggling provider isn't immediately hammered with the same volume of requests again. After enough failed attempts, the notification moves to a Dead Letter Queue (see Availability & Fault Tolerance, 5.03) for manual inspection instead of retrying forever.
 
-```text
-Attempt 1: immediate
-Attempt 2: +30 seconds
-Attempt 3: +2 minutes
-Attempt 4: +10 minutes
-After 4 failures: move to DLQ (Dead Letter Queue) for manual inspection
-```
-
-Each notification has a unique `notification_id`. External providers and internal systems use this ID to deduplicate retries — if the same `notification_id` is received twice, only process it once.
+Each notification has a unique `notification_id`, generated as a UUID for the same reason a chat message's ID is (see ID Generation Strategies, 3.02) — notifications are created by many independent triggering services with no shared counter. External providers and internal systems use this ID to deduplicate retries: if the same `notification_id` is received twice, only process it once, which is exactly what makes at-least-once delivery safe to build on top of.
 
 
 #### Database Schema
@@ -3618,7 +3945,80 @@ CREATE TABLE user_notification_prefs (
 
 #### Bottlenecks & Solutions
 
-- **Rate limits on providers** → APNs/FCM/Twilio impose rate limits. Use token bucket at the worker level; batch email sends (SendGrid batch API).
-- **Marketing bulk sends** → schedule bulk notifications with a rate-controlled worker (e.g. 100K emails/hour) to avoid overwhelming the provider.
-- **Priority** → transactional notifications get a high-priority Kafka partition; marketing goes to a low-priority partition so transactional always flows through.
-- **Observability** → track delivery rate, bounce rate, failure rate per channel. Alert if delivery rate drops below 99%.
+- **Rate limits on providers** → APNs/FCM/Twilio impose rate limits. Use a token bucket at the worker level (the same rate-limiting algorithm from API Gateway & Rate Limiting, 2.05, applied to outbound calls instead of inbound ones); batch email sends where the provider supports a batch API.
+- **Marketing bulk sends** → schedule bulk notifications through a rate-controlled worker so the provider is never sent more than it can handle at once.
+- **Priority** → transactional notifications get a high-priority Kafka partition; marketing goes to a low-priority partition so transactional traffic always flows through even while a large marketing batch is draining.
+- **Observability** → track delivery rate, bounce rate, and failure rate per channel (see Monitoring & Observability, 5.05); alert when delivery rate drops noticeably, so a struggling provider integration is caught quickly rather than discovered from user complaints.
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — A triggering service retries its request after a timeout. How do you avoid sending the user a duplicate notification?</summary>
+
+The triggering service should generate the `notification_id` itself (or pass an **idempotency key** — a value the caller supplies specifically so the server can recognize "this is the same request as before" even if it arrives more than once) BEFORE calling the Notification Service API, so a retried request carries the same ID as the original attempt. The Notification Service treats creation as **idempotent** on that ID — running the same creation request twice has the same effect as running it once: if a notification with that ID already exists, it returns the existing result instead of creating a second one — the same deduplication mechanism already used for worker-level delivery retries (see Retry & Idempotency above), just applied one layer further upstream.
+
+</details>
+
+<details>
+<summary>Show Answer — How would you batch multiple events into a single digest notification (e.g. "5 people liked your post")?</summary>
+
+Don't send each triggering event straight through to delivery — buffer related events (same user, same notification type) for a short window, and have a separate aggregation step decide whether to flush them as one digest or send immediately, depending on the notification type's priority. This adds a stateful aggregation stage in front of the existing queue-per-channel pipeline (see High-Level Design above); transactional notifications skip this stage entirely and flow straight through, since batching a password-reset email would be actively harmful.
+
+</details>
+
+<details>
+<summary>Show Answer — A user's push token is stale (they uninstalled the app) or their email bounces. What happens?</summary>
+
+The provider (APNs/FCM/the email service) reports the failure back to the worker, which marks that specific channel as invalid for the user — e.g. clearing the stored push token or flagging the email address as bouncing — rather than silently retrying forever against a channel that will never succeed. Future notifications for that user then skip the broken channel (checked alongside the preference filtering already in the design — see User Preference Filtering above) until the user re-registers a valid token or corrects their email.
+
+</details>
+
+<details>
+<summary>Show Answer — How would you prioritize a security-critical notification (e.g. "new login detected") over marketing traffic?</summary>
+
+This is the same high/low-priority Kafka partition split already used for transactional vs marketing (see Priority above) — a security alert is simply routed to the high-priority partition (or an even higher-priority one of its own), guaranteeing it's picked up ahead of a large marketing batch regardless of how much marketing volume is queued. Because channel, priority, and delivery are already decoupled in this design, adding a new priority tier doesn't require changing anything about how push/email/SMS workers themselves function.
+
+</details>
+
+<details>
+<summary>Show Answer — Why route all channels through one Notification Service instead of letting each triggering service call APNs/SendGrid/Twilio directly?</summary>
+
+Centralizing notification sending is what makes user preferences, rate limiting, retries, and delivery tracking consistent across every notification in the system, instead of every triggering service (Order Service, Auth Service, etc.) reimplementing that logic separately — and inevitably inconsistently. It's the same rationale behind a **Facade** — a design pattern where one simple, unified interface hides the coordination complexity of several underlying subsystems, so callers don't need to know any of them exist individually (see the Design Patterns section in the Technical Study Guide's Java chapter).
+
+</details>
+
+<details>
+<summary>Show Answer — What type of load balancer sits in front of the Notification Service, and do the channel workers need one too?</summary>
+
+An **L7 load balancer** — the kind that reads the actual HTTP request rather than just IP/port, see 2.02 — in front of the Notification Service API makes sense, since it needs to inspect and authenticate incoming requests from triggering services (see below). The channel workers (Push/Email/SMS) are a different story: they're Kafka CONSUMERS, not request-handling servers sitting behind a load balancer — Kafka's own partition assignment across a **consumer group** (a set of worker instances that split up the partitions of a topic between them, so each message is processed by exactly one worker in the group) is what spreads work across multiple worker instances, doing the same job a load balancer would for a request-driven service, just via a different mechanism (see Message Queues & Event-Driven Architecture, 4.02).
+
+</details>
+
+<details>
+<summary>Show Answer — How do triggering services (Order Service, Auth Service, etc.) authenticate to the Notification Service?</summary>
+
+This is internal, service-to-service traffic, not end-user traffic — so it's authenticated differently from a normal user-facing API. The standard approach is **mutual TLS (mTLS)** — both sides of the connection present a certificate proving their identity, not just the server (which is all normal TLS/HTTPS verifies) — or signed service tokens (see Authentication & Authorisation and Network Security, 5.06), where each service proves its own identity to the Notification Service, rather than a human ever logging in. This matters because the Notification Service must be confident a request to "send this user a notification" genuinely came from a legitimate internal service — without that check, anything reachable on the internal network could trigger arbitrary notifications to any user.
+
+</details>
+
+<details>
+<summary>Show Answer — What secrets does this system handle, and how should they be managed?</summary>
+
+Provider credentials — APNs push certificates, FCM server keys, SendGrid/SES API keys, Twilio credentials — are all secrets that, if leaked, let an attacker send arbitrary push notifications, emails, or texts as your product. These belong in a dedicated secrets manager (AWS Secrets Manager, HashiCorp Vault — see Secrets Management, 5.06), fetched at runtime and rotated periodically, never hardcoded or committed to source control. Inbound webhooks from providers (delivery status callbacks) should also have their signatures verified — an unverified webhook endpoint would let anyone forge a "delivered successfully" callback for a notification that never actually sent.
+
+</details>
+
+<details>
+<summary>Show Answer — Cloud-managed queue and providers, or self-hosted?</summary>
+
+Managed is the clear default (see Cloud & Infrastructure, 5.07): a managed Kafka (MSK) for the queue, and third-party providers (SES/SendGrid, Twilio, APNs/FCM) for actual delivery. Running your own SMTP server or SMS gateway is rarely worth considering — email and SMS deliverability depends heavily on sender reputation that established providers have spent years building, and a self-hosted mail server is disproportionately likely to have its messages marked as spam.
+
+</details>
+
+<details>
+<summary>Show Answer — Where does sharding or replication apply in this design?</summary>
+
+The Kafka topics are already partitioned (see High-Level Design above) — that partitioning IS a form of sharding, letting multiple worker instances consume and process in parallel rather than serializing through one worker per channel. The notifications database (delivery status, history) follows the more familiar pattern from Database Fundamentals (3.01): replicate first for read scaling (status lookups, user-facing "notification history" screens), and shard by `user_id` only once a single primary can no longer hold the volume — sharding by user keeps "fetch this user's notification history" a single-shard query rather than one that fans out everywhere.
+
+</details>

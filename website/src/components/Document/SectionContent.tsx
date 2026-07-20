@@ -106,6 +106,10 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
   }
 
   const renderLine = (rawLine: string, li: number): React.ReactNode => {
+    // Leading whitespace indicates nesting depth (e.g. "  - sub-point") —
+    // measure it BEFORE trimming, since trimming would erase it.
+    const indent = rawLine.length - rawLine.trimStart().length
+    const nestLevel = Math.min(Math.floor(indent / 2), 4)
     const trimmed = rawLine.trim()
     if (!trimmed) return null
 
@@ -116,10 +120,13 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
     if (/^[-•*]\s/.test(bare)) {
       return (
         <div key={li} style={{
-          display: 'flex', gap: 10, paddingLeft: 4,
+          display: 'flex', gap: 10, paddingLeft: 4 + nestLevel * 20,
           color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6,
         }}>
-          <span style={{ color: section.partColor, flexShrink: 0, fontWeight: 700, marginTop: 2 }}>›</span>
+          <span style={{
+            color: section.partColor, flexShrink: 0, fontWeight: 700, marginTop: 2,
+            opacity: nestLevel > 0 ? 0.6 : 1,
+          }}>›</span>
           <span>{renderInline(bare.replace(/^[-•*]\s*/, ''))}</span>
         </div>
       )
@@ -282,7 +289,7 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
                 if (text) {
                   segments.push(
                     <div key={`t${idx++}`} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
-                      {text.split('\n').map((l, li) => renderLine(l.trim(), li))}
+                      {text.split('\n').map((l, li) => renderLine(l, li))}
                     </div>
                   )
                 }
@@ -340,7 +347,7 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
                     width: 18, height: 18, borderRadius: '50%',
                     background: `${section.partColor}20`, fontSize: 10, fontWeight: 800,
                   }}>▶</span>
-                  {block.summary ?? 'Ver resposta'}
+                  {block.summary ?? 'Show Answer'}
                 </summary>
                 <div style={{
                   padding: '12px 16px 14px',
@@ -419,7 +426,7 @@ export default function SectionContent({ section, searchQuery = '' }: Props) {
           const lines = block.content.split('\n')
           return (
             <div key={i} style={{ marginTop: mt, display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {lines.map((line, li) => renderLine(line.trim(), li))}
+              {lines.map((line, li) => renderLine(line, li))}
             </div>
           )
         })}

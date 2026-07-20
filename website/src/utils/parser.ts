@@ -111,7 +111,7 @@ export function parseDocument(rawContent: string): ParsedDocument {
         const summaryLine = detailLines.find(l => l.trim().startsWith('<summary>'))
         const summary = summaryLine
           ? summaryLine.trim().replace(/^<summary>/, '').replace(/<\/summary>$/, '').trim()
-          : 'Ver resposta'
+          : 'Show Answer'
         const bodyLines = detailLines.filter(l => !l.trim().startsWith('<summary>'))
         const content = bodyLines.join('\n')
         if (currentSection) {
@@ -274,7 +274,9 @@ export function parseDocument(rawContent: string): ParsedDocument {
         paraSpacing = blankCount
         blankCount = 0
       }
-      paraLines.push(trimmed)
+      // Keep leading whitespace (only trim the trailing end) so nested bullet
+      // lists (e.g. "  - sub-point") retain their indentation for rendering.
+      paraLines.push(line.replace(/\s+$/, ''))
     }
   }
 

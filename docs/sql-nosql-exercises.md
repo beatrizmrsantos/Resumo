@@ -83,7 +83,7 @@ Sample data to have in mind:
 Return every row and every column from the `users` table.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users;
@@ -96,7 +96,7 @@ SELECT * FROM users;
 Return only the `name` and `email` of all users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT name, email FROM users;
@@ -109,7 +109,7 @@ SELECT name, email FROM users;
 Return `name` as `full_name` and `email` as `email_address`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT name AS full_name, email AS email_address FROM users;
@@ -122,7 +122,7 @@ SELECT name AS full_name, email AS email_address FROM users;
 Return the list of distinct countries from the `users` table (no duplicates).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT DISTINCT country FROM users;
@@ -135,7 +135,7 @@ SELECT DISTINCT country FROM users;
 Return only the first 10 users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users LIMIT 10;
@@ -151,7 +151,7 @@ SELECT * FROM users LIMIT 10;
 Return all users from Portugal.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users WHERE country = 'Portugal';
@@ -164,7 +164,7 @@ SELECT * FROM users WHERE country = 'Portugal';
 Return all products with a price greater than 50.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM products WHERE price > 50;
@@ -177,7 +177,7 @@ SELECT * FROM products WHERE price > 50;
 Return users who are from Portugal AND older than 25.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users
@@ -191,7 +191,7 @@ WHERE country = 'Portugal' AND age > 25;
 Return users from Portugal or Spain.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users
@@ -205,7 +205,7 @@ WHERE country = 'Portugal' OR country = 'Spain';
 Return users from Portugal, Spain, or France using `IN`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users
@@ -219,7 +219,7 @@ WHERE country IN ('Portugal', 'Spain', 'France');
 Return products with a price between 10 and 100 (inclusive).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM products
@@ -233,7 +233,7 @@ WHERE price BETWEEN 10 AND 100;
 Return users whose name starts with the letter 'A'.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users WHERE name LIKE 'A%';
@@ -248,7 +248,7 @@ SELECT * FROM users WHERE name LIKE 'A%';
 Return orders that have no `total` set (NULL).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM orders WHERE total IS NULL;
@@ -263,7 +263,7 @@ Note: you cannot use `= NULL`. You must use `IS NULL`.
 Return all products ordered by price from cheapest to most expensive.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM products ORDER BY price ASC;
@@ -278,7 +278,7 @@ SELECT * FROM products ORDER BY price ASC;
 Return the 5 most expensive products.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM products ORDER BY price DESC LIMIT 5;
@@ -291,7 +291,7 @@ SELECT * FROM products ORDER BY price DESC LIMIT 5;
 Return users ordered by country (A→Z) and then by name (A→Z) within each country.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users ORDER BY country ASC, name ASC;
@@ -304,7 +304,7 @@ SELECT * FROM users ORDER BY country ASC, name ASC;
 Return the second page of users (10 per page), i.e. users 11 to 20.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 10;
@@ -322,7 +322,7 @@ SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 10;
 Count the total number of users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT COUNT(*) FROM users;
@@ -335,7 +335,7 @@ SELECT COUNT(*) FROM users;
 Count how many users have a `country` set (not NULL).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT COUNT(country) FROM users;
@@ -350,7 +350,7 @@ SELECT COUNT(country) FROM users;
 Calculate the total revenue from all orders.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT SUM(total) AS total_revenue FROM orders;
@@ -363,7 +363,7 @@ SELECT SUM(total) AS total_revenue FROM orders;
 Calculate the average product price.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT AVG(price) AS avg_price FROM products;
@@ -376,7 +376,7 @@ SELECT AVG(price) AS avg_price FROM products;
 Return the cheapest and most expensive product price.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT MIN(price) AS cheapest, MAX(price) AS most_expensive FROM products;
@@ -389,7 +389,7 @@ SELECT MIN(price) AS cheapest, MAX(price) AS most_expensive FROM products;
 Return the average product price rounded to 2 decimal places.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT ROUND(AVG(price), 2) AS avg_price FROM products;
@@ -405,7 +405,7 @@ SELECT ROUND(AVG(price), 2) AS avg_price FROM products;
 Count how many users exist per country.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT country, COUNT(*) AS user_count
@@ -420,7 +420,7 @@ GROUP BY country;
 Count orders per status and order the result by count descending.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT status, COUNT(*) AS order_count
@@ -436,7 +436,7 @@ ORDER BY order_count DESC;
 Calculate the total revenue and average order value per user.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT user_id,
@@ -454,7 +454,7 @@ GROUP BY user_id;
 Return only the countries that have more than 5 users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT country, COUNT(*) AS user_count
@@ -472,7 +472,7 @@ HAVING COUNT(*) > 5;
 Return users who have placed more than 3 orders.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT user_id, COUNT(*) AS order_count
@@ -489,7 +489,7 @@ ORDER BY order_count DESC;
 Return the number of products and average price per category, only for categories with an average price above 30.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT category,
@@ -511,7 +511,7 @@ ORDER BY avg_price DESC;
 Return all orders with the corresponding user's name and email.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT o.id        AS order_id,
@@ -532,7 +532,7 @@ INNER JOIN users u ON o.user_id = u.id;
 Return all users and their orders. Include users who have never placed an order (show NULL for order columns).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT u.name, u.email, o.id AS order_id, o.total
@@ -549,7 +549,7 @@ LEFT JOIN orders o ON u.id = o.user_id;
 Using a LEFT JOIN, return only the users who have never placed an order.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT u.name, u.email
@@ -567,7 +567,7 @@ When the left join finds no match, all right-side columns are NULL. Filtering `W
 Return each order item with the order ID, the product name, quantity, and unit price.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT oi.order_id,
@@ -586,7 +586,7 @@ INNER JOIN orders   o ON oi.order_id   = o.id;
 Return a full receipt: customer name, order date, product name, quantity, unit price, and line total.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT u.name                              AS customer,
@@ -609,7 +609,7 @@ ORDER BY o.id, p.name;
 Return each user's name and the total amount they have spent across all orders.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT u.name, SUM(o.total) AS total_spent
@@ -626,7 +626,7 @@ ORDER BY total_spent DESC;
 Return the names of products that have never appeared in any order.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT p.name
@@ -645,7 +645,7 @@ WHERE oi.id IS NULL;
 Return all users who have placed at least one order.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM users
@@ -665,7 +665,7 @@ WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id);
 Return all orders whose total is above the average order total.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM orders
@@ -681,7 +681,7 @@ The subquery runs first, computes the average, then the outer query filters.
 Calculate the average number of orders per user.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT AVG(order_count) AS avg_orders_per_user
@@ -701,7 +701,7 @@ A subquery in the `FROM` clause is called a derived table. It must have an alias
 Return users whose age is above the average age of users in their own country.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT u.name, u.country, u.age
@@ -722,7 +722,7 @@ A correlated subquery references the outer query (`u.country`). It runs once for
 Return products that are NOT in the 'Electronics' or 'Books' categories.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM products
@@ -741,7 +741,7 @@ Careful: if any value in the subquery list is NULL, `NOT IN` returns no rows. Pr
 Using a CTE, find the top 3 customers by total spending.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 WITH customer_spending AS (
@@ -765,7 +765,7 @@ A CTE (`WITH` clause) is a named temporary result set. It makes complex queries 
 Using two CTEs, find users who spent above average AND placed more than 2 orders.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 WITH user_stats AS (
@@ -794,7 +794,7 @@ ORDER BY us.total_spent DESC;
 Using a CTE, find the most ordered product (by total quantity sold).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 WITH product_sales AS (
@@ -819,7 +819,7 @@ LIMIT 1;
 Number all orders per user by date (oldest order = 1).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT user_id,
@@ -838,7 +838,7 @@ FROM orders;
 Rank users by total spending. Show both RANK and DENSE_RANK.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT u.name,
@@ -859,7 +859,7 @@ GROUP BY u.id, u.name;
 Calculate the running total of order revenue ordered by date.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT id AS order_id,
@@ -879,7 +879,7 @@ ORDER BY created_at;
 For each order, show the current total and the previous order total for the same user.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT user_id,
@@ -901,7 +901,7 @@ ORDER BY user_id, created_at;
 For each order, show the current total and the next order total for the same user.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT user_id,
@@ -921,7 +921,7 @@ ORDER BY user_id, created_at;
 Divide users into 4 groups (quartiles) by total spending.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 WITH spending AS (
@@ -945,7 +945,7 @@ INNER JOIN users u ON u.id = s.user_id;
 Return only the first order placed by each user (using window functions, not a correlated subquery).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 SELECT * FROM (
@@ -968,7 +968,7 @@ Filter on the window function result using a subquery or CTE, since you cannot u
 Insert a new user: name='Beatriz', email='beatriz@example.com', country='Portugal', age=25.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 INSERT INTO users (name, email, country, age)
@@ -984,7 +984,7 @@ VALUES ('Beatriz', 'beatriz@example.com', 'Portugal', 25);
 Insert three products at once.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 INSERT INTO products (name, category, price, stock)
@@ -1001,7 +1001,7 @@ VALUES
 Update the email of user with id=1 to 'new@example.com'.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 UPDATE users
@@ -1018,7 +1018,7 @@ Always include a `WHERE` clause in UPDATE. Without it, every row in the table is
 Update user id=5: set country to 'Spain' and age to 30.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 UPDATE users
@@ -1033,7 +1033,7 @@ WHERE id = 5;
 Reduce the stock of product id=3 by 10 units.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 UPDATE products
@@ -1048,7 +1048,7 @@ WHERE id = 3;
 Mark all orders from users in 'Germany' as 'cancelled'.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 UPDATE orders
@@ -1065,7 +1065,7 @@ WHERE user_id IN (
 Delete the user with id=10.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 DELETE FROM users WHERE id = 10;
@@ -1080,7 +1080,7 @@ Always use a `WHERE` clause. `DELETE FROM users` with no WHERE deletes every row
 Delete all orders with status 'cancelled' that were created more than 1 year ago.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 DELETE FROM orders
@@ -1095,7 +1095,7 @@ WHERE status = 'cancelled'
 Insert a product, but if a product with the same name already exists, update its price instead.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 INSERT INTO products (name, category, price, stock)
@@ -1116,7 +1116,7 @@ DO UPDATE SET price = EXCLUDED.price;
 Create a `reviews` table: id, user_id (FK), product_id (FK), rating (1–5), comment, created_at.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 CREATE TABLE reviews (
@@ -1143,7 +1143,7 @@ CREATE TABLE reviews (
 Create an index to speed up queries that filter orders by `user_id`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 CREATE INDEX idx_orders_user_id ON orders(user_id);
@@ -1156,7 +1156,7 @@ CREATE INDEX idx_orders_user_id ON orders(user_id);
 Create a composite index for queries that filter `order_items` by both `order_id` and `product_id`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 CREATE INDEX idx_order_items_order_product ON order_items(order_id, product_id);
@@ -1171,7 +1171,7 @@ A composite index benefits queries that filter on `order_id` alone, OR on `order
 Add a `phone` column (VARCHAR 20, nullable) to the `users` table.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 ALTER TABLE users ADD COLUMN phone VARCHAR(20);
@@ -1184,7 +1184,7 @@ ALTER TABLE users ADD COLUMN phone VARCHAR(20);
 Transfer an order from user 1 to user 2. Wrap it in a transaction so that if any step fails, nothing is changed.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```sql
 BEGIN;
@@ -1262,7 +1262,7 @@ Tag values: `"premium"`, `"newsletter"`, `"beta-tester"`, `"inactive"`
 Return all documents in the `users` collection.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find()
@@ -1280,7 +1280,7 @@ db.users.find({})
 Return the first user document found.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.findOne()
@@ -1295,7 +1295,7 @@ db.users.findOne()
 Find the user with email `"beatriz@example.com"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.findOne({ email: "beatriz@example.com" })
@@ -1308,7 +1308,7 @@ db.users.findOne({ email: "beatriz@example.com" })
 Return all users but show only `name` and `email` (exclude everything else).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({}, { name: 1, email: 1, _id: 0 })
@@ -1323,7 +1323,7 @@ db.users.find({}, { name: 1, email: 1, _id: 0 })
 Return all users but hide the `tags` and `createdAt` fields.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({}, { tags: 0, createdAt: 0 })
@@ -1336,7 +1336,7 @@ db.users.find({}, { tags: 0, createdAt: 0 })
 Return all users sorted by name A → Z.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find().sort({ name: 1 })
@@ -1351,7 +1351,7 @@ db.users.find().sort({ name: 1 })
 Return the 5 youngest users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find().sort({ age: 1 }).limit(5)
@@ -1364,7 +1364,7 @@ db.users.find().sort({ age: 1 }).limit(5)
 Return the second page of users (5 per page) sorted by name.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find().sort({ name: 1 }).skip(5).limit(5)
@@ -1377,7 +1377,7 @@ db.users.find().sort({ name: 1 }).skip(5).limit(5)
 Count the total number of users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.countDocuments({})
@@ -1392,7 +1392,7 @@ Prefer `countDocuments()` over the deprecated `.count()`.
 Count how many users are from Portugal.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.countDocuments({ country: "Portugal" })
@@ -1408,7 +1408,7 @@ db.users.countDocuments({ country: "Portugal" })
 Find all products with a price greater than 50.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.find({ price: { $gt: 50 } })
@@ -1423,7 +1423,7 @@ Comparison operators: `$gt` (>), `$gte` (>=), `$lt` (<), `$lte` (<=), `$eq` (=),
 Find products with a price between 10 and 100 (inclusive).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.find({ price: { $gte: 10, $lte: 100 } })
@@ -1438,7 +1438,7 @@ Multiple conditions on the same field are implicitly AND.
 Find all orders that are NOT in status `"cancelled"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.find({ status: { $ne: "cancelled" } })
@@ -1451,7 +1451,7 @@ db.orders.find({ status: { $ne: "cancelled" } })
 Find users from Portugal, Spain, or France.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ country: { $in: ["Portugal", "Spain", "France"] } })
@@ -1464,7 +1464,7 @@ db.users.find({ country: { $in: ["Portugal", "Spain", "France"] } })
 Find products NOT in the 'Electronics' or 'Books' categories.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.find({ category: { $nin: ["Electronics", "Books"] } })
@@ -1477,7 +1477,7 @@ db.products.find({ category: { $nin: ["Electronics", "Books"] } })
 Find users from Portugal older than 25 (implicit AND).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ country: "Portugal", age: { $gt: 25 } })
@@ -1492,7 +1492,7 @@ Multiple fields in the same filter object are implicitly ANDed.
 Find users from Portugal older than 25 using the explicit `$and` operator.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({
@@ -1512,7 +1512,7 @@ Use explicit `$and` when you need to apply multiple conditions to the **same fie
 Find orders with status `"pending"` OR `"processing"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.find({
@@ -1530,7 +1530,7 @@ db.orders.find({
 Find products in 'Electronics' with price below 50, OR any product in 'Books'.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.find({
@@ -1548,7 +1548,7 @@ db.products.find({
 Find users whose age is NOT greater than 30 (i.e. age <= 30).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ age: { $not: { $gt: 30 } } })
@@ -1563,7 +1563,7 @@ db.users.find({ age: { $not: { $gt: 30 } } })
 Find all orders where the first item has a quantity greater than 2. (Access nested field with dot notation.)
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.find({ "items.0.quantity": { $gt: 2 } })
@@ -1581,7 +1581,7 @@ Dot notation accesses nested fields. `items.0` refers to the first element of th
 Find users with the tag `"premium"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ tags: "premium" })
@@ -1596,7 +1596,7 @@ When the field is an array and you query with a scalar value, MongoDB checks if 
 Find users who have BOTH the `"premium"` AND `"newsletter"` tags.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ tags: { $all: ["premium", "newsletter"] } })
@@ -1611,7 +1611,7 @@ db.users.find({ tags: { $all: ["premium", "newsletter"] } })
 Find users with exactly 2 tags.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ tags: { $size: 2 } })
@@ -1626,7 +1626,7 @@ db.users.find({ tags: { $size: 2 } })
 Find orders where at least one item has quantity >= 3 AND unitPrice > 50 (both conditions on the same array element).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.find({
@@ -1645,7 +1645,7 @@ Without `$elemMatch`, the conditions could be satisfied by different array eleme
 Find users that have a `phone` field set.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ phone: { $exists: true } })
@@ -1660,7 +1660,7 @@ db.users.find({ phone: { $exists: true } })
 Find documents where the `age` field is stored as a number (not a string).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.find({ age: { $type: "number" } })
@@ -1678,7 +1678,7 @@ Useful for finding data quality issues — sometimes data arrives with the wrong
 Insert a new user: Beatriz, beatriz@example.com, Portugal, age 25, tags ["premium"].
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.insertOne({
@@ -1700,7 +1700,7 @@ MongoDB generates `_id` automatically if not provided.
 Insert three products at once.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.insertMany([
@@ -1717,7 +1717,7 @@ db.products.insertMany([
 Update the email of the user named "Beatriz" to "b.santos@example.com".
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateOne(
@@ -1735,7 +1735,7 @@ db.users.updateOne(
 Update user "Beatriz": set country to "Spain" and age to 26.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateOne(
@@ -1751,7 +1751,7 @@ db.users.updateOne(
 Remove the `phone` field from all users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateMany(
@@ -1769,7 +1769,7 @@ The value `""` is ignored — any value works. `$unset` simply removes the field
 Increase the stock of product "Mechanical Keyboard" by 20.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.updateOne(
@@ -1787,7 +1787,7 @@ Use a negative number to decrease: `{ $inc: { stock: -5 } }`.
 Add the tag `"beta-tester"` to user "Beatriz".
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateOne(
@@ -1805,7 +1805,7 @@ db.users.updateOne(
 Add the tag `"newsletter"` to user "Beatriz" only if it is not already there.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateOne(
@@ -1821,7 +1821,7 @@ db.users.updateOne(
 Remove the tag `"inactive"` from all users.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateMany(
@@ -1839,7 +1839,7 @@ db.users.updateMany(
 Add a new rating of `5` to the "Mechanical Keyboard" product's ratings array.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.updateOne(
@@ -1855,7 +1855,7 @@ db.products.updateOne(
 Update the user with email "new@example.com" — if they do not exist, create them.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.updateOne(
@@ -1874,7 +1874,7 @@ db.users.updateOne(
 Mark all orders with status `"pending"` that are older than 30 days as `"cancelled"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.updateMany(
@@ -1893,7 +1893,7 @@ db.orders.updateMany(
 Delete the user with email "beatriz@example.com".
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.users.deleteOne({ email: "beatriz@example.com" })
@@ -1908,7 +1908,7 @@ db.users.deleteOne({ email: "beatriz@example.com" })
 Delete all products with stock equal to 0.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.deleteMany({ stock: 0 })
@@ -1928,7 +1928,7 @@ Common stages: `$match`, `$group`, `$sort`, `$project`, `$limit`, `$skip`, `$unw
 Using the aggregation pipeline, find all orders with status `"delivered"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -1945,7 +1945,7 @@ db.orders.aggregate([
 Count how many orders have status `"pending"`.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -1961,7 +1961,7 @@ db.orders.aggregate([
 Count the number of orders per status.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -1984,7 +1984,7 @@ db.orders.aggregate([
 Calculate the total revenue across all delivered orders.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2007,7 +2007,7 @@ db.orders.aggregate([
 For each user, calculate the number of orders, total spent, and average order value.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2030,7 +2030,7 @@ db.orders.aggregate([
 Return only the `status` and `total` fields from orders, and add a computed field `isHighValue` (true if total > 100).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2053,7 +2053,7 @@ db.orders.aggregate([
 Add a field `discountedTotal` (total minus 10%) to all orders without removing other fields.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2074,7 +2074,7 @@ db.orders.aggregate([
 Find the top 5 users by total spending.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2096,7 +2096,7 @@ db.orders.aggregate([
 Each order has an `items` array. Flatten the orders so each item becomes its own document.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2116,7 +2116,7 @@ After: `{ _id: 1, items: A }`, `{ _id: 1, items: B }`, `{ _id: 1, items: C }`
 Using `$unwind` on the `items` array, calculate the total quantity sold per product.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2138,7 +2138,7 @@ db.orders.aggregate([
 Join orders with user names (equivalent of a SQL JOIN between `orders` and `users`).
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2172,7 +2172,7 @@ db.orders.aggregate([
 Calculate total revenue grouped by year and month.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2198,7 +2198,7 @@ db.orders.aggregate([
 Find the top 3 product categories by total revenue (only from delivered orders), including number of items sold.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
@@ -2241,7 +2241,7 @@ db.orders.aggregate([
 Group products into price buckets: 0–25, 25–50, 50–100, 100+.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.products.aggregate([
@@ -2269,7 +2269,7 @@ db.products.aggregate([
 In a single aggregation, return simultaneously: count per status, average total, and top 3 users by spending.
 
 <details>
-<summary>Ver resposta</summary>
+<summary>Show Answer</summary>
 
 ```js
 db.orders.aggregate([
