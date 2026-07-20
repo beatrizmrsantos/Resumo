@@ -7264,20 +7264,136 @@ function Counter() {
 
 ### Overview
 
-Angular is a complete framework — not just a library. It includes routing, forms, HTTP client, testing utilities, and an opinionated architecture, all out of the box. Built with TypeScript by Google. Angular uses a component-based architecture and relies heavily on RxJS for reactive programming.
+Angular is a complete framework — not just a library like React. It includes routing, forms, an HTTP client, testing utilities, and an opinionated architecture, all out of the box, instead of requiring you to pick and combine separate libraries yourself. Built with TypeScript by Google, and used heavily for large enterprise applications where a consistent, "one right way to do it" structure matters more than flexibility.
+
+**What is a SPA (Single-Page Application)?** Angular builds Single-Page Applications — the browser loads ONE HTML page up front, and from then on, navigating between "pages" is handled entirely by JavaScript rewriting the DOM and updating the URL (via the History API), without a full page reload or a new request to the server for each page. This is what makes an Angular app feel instant when clicking between views — the server is only asked for data (via HTTP requests), not for whole new HTML documents.
+
+**Component-based architecture**: an Angular application is a tree of components — each one a self-contained unit combining a template (HTML — what's shown), styles (CSS — how it looks), and logic (a TypeScript class — how it behaves). Complex UIs are built by composing many small, focused components together, each responsible for one part of the screen (see Components below).
+
+**Angular vs React**: React (see the React chapter) is a UI library focused purely on rendering — routing, HTTP calls, forms, and state management are all separate libraries you choose and wire together yourself. Angular is a full, opinionated framework that ships all of that built in, with its own conventions for each. React uses JSX (HTML-like syntax inside JavaScript/TypeScript) and plain functions/hooks; Angular uses separate HTML template files (or inline templates) with its own template syntax (`*ngIf`, `{{ }}`, etc. — see Directives and Data Binding below) and TypeScript classes decorated with `@Component`. React re-renders via the Virtual DOM (see the React chapter); Angular uses Change Detection (see below) to detect what changed and update the real DOM directly. Neither is "better" — Angular trades flexibility for consistency and built-in tooling, which many larger teams value; React trades a smaller, less opinionated core for the freedom to pick your own routing/state/data-fetching libraries.
+
+
+### Angular CLI
+
+The Angular CLI (`ng`) is the standard tool for creating, running, and building Angular projects — almost nothing in Angular development happens without it.
+
+```bash
+ng new my-app              # scaffold a new Angular project with a standard folder structure
+ng serve                   # run a local dev server with live-reload (usually http://localhost:4200)
+ng build                   # compile and bundle the app for production, output to dist/
+ng generate component user-card    # scaffold a new component (files + boilerplate) — short: ng g c user-card
+ng generate service user           # scaffold a new service — short: ng g s user
+```
+
+`ng generate` (often shortened to `ng g`) is worth knowing well — it creates the file(s), the class boilerplate, and (for a component) registers it, so you rarely hand-write a new component or service completely from scratch.
+
+
+### Components
+
+A component is the basic building block of an Angular UI — a TypeScript class decorated with `@Component`, paired with an HTML template and (usually) CSS styles.
+
+```typescript
+@Component({
+    selector: "app-user-card",           // the custom HTML tag this component renders as: <app-user-card>
+    templateUrl: "./user-card.component.html",   // or an inline `template: \`...\`` string
+    styleUrl: "./user-card.component.css",       // or an inline `styles: [\`...\`]` array
+})
+export class UserCardComponent {
+    name = "Beatriz";                    // a plain class property — available in the template
+}
+```
+
+```html
+<!-- user-card.component.html -->
+<div class="card">
+    <h2>{{ name }}</h2>   <!-- interpolation — see Data Binding below -->
+</div>
+```
+
+`ng generate component user-card` (see Angular CLI above) creates all three files together — the class, the template, and the stylesheet — plus a `.spec.ts` test file, following this exact convention. Once created, a component is used elsewhere just like an HTML tag: `<app-user-card></app-user-card>`.
+
+**Communication between components** is covered as its own topic below (see Component Communication), since it's one of the most commonly tested Angular concepts.
+
+
+### Data Binding
+
+Data binding is how a component's TypeScript class and its HTML template stay in sync — Angular offers four distinct forms, each with different syntax and a different direction of data flow.
+
+**Interpolation `{{ }}`** — displays a component property's value as text inside the template. One-way: class → template.
+
+```html
+<h2>{{ user.name }}</h2>
+<p>Total: {{ price * quantity }}</p>   <!-- can contain simple expressions, not full JS statements -->
+```
+
+**Property Binding `[ ]`** — binds a component property to an HTML element's property (not just its text content) — e.g. disabling a button, setting an `<img>` source. One-way: class → template.
+
+```html
+<button [disabled]="isLoading">Submit</button>
+<img [src]="user.avatarUrl">
+```
+
+**Event Binding `( )`** — runs a component method in response to a DOM event (click, input, submit). One-way: template → class.
+
+```html
+<button (click)="onSave()">Save</button>
+<input (input)="onSearch($event.target.value)">
+```
+
+**Two-way Binding `[( )]`** ("banana in a box") — combines property binding and event binding into one: the template displays the value AND updates it when the user changes it. Requires the `FormsModule` and is most commonly used with `ngModel` on form inputs.
+
+```html
+<input [(ngModel)]="username">
+<!-- equivalent to combining both directions manually: -->
+<input [ngModel]="username" (ngModelChange)="username = $event">
+```
+
+**Rule of thumb**: `{{ }}` and `[ ]` for pushing data OUT to the template; `( )` for reacting to events coming FROM the template; `[( )]` only when you genuinely need both directions kept in sync automatically, like a simple form field.
+
+
+### Directives
+
+Directives are instructions attached to an HTML element that change its behavior or appearance. The three most common, built-in "structural" and "attribute" directives:
+
+**`*ngIf`** — adds or removes an element from the DOM entirely, based on a condition (unlike CSS `display: none`, which just hides it visually while keeping it in the DOM).
+
+```html
+<div *ngIf="user">{{ user.name }}</div>
+<div *ngIf="user; else loading">{{ user.name }}</div>
+<ng-template #loading><p>Loading...</p></ng-template>
+```
+
+**`*ngFor`** — repeats an element once per item in a list, the Angular equivalent of JavaScript's `.map()` in JSX (see the React chapter).
+
+```html
+<ul>
+  <li *ngFor="let user of users; trackBy: trackByUserId">{{ user.name }}</li>
+</ul>
+```
+
+`trackBy` tells Angular how to identify each item across re-renders (by a stable ID rather than by array position) — exactly the same purpose as a `key` prop in React's list rendering (see Lists and Keys in the React chapter), and just as important for avoiding subtle rendering bugs when a list is reordered or filtered.
+
+**`[ngClass]`** — conditionally applies one or more CSS classes.
+
+```html
+<div [ngClass]="{ active: isActive, disabled: isDisabled }">...</div>
+<div [ngClass]="isActive ? 'active' : ''">...</div>
+```
+
+The leading `*` on `*ngIf`/`*ngFor` marks them as **structural directives** — they add/remove/repeat entire chunks of DOM, unlike `[ngClass]`, an **attribute directive** that only changes something about an element that's already there.
 
 
 ### Components, Templates, and Change Detection
 
+**Change Detection** is how Angular figures out what changed and updates the real DOM to match — conceptually similar to what React's Virtual DOM diffing does (see the React chapter), but working differently under the hood.
 
-**Change Detection**: by default (Default strategy), Angular checks every component on every browser event. 
-OnPush strategy only checks when:
-  - A component's @Input reference changes
-  - An event originates from the component
-  - An async pipe emits a new value
-  - You manually call markForCheck()
+By default (**Default** strategy), Angular checks every component on every browser event (a click, a timer, an HTTP response) — simple, but potentially wasteful in a large app, since components with nothing changed still get re-checked every time.
 
-OnPush dramatically improves performance in large apps.
+**OnPush** strategy only re-checks a component when:
+- A component's `@Input` reference changes (a NEW object/array reference, not just a mutated property inside the same object — see Immutability in the Java chapter for the same "compare by reference" idea)
+- An event originates from within the component itself
+- An async pipe (see Pipes below) emits a new value
+- You manually call `markForCheck()`
 
 ```typescript
 @Component({
@@ -7298,26 +7414,186 @@ export class UserCardComponent {
 }
 ```
 
+OnPush dramatically improves performance in large apps, at the cost of needing to be disciplined about always passing NEW object/array references into `@Input`s when data changes, rather than mutating them in place.
 
-### Services and Dependency Injection
 
+### Services
 
-**providedIn**: "root" registers the service as a singleton without needing to add it to any module's providers array.
+A service is a plain TypeScript class whose job is to hold and provide reusable logic or data — API calls, shared state, business logic — kept OUT of components, so that logic isn't duplicated across every component that needs it and stays testable independent of the UI.
 
 ```typescript
-@Injectable({ providedIn: "root" })   // singleton for the entire app
+@Injectable({ providedIn: "root" })   // see Dependency Injection below for what this means
 export class UserService {
     constructor(private http: HttpClient) {}
 
-    getUsers(): Observable<User[]> {
+    getUsers(): Observable<User[]> {          // see RxJS below for Observable
         return this.http.get<User[]>("/api/users");
     }
 }
 ```
 
+`ng generate service user` (see Angular CLI above) scaffolds this boilerplate automatically. A component that needs this logic doesn't create a `UserService` itself — it declares that it needs one, and Angular provides an instance (see Dependency Injection below).
 
-### Rxjs Operators (critical for Angular Interviews)
+**`providedIn: "root"`** registers the service as a single, app-wide **singleton** — one shared instance used everywhere it's injected — without needing to manually list it in any module's `providers` array. This is the standard, recommended way to register most services today.
 
+
+### Dependency Injection
+
+**Dependency Injection (DI)** is the mechanism Angular uses to provide a class with the objects (dependencies) it needs, rather than that class creating them itself with `new`.
+
+**How it works**: when a component/service declares a dependency in its constructor, Angular's injector looks up (or creates, if it doesn't exist yet) an instance of that dependency and passes it in automatically — the class itself never calls `new UserService()`.
+
+```typescript
+@Component({ selector: "app-user-list", template: `...` })
+export class UserListComponent {
+    // constructor injection — Angular sees this constructor needs a UserService,
+    // and supplies one automatically when creating this component
+    constructor(private userService: UserService) {}
+
+    ngOnInit() {
+        this.userService.getUsers().subscribe(users => this.users = users);
+    }
+}
+```
+
+**Why DI is used**: it decouples a class from the concrete implementation of what it depends on — `UserListComponent` just declares "I need something that behaves like a UserService," without knowing or caring how that service is constructed. This makes testing far easier (a test can inject a fake/mock `UserService` instead of a real one that makes real HTTP calls) and makes it possible to swap an implementation (e.g. a different service for a different environment) without touching every class that uses it — the same underlying idea as Dependency Injection in Spring Boot (see the Spring Boot chapter), just applied to a frontend framework instead of a backend one.
+
+**Constructor injection** (shown above) is the standard and virtually only way dependencies are injected in Angular — declaring a parameter's TYPE in the constructor, with a visibility modifier (`private`/`public`), is enough for Angular to both inject the dependency AND automatically create a class property for it, with no extra assignment code needed.
+
+This is one of the most frequently asked Angular interview questions — being able to explain BOTH how DI works mechanically (constructor injection + the injector) and WHY it's used (decoupling, testability) is expected.
+
+
+### Routing
+
+Angular's Router maps URL paths to components, letting a Single-Page Application (see Overview above) navigate between "pages" without a full reload.
+
+```typescript
+// app.routes.ts
+export const routes: Routes = [
+    { path: "", component: HomeComponent },
+    { path: "users", component: UserListComponent },
+    { path: "users/:id", component: UserDetailComponent },   // dynamic route parameter
+    { path: "**", component: NotFoundComponent },              // wildcard — catch-all/404
+];
+```
+
+**`RouterOutlet`** — a placeholder in a template marking WHERE the routed component should be rendered; typically placed once, in the root component's template.
+
+```html
+<!-- app.component.html -->
+<nav>
+    <a routerLink="/">Home</a>
+    <a routerLink="/users">Users</a>
+</nav>
+<router-outlet></router-outlet>   <!-- the matched route's component renders here -->
+```
+
+**`RouterLink`** — the directive used for navigation links instead of a plain `<a href>`, so Angular intercepts the click and handles navigation client-side (updating the URL and swapping the routed component) instead of triggering a real page reload — the same underlying idea as React Router's `<Link>` (see the React chapter).
+
+**Programmatic navigation**, and **reading route parameters**:
+
+```typescript
+export class UserDetailComponent {
+    constructor(private route: ActivatedRoute, private router: Router) {}
+
+    ngOnInit() {
+        const id = this.route.snapshot.paramMap.get("id");   // reads ":id" from the URL
+    }
+
+    goBack() {
+        this.router.navigate(["/users"]);   // navigate from code, e.g. after a save/delete
+    }
+}
+```
+
+
+### HTTP Requests
+
+Angular's `HttpClient` (injected like any other service — see Dependency Injection above) is the standard way to consume a REST API.
+
+```typescript
+@Injectable({ providedIn: "root" })
+export class UserService {
+    constructor(private http: HttpClient) {}
+
+    getUsers(): Observable<User[]> {
+        return this.http.get<User[]>("/api/users");                        // GET
+    }
+    createUser(user: User): Observable<User> {
+        return this.http.post<User>("/api/users", user);                    // POST
+    }
+    updateUser(id: number, user: User): Observable<User> {
+        return this.http.put<User>(`/api/users/${id}`, user);               // PUT
+    }
+    deleteUser(id: number): Observable<void> {
+        return this.http.delete<void>(`/api/users/${id}`);                  // DELETE
+    }
+}
+```
+
+Every `HttpClient` method returns an **Observable** (see RxJS below), not a Promise — nothing happens until something calls `.subscribe()` on it. A component consumes the service like this:
+
+```typescript
+export class UserListComponent implements OnInit {
+    users: User[] = [];
+    constructor(private userService: UserService) {}
+
+    ngOnInit() {                                   // see Lifecycle below
+        this.userService.getUsers().subscribe(users => this.users = users);
+    }
+}
+```
+
+
+### RxJS
+
+Angular is built around **RxJS** (Reactive Extensions for JavaScript) for handling asynchronous data — HTTP responses, user input events, route changes, and more are all modeled as **Observables** rather than Promises or plain callbacks.
+
+**Observable** — represents a STREAM of values over time (zero, one, or many), rather than a Promise's single eventual value. An Observable does nothing on its own until it's subscribed to — it's a description of a data stream, not the data itself.
+
+```typescript
+const numbers$ = new Observable<number>(subscriber => {
+    subscriber.next(1);
+    subscriber.next(2);
+    subscriber.complete();
+});
+```
+
+(The trailing `$` in `numbers$` is just a naming convention for variables holding an Observable — not required by the language, but used almost everywhere in Angular code for readability.)
+
+**`subscribe()`** — starts "listening" to an Observable; without calling this, nothing the Observable describes ever actually runs.
+
+```typescript
+numbers$.subscribe(value => console.log(value));   // 1, 2
+```
+
+**`pipe()`** — chains operators together to transform the stream, without subscribing yet — conceptually similar to chaining `.map()`/`.filter()` on an array (see Streams in the Java chapter), except it operates on values arriving OVER TIME instead of ones already in memory.
+
+**`map()`** — transforms each emitted value, exactly like `Array.map()` but for a stream.
+
+```typescript
+this.http.get<User[]>("/api/users").pipe(
+    map(users => users.filter(u => u.active))   // transform the emitted array before it reaches subscribe()
+).subscribe(activeUsers => this.users = activeUsers);
+```
+
+**`catchError()`** — handles an error emitted by the Observable, similar in spirit to a `.catch()` on a Promise (see the JavaScript chapter) — without it, an HTTP error would otherwise propagate and silently break the subscription.
+
+```typescript
+this.http.get<User[]>("/api/users").pipe(
+    catchError(error => {
+        console.error("Failed to load users", error);
+        return of([]);   // return a fallback Observable so the stream still completes gracefully
+    })
+).subscribe(users => this.users = users);
+```
+
+**Why Angular uses Observables instead of Promises**: an Observable can emit MULTIPLE values over time (a Promise resolves exactly once), can be CANCELLED mid-flight by unsubscribing (a Promise cannot be cancelled once started), and comes with a large library of composable operators (`map`, `switchMap`, `debounceTime`, and more — see the advanced RxJS Operators section below) for combining and transforming asynchronous streams declaratively. This matters a lot for things like a search-as-you-type box (cancelling a stale in-flight request when the user types again — see `switchMap` below) or route parameter changes (a stream of values over the component's lifetime, not just one).
+
+
+### RxJS Operators (Advanced — Critical for Angular Interviews)
+
+Beyond the basics above, four operators specifically come up constantly in Angular interviews, because they each handle "what to do with a NEW value while a previous async operation is still in flight" differently:
 
 **switchMap** — cancels the previous inner Observable when a new outer value arrives.
 
@@ -7346,12 +7622,169 @@ Use for: sequential operations where order matters (process items one by one)
 Use for: login button (ignore extra clicks while request is in-flight)
 
 ```html
-// async pipe in template — subscribes and auto-unsubscribes
+<!-- async pipe in template — subscribes and auto-unsubscribes, see Pipes below -->
 <ul>
   <li *ngFor="let user of users$ | async">{{ user.name }}</li>
 </ul>
 ```
 
+
+### Forms
+
+Angular has two form-building approaches; **Reactive Forms** are the standard, recommended approach for anything beyond a trivial form — the form's state and validation rules live explicitly in the TypeScript class, rather than being inferred from template directives (the older "Template-Driven Forms" approach).
+
+**FormControl** — represents a single form input's value and validation state.
+**FormGroup** — groups multiple `FormControl`s together into one logical form.
+**Validators** — built-in (or custom) validation rules attached to a control.
+
+```typescript
+export class SignupComponent {
+    signupForm = new FormGroup({
+        email: new FormControl("", [Validators.required, Validators.email]),
+        password: new FormControl("", [Validators.required, Validators.minLength(8)]),
+    });
+
+    onSubmit() {
+        if (this.signupForm.valid) {
+            console.log(this.signupForm.value);   // { email: "...", password: "..." }
+        }
+    }
+}
+```
+
+```html
+<form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+    <input formControlName="email">
+    <div *ngIf="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+        Invalid email
+    </div>
+    <input formControlName="password" type="password">
+    <button type="submit" [disabled]="signupForm.invalid">Sign up</button>
+</form>
+```
+
+This is conceptually close to a Controlled Component in React (see the React chapter) — the FORM STATE lives in the component class (the "source of truth"), and the template just reflects and updates it, rather than the DOM inputs holding their own independent state.
+
+
+### Lifecycle Hooks
+
+Angular calls specific methods on a component automatically at defined points in its life, if the component's class implements the corresponding interface. Two are used constantly:
+
+**`ngOnInit()`** — called once, right after Angular first sets a component's `@Input` properties — the standard place to fetch initial data (see HTTP Requests above), NOT the constructor (dependency injection happens in the constructor, but inputs aren't guaranteed to be set yet at that point).
+
+**`ngOnDestroy()`** — called just before Angular removes the component (e.g. navigating away from its route). The standard place to clean up — unsubscribing from any Observable subscribed to manually (not needed for the `async` pipe, see Pipes below, which unsubscribes automatically), clearing timers, removing manually-added event listeners — exactly the same cleanup responsibility as a `useEffect` cleanup function in React (see the React chapter).
+
+```typescript
+export class UserListComponent implements OnInit, OnDestroy {
+    private subscription?: Subscription;
+
+    ngOnInit() {
+        this.subscription = this.userService.getUsers().subscribe(users => this.users = users);
+    }
+
+    ngOnDestroy() {
+        this.subscription?.unsubscribe();   // prevent a memory leak — see Memory Leaks in the JavaScript chapter
+    }
+}
+```
+
+
+### Component Communication
+
+Components communicate through a well-defined, one-directional flow — data flows DOWN from parent to child via `@Input`, and events flow UP from child to parent via `@Output`, mirroring the same unidirectional data flow principle as React's Props (see the React chapter).
+
+**`@Input()`** — declares a property that a PARENT component can set from its template, passing data down into the child.
+
+```typescript
+export class UserCardComponent {
+    @Input() user!: User;   // parent passes this in: <app-user-card [user]="selectedUser">
+}
+```
+
+**`@Output()` + `EventEmitter`** — declares a custom event a CHILD component can emit, which a parent can listen for — the mechanism for a child to notify its parent that something happened, without the child needing any reference back to the parent.
+
+```typescript
+export class UserCardComponent {
+    @Output() edit = new EventEmitter<User>();
+    onEditClick() {
+        this.edit.emit(this.user);   // notify the parent, passing the user along
+    }
+}
+```
+
+```html
+<!-- parent template -->
+<app-user-card [user]="selectedUser" (edit)="onUserEdit($event)"></app-user-card>
+```
+
+**Rule of thumb**: `@Input` for data going down, `@Output`/`EventEmitter` for events going up — for components that aren't in a direct parent-child relationship, a shared Service (see Services above) is the standard way to communicate instead.
+
+
+### Pipes
+
+A pipe transforms a value directly in the template, using the `|` syntax — a small, focused, reusable formatting function, without needing to reformat the value in the component class first.
+
+```html
+{{ today | date:'longDate' }}          <!-- date formatting -->
+{{ price | currency:'EUR' }}            <!-- currency formatting -->
+{{ name | uppercase }}                  <!-- ALL CAPS -->
+{{ name | lowercase }}                  <!-- all lowercase -->
+```
+
+**`async` pipe** — deserves special mention: it subscribes to an Observable (or Promise) directly in the template, automatically unwraps each emitted value, AND automatically unsubscribes when the component is destroyed — removing the need to manually `subscribe()`/`unsubscribe()` in the component class (see Lifecycle Hooks above) for the common case of "just display this stream's latest value."
+
+```html
+<ul>
+  <li *ngFor="let user of users$ | async">{{ user.name }}</li>
+</ul>
+<!-- users$ is an Observable<User[]> property on the component — no .subscribe() call needed anywhere -->
+```
+
+Pipes can be chained: `{{ name | lowercase | titlecase }}` applies them left to right.
+
+
+### JWT and Authentication
+
+A typical Angular authentication flow (see the Authentication & Authorization chapter for the underlying concepts) combines a login request, token storage, attaching the token to future requests, and an Interceptor to automate that last part.
+
+```typescript
+@Injectable({ providedIn: "root" })
+export class AuthService {
+    constructor(private http: HttpClient) {}
+
+    login(email: string, password: string): Observable<{ token: string }> {
+        return this.http.post<{ token: string }>("/api/login", { email, password }).pipe(
+            tap(response => localStorage.setItem("token", response.token))   // store the token on success
+        );
+    }
+}
+```
+
+**Sending the token on future requests**: rather than manually adding an `Authorization` header to every single HTTP call, an **Interceptor** does it once, centrally, for every outgoing request.
+
+```typescript
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        req = req.clone({ headers: req.headers.set("Authorization", `Bearer ${token}`) });
+    }
+    return next(req);
+};
+```
+
+**What Interceptors are for**: they sit between your code and every HTTP request/response, letting you handle cross-cutting concerns in ONE place instead of repeating them everywhere a request is made — attaching auth tokens (as above), logging every request, globally handling 401 responses (redirecting to login), or showing a loading spinner for the duration of any request. This is the same "wrap every call with shared behavior" idea as Spring's AOP/`@Transactional` (see the Java chapter) or Express middleware (see the Node.js chapter), just applied to outgoing HTTP calls in the browser.
+
+
+### Angular Project Structure
+
+Knowing what each generated file is FOR matters more than memorizing the exact folder layout:
+
+- **`app.component`** (`.ts`/`.html`/`.css`) — the root component of the application; every other component eventually nests inside its template (typically via `<router-outlet>` — see Routing above).
+- **`main.ts`** — the actual entry point of the application; bootstraps (starts) the root `AppComponent` and mounts it into the page's `index.html`.
+- **`app.config.ts`** (modern, standalone-component apps) — registers app-wide providers (the router, HTTP client, etc.) in one place, replacing the older `app.module.ts`.
+- **`app.module.ts`** (older, NgModule-based apps) — the older way of declaring which components/services/directives belong to the app and wiring up providers; still common in existing/legacy Angular codebases, though new Angular projects default to the simpler standalone-component model (`app.config.ts`) instead.
+- **`assets/`** — static files (images, fonts, JSON data) copied as-is into the build output, referenced directly by path in templates/CSS.
+- **`environments/`** — per-environment configuration (`environment.ts` for development, `environment.prod.ts` for production) — typically API base URLs and feature flags that differ between environments, imported into services instead of hardcoded (see the Configuration/Profiles pattern in the Spring Boot chapter for the same underlying idea on the backend).
 
 
 ## 3.03 Three.js
