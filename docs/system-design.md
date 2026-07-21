@@ -47,6 +47,9 @@
 - 6.03 Design a Real-Time Chat Application
 - 6.04 Design a File Storage System
 - 6.05 Design a Notification System
+- 6.06 Design an E-Commerce Checkout System
+- 6.07 Design a Ride-Hailing App
+- 6.08 Design a Banking/Payment Transaction System
 
 
 ---
@@ -3124,18 +3127,45 @@ Non-Functional:
 
 ```text
 Client
-  ↓
-DNS → CDN (caches popular redirects at edge)
-  ↓
-Load Balancer
-  ↓
-API Servers (stateless, horizontally scaled)
-  ↓           ↓
-Cache       Database
-(Redis)     (PostgreSQL)
+  │
+  ▼
+DNS  (resolves short.ly → the load balancer's IP)
+  │
+  ▼
+CDN  (caches popular redirects at the edge)
+  │
+  ▼
+Load Balancer  (L7, Round Robin)
+  │
+  ▼
+API Servers  (stateless, horizontally scaled)
+  │              │
+  ▼              ▼
+Cache          Database (primary + read replicas)
+(Redis)        (PostgreSQL)
 ```
 
-This is the standard read-heavy shape from Scalability (5.01): stateless API servers behind a Load Balancer (2.02) so capacity scales horizontally, a cache in front of the database to absorb the bulk of read traffic (see Caching, 3.05), and a CDN (2.04) caching the most popular redirects at the edge, closer to users and further from the origin entirely.
+**Walking through every decision in this diagram, and why:**
+
+- **DNS (2.01)**: translates the human-readable domain (`short.ly`) into the IP address of the load balancer. Nothing URL-shortener-specific here — every public system needs this first hop.
+
+- **CDN (2.04)**: caches the redirect RESPONSE itself at edge locations close to users — since a redirect is just a small HTTP response (a 301 with a `Location` header, no real payload), the CDN can serve it directly from the edge for popular links without the request ever reaching your origin servers at all. This matters because a viral link can spike traffic far faster than your origin can scale up.
+
+- **Load Balancer — L7, Round Robin (2.02)**: an **L7 (Application) load balancer** is used rather than L4, because it reads the actual HTTP request — this lets it terminate TLS once at the edge, and gives path-based routing for free if creation (`POST /urls`) and redirect (`GET /{code}`) ever need different backend pools or rate limits. The algorithm is plain **Round Robin**: the API servers are stateless (see below), every redirect lookup costs roughly the same amount of work, and there's no session affinity to preserve — the harder cases for Round Robin (uneven request cost, server-held session state) don't apply here.
+
+- **API Servers — stateless, horizontal scaling (5.01)**: the servers hold no session/user state in memory between requests — every request carries everything needed to handle it (a short code), and any server can handle any request. This is what makes **horizontal scaling** possible at all: because no server is "special," the load balancer can freely add or remove servers behind it to match traffic, rather than being stuck vertically scaling one box (see Scalability, 5.01). Given this system is read-dominated with a simple, uniform request shape, horizontal scaling of cheap, identical servers is a much better fit than trying to buy one increasingly expensive, more powerful machine.
+
+- **Authentication**: the redirect path (`GET /{code}`) stays fully PUBLIC and unauthenticated — anyone with the link must be able to use it, that's the whole point of the service. Creating a link is where auth becomes a real design choice: allow fully anonymous creation (simplest, but harder to rate-limit since there's no account to key on), or require an API key/account for a higher rate limit, custom aliases, and a "my links" dashboard. If accounts exist, authorization is a simple OWNERSHIP check ("does this link belong to this account?") rather than full RBAC (see Authentication & Authorisation, 5.06) — a role system only matters if admin/moderation capabilities are added later.
+
+- **Cache — Redis, cache-aside (3.05)**: sits in front of the database specifically to absorb the READ traffic, since this system is overwhelmingly read-heavy (redirects vastly outnumber URL creations). It holds `short_code → long_url` pairs for recently/frequently accessed codes; see Redirect Flow below for exactly how a request uses it. This is the layer that does most of the actual work of keeping redirects fast.
+
+- **Database — SQL (PostgreSQL)**: the access pattern is a single, simple point lookup by `short_code` — no joins, no complex relational queries — which a NoSQL key-value store (e.g. DynamoDB) would serve equally well (see SQL vs NoSQL trade-offs, 3.04). PostgreSQL is chosen here specifically for its `UNIQUE` constraint on `short_code` (see Constraints in the SQL chapter) — a hard, database-enforced guarantee that two different long URLs never collide on the same code, which a key-value store would require re-implementing yourself (a conditional write) instead of getting for free. Either answer is defensible in an interview — what matters is explaining that the DATA here is simple/uniform (favors either), while the UNIQUENESS constraint specifically favors SQL.
+
+- **Replication before sharding (3.01)**: start with **read replicas**, not sharding — since the workload is overwhelmingly read-heavy, replicas scale read capacity without touching the data model, and are far simpler to operate. Reach for **sharding** only once a single primary genuinely can't hold the dataset or absorb the write volume, at which point hashing `short_code` to pick the shard (`hash(code) % number_of_shards`, or **consistent hashing** to avoid a mass reshuffle whenever a shard is added/removed) keeps lookups simple (still a single-shard point lookup) while spreading codes evenly, avoiding a "hot shard."
+
+- **Message Queue — not needed for the core flow**: creating and redirecting a URL are both simple, synchronous, low-latency operations with no heavy background processing — there's no natural place for asynchronous work in the core path. A queue (see Message Queues & Event-Driven Architecture, 4.02) only enters the picture for a SEPARATE concern, like click analytics (see Follow-Up Questions below), which is deliberately kept off the hot path.
+
+- **Cloud vs self-hosted (5.07)**: managed cloud services are the clear default — managed Postgres (e.g. RDS) and managed Redis (e.g. ElastiCache), fronted by a managed CDN and load balancer. Nothing about this system's logic is unusual enough to justify the operational overhead (patching, backups, failover, on-call) of running your own database or cache cluster; that overhead is "undifferentiated heavy lifting" that buys the product nothing extra here.
 
 
 #### Short Code Generation
@@ -3157,17 +3187,38 @@ Compact and collision-free by construction — but a plain incrementing counter,
 
 #### Database Schema
 
+```text
+users                    urls
+┌─────────────┐          ┌──────────────────┐
+│ id (PK)      │◄────────┤ user_id (FK)       │
+│ email         │  1    * │ id (PK)             │
+│ created_at    │         │ short_code (UNIQUE) │
+└─────────────┘          │ long_url             │
+                          │ created_at            │
+                          │ expires_at             │
+                          └──────────────────┘
+```
+
+One user can own MANY urls (1-to-many) — `urls.user_id` is a foreign key back to `users.id`. `user_id` is nullable, since anonymous link creation is allowed (see Authentication above).
+
 ```sql
+CREATE TABLE users (
+    id          BIGINT PRIMARY KEY,
+    email       VARCHAR(255) UNIQUE NOT NULL,
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE urls (
     id          BIGINT PRIMARY KEY,
     short_code  VARCHAR(10) UNIQUE NOT NULL,
     long_url    TEXT NOT NULL,
-    user_id     BIGINT,
+    user_id     BIGINT REFERENCES users(id),   -- nullable: NULL = anonymously created
     created_at  TIMESTAMP DEFAULT NOW(),
     expires_at  TIMESTAMP
 );
 
 CREATE INDEX idx_short_code ON urls(short_code);
+CREATE INDEX idx_urls_user_id ON urls(user_id);   -- for a "my links" dashboard query
 ```
 
 
@@ -3240,29 +3291,6 @@ The system should degrade, not fail outright: every request simply falls through
 </details>
 
 <details>
-<summary>Show Answer — Why a relational database here instead of a NoSQL store?</summary>
-
-The access pattern is a single, simple lookup by `short_code` — no joins, no complex queries — which a NoSQL key-value store would actually serve well too. PostgreSQL is a perfectly reasonable choice specifically because the DATA is simple and relationships are minimal (see SQL vs NoSQL trade-offs in 3.04): each row stands alone, nothing needs to be queried together across tables, and the strict schema of a relational table (`short_code`, `long_url`, `expires_at`, ...) is a natural fit for data that's already uniform and well-structured.
-
-Where PostgreSQL pulls ahead is the `UNIQUE` constraint on `short_code` (see Constraints in the SQL chapter) — it gives a hard, database-enforced correctness guarantee against two different long URLs ending up mapped from the same code, exactly the race condition discussed in the first Follow-Up Question above. A key-value store like DynamoDB is an equally valid answer, since it would serve the read-by-key pattern just as fast and would scale writes more easily — you'd just need to re-implement that uniqueness guarantee yourself (a conditional write) instead of getting it from the database for free. Naming that alternative, and WHY the access pattern makes either one reasonable, is what an interviewer is really listening for.
-
-</details>
-
-<details>
-<summary>Show Answer — What type of load balancer, and which algorithm, would you put in front of the API servers?</summary>
-
-An **L7 (Application) load balancer** — one that reads the actual HTTP request (path, headers, cookies) rather than just forwarding raw packets, unlike a lower-level L4 balancer that only sees IP/port (see Layer 4 vs Layer 7 Load Balancing, 2.02) — is the natural fit: it can terminate TLS once at the edge, and — even though this service is simple — L7 gives you path-based routing for free if creation (`POST /urls`) and redirect (`GET /{code}`) ever need different backend pools or different rate limits. For the algorithm, **Round Robin** — cycling through servers in fixed order, 1→2→3→1→2→3... (2.02) — is enough: the API servers are stateless, every redirect lookup costs roughly the same amount of work, and there's no session affinity to preserve — the harder cases for Round Robin (wildly uneven request cost, server-held session state) don't apply here.
-
-</details>
-
-<details>
-<summary>Show Answer — What authentication/authorization would you use, and where?</summary>
-
-The redirect path (`GET /{code}`) stays fully public and unauthenticated — anyone with the link must be able to use it, that's the whole point of the service. Creating a link is where auth becomes a design choice: allow fully anonymous creation (simplest, but rate-limited harder per IP since there's no account to rate-limit against), or require an API key/account for a higher rate limit, custom aliases, and a "my links" dashboard. If accounts exist, authorization is a simple ownership check — "does this link belong to this account?" — rather than full **RBAC** (Role-Based Access Control: users get assigned roles like admin/editor/viewer, and permissions attach to the role rather than the individual user — see Authentication & Authorisation in the Security chapter, 5.06); a role system only becomes relevant if you later add admin/moderation capabilities (e.g. staff who can take down reported links).
-
-</details>
-
-<details>
 <summary>Show Answer — How do you keep this system secure and maintainable in production, beyond the phishing defenses already discussed?</summary>
 
 **Security:**
@@ -3277,26 +3305,6 @@ The redirect path (`GET /{code}`) stays fully public and unauthenticated — any
 **Maintainability:**
 
 - **Dashboards and alerts on cache hit rate, redirect latency, and error rate** (see Monitoring & Observability, 5.05) — a dropping cache hit rate is often the first sign something's wrong (a bad deploy invalidating the cache, or a traffic pattern change) well before users notice.
-
-</details>
-
-<details>
-<summary>Show Answer — Would you run this on managed cloud services, or self-host the components?</summary>
-
-Managed cloud services are the clear default here (see Cloud & Infrastructure, 5.07) — a managed Postgres (RDS) and managed Redis (ElastiCache), fronted by a managed CDN and load balancer. Nothing about this system's logic is unusual enough to justify the operational overhead of running your own database or cache cluster; that overhead (patching, backups, failover, on-call) is exactly what "undifferentiated heavy lifting" means, and it buys the product nothing extra here. Self-hosting would only become worth discussing at a scale where the managed-service cost itself becomes the dominant expense — a very different conversation than the one this design is solving.
-
-</details>
-
-<details>
-<summary>Show Answer — Would you reach for sharding, replication, both, or neither — and in what order?</summary>
-
-Start with **replication**, not sharding: since the workload is overwhelmingly read-heavy, adding read replicas (see Replication under Database Fundamentals, 3.01) scales the redirect path's read capacity without touching the data model at all, and it's far simpler to operate. Reach for **sharding** only once a single primary genuinely can't hold the dataset or absorb the write volume of new URLs.
-
-Hashing `short_code` to pick the shard spreads codes evenly across shards, even if the codes themselves are sequential or clustered — this avoids a "hot shard" that a naive split (e.g. by first letter) could cause. The lookup stays fast because the shard is computable from the code alone: `hash(code) % number_of_shards` tells the app exactly which single shard to query, with no need to check every shard first.
-
-The simplest way to turn a hash into a shard number is the **modulo**: `hash("abc123") % 4` (for 4 shards) always gives a number from 0-3, and since the hash is uniformly distributed, so is the resulting shard assignment. The catch is that adding or removing a shard changes the modulo result for almost every key, forcing a massive reshuffle of data — which is why real systems typically use **consistent hashing** instead: shards and keys are placed on a conceptual ring, and each key belongs to the next shard found going around it, so adding/removing a shard only reassigns the keys near that one point on the ring, not everything.
-
-Doing this in the wrong order — sharding before you've exhausted what replication and caching can give you — adds real operational complexity (cross-shard rebalancing, more moving parts) for a problem caching and replicas would have solved more simply.
 
 </details>
 
@@ -3328,6 +3336,51 @@ Non-Functional:
 - Read-heavy — a feed is opened far more often than a post is published, so the read path is the one that must scale (see Scalability, 5.01)
 - Fast feed loads — the feed is the first thing a user sees on opening the app
 - Eventual consistency is acceptable — a brand-new post doesn't need to appear in every follower's feed instantly (see CAP Theorem & Consistency Models, 5.02)
+
+
+#### High-Level Design
+
+```text
+Client
+  │
+  ▼
+DNS
+  │
+  ▼
+CDN  (post images/video — see Object Storage, 3.06)
+  │
+  ▼
+Load Balancer  (L7, Least Connections)
+  │
+  ▼
+API Servers  (stateless, horizontally scaled)
+  │                              │
+  ▼                              ▼
+Feed Cache (Redis)          Posts DB (PostgreSQL, primary + replicas)
+  ▲                              │
+  │                              ▼
+Fanout Worker  ◄──────  Message Queue (Kafka, topic "new-posts")
+```
+
+**Walking through every decision in this diagram, and why:**
+
+- **DNS + CDN (2.01, 2.04)**: standard first hops. The CDN's role here is specifically for MEDIA — post images and video are large, static, and cacheable at the edge (see Object Storage, 3.06) — the feed data itself (text, counts, IDs) is far too dynamic and per-user to CDN-cache usefully.
+
+- **Load Balancer — L7, Least Connections (2.02)**: **L7** so the load balancer can route the read-heavy feed endpoint separately from write endpoints (posting, following), which have very different load profiles. The algorithm is **Least Connections** rather than Round Robin: assembling a feed can take noticeably longer for some requests than others (merging in high-follower-count accounts at read time — see the hybrid fan-out approach below), so routing to whichever server has the fewest requests in flight avoids piling slow requests onto one instance.
+
+- **API Servers — stateless, horizontal (5.01)**: hold no per-user session state in memory; all real state lives in the feed cache and database. This is what lets the fleet scale horizontally with traffic, and is a hard requirement given the read-heavy, bursty nature of social traffic (a viral post can spike load unpredictably).
+
+- **Authentication — JWT (5.06)**: a short-lived, signed access token (plus a longer-lived refresh token) is used rather than server-side sessions, since it keeps the auth check on every request cheap and stateless — no database/session-store lookup needed just to verify who's calling, which matters given how often the feed and related endpoints are hit. Authorization is mostly ownership-based (delete your own post, not someone else's) — full RBAC only enters the picture if staff/moderator roles are added.
+
+- **Database — SQL (PostgreSQL)**: posts and the follow-graph are RELATIONAL by nature — a post belongs to a user, a follow links two users — and the system benefits from real joins (e.g. "posts from users I follow") and strong constraints (see SQL at Scale, 3.03). A NoSQL document/wide-column store is also a defensible answer at very large scale specifically for the posts table (see NoSQL at Scale, 3.04), since posts are mostly written once and read by ID/user — but the follow-graph in particular is exactly the kind of relational, join-heavy data SQL is built for.
+
+- **Replication and sharding (3.01)**: read replicas absorb the read-heavy load first, without changing the data model. Sharding becomes necessary once a single primary can't hold the growing volume of posts — sharding the posts table by `user_id` keeps a single user's own posts together (so "get this user's posts" never needs a cross-shard query), which matters since the read path already fans out across many DIFFERENT users' data at query time — you don't want an individual user's OWN data also split across shards on top of that.
+
+- **Feed Cache — Redis**: holds each user's pre-built feed (a sorted set of post IDs, scored by time) so a feed LOAD is a fast cache read rather than a live fan-out query — see the Fan-Out approaches below for how it gets populated.
+
+- **Message Queue — Kafka, needed here**: unlike the URL Shortener (6.01), this system genuinely needs a queue — publishing a post must trigger fanning it out to potentially many followers' feed caches, which is exactly the kind of slow, high-fan-out background work that should never block the act of posting itself (see Message Queues & Event-Driven Architecture, 4.02). The Post Service publishes an event and returns immediately; a separate Fanout Worker consumes it asynchronously.
+
+- **Cloud vs self-hosted (5.07)**: managed services (managed Kafka, managed Redis, managed Postgres) are the default — the operational burden of running distributed, stateful infrastructure yourself only becomes worth it at a scale/cost point most systems never reach (see the Cloud & Infrastructure chapter for when that trade-off flips).
 
 
 #### Two Approaches: Fan-Out on Write vs Fan-Out on Read
@@ -3365,23 +3418,20 @@ Pro: no write amplification, simple. Con: slow for users who follow a large numb
 This mirrors the general read-heavy vs write-heavy trade-off from Scalability (5.01) — push work to write time when reads dominate and writes are cheap to amplify, fall back to read time for the specific accounts where that amplification would itself become the bottleneck.
 
 
-#### High-Level Design
+#### Database Schema
 
 ```text
-Post Service
-  ↓
-Message Queue (Kafka topic: "new-posts")
-  ↓
-Feed Fanout Worker
-  ↓
-Feed Cache (Redis)
-  ←── read ── Feed API ← Client
+users              follows                    posts
+┌───────────┐      ┌──────────────┐            ┌──────────────┐
+│ id (PK)     │◄──┬─┤ follower_id (FK) │            │ id (PK)         │
+│ username     │    │ │ followee_id (FK)│─┬──────────┤ user_id (FK)     │
+└───────────┘    └─┼──────────────┘  │          │ content           │
+                     └──────────────────┘          │ created_at         │
+                        (composite PK:               └──────────────┘
+                     follower_id + followee_id)
 ```
 
-The Post Service doesn't fan out synchronously — it publishes an event and returns immediately, exactly the decoupling pattern from Message Queues & Event-Driven Architecture (4.02). A separate Fanout Worker consumes the event and does the (potentially slow, high-fan-out) work of updating follower feed caches, so a viral post never makes the act of posting itself feel slow.
-
-
-#### Database Schema (simplified)
+`follows` is a many-to-many join table between `users` and itself (a user can follow many users, and be followed by many users) — this is exactly the many-to-many pattern from Entity Relationships in the Technical Study Guide's Spring Boot chapter, just self-referential (both foreign keys point back to `users`). `posts` is a straightforward one-to-many: one user has many posts.
 
 ```sql
 -- Users and follow relationships
@@ -3449,37 +3499,9 @@ Stories are a good fit for a separate, TTL-based cache entry rather than reusing
 </details>
 
 <details>
-<summary>Show Answer — What type of load balancer, and which algorithm, would you use for the Feed API?</summary>
-
-An **L7 load balancer** — one that reads the actual HTTP request rather than just IP/port, see 2.02 — the Feed API benefits from content-aware routing (e.g. separating the read-heavy feed endpoint from the write endpoints for posting/following, which have very different load profiles). For the algorithm, **Least Connections** — send each new request to whichever backend currently has the fewest requests still in flight, rather than blindly cycling through servers — is a better fit than plain Round Robin (fixed 1→2→3→1→2→3 rotation): assembling a feed can take noticeably longer for some requests than others (merging in celebrity posts at read time, see the hybrid fanout approach above), so routing to whichever server currently has the fewest open requests avoids piling slow requests onto one instance the way Round Robin could. No sticky sessions are needed — the Feed API is stateless, with all real state living in the feed cache and database, not in server memory.
-
-</details>
-
-<details>
-<summary>Show Answer — What authentication/authorization approach fits this system?</summary>
-
-Standard **JWT access token + refresh token** — a compact, signed token (JSON Web Token) the server can verify without a database lookup, paired with a longer-lived token used only to obtain a new one once it expires (see Authentication & Authorisation, 5.06) — for the API: short-lived access tokens keep the auth check on every request cheap and stateless, which matters given how often the feed and its related endpoints are called. Authorization is mostly ownership-based (a user can delete their own post, edit their own profile, but not someone else's) rather than full **RBAC** (Role-Based Access Control — permissions attached to roles like admin/editor/viewer rather than checked per resource) — RBAC becomes relevant only if the platform adds staff roles like moderators, who need broader permissions (e.g. removing any post) than a regular user.
-
-</details>
-
-<details>
 <summary>Show Answer — What security and moderation concerns are specific to a feed of user-generated content?</summary>
 
 Because posts are user-generated content rendered back to OTHER users, this system is a textbook target for stored **XSS (Cross-Site Scripting)** — an attacker submits a post containing malicious JavaScript, which then runs in every other user's browser when they view it (see the OWASP Top 10, 5.06) — so post content must be escaped/sanitised before rendering, never inserted as raw HTML. Rate-limit posting per account to blunt spam and bot-driven content floods (see API Gateway & Rate Limiting, 2.05), and validate/authorize every write server-side — never trust a client-supplied `user_id` on a post, always derive it from the authenticated session. A moderation/reporting pipeline (flagging content for review, an admin takedown path) is also expected in any real answer once user-generated content is involved.
-
-</details>
-
-<details>
-<summary>Show Answer — Would you self-host Kafka and Cassandra-style infrastructure, or use managed cloud services?</summary>
-
-Managed services are the sensible default (see Cloud & Infrastructure, 5.07) — a managed Kafka (e.g. AWS MSK) and managed Redis remove the very real operational burden of running distributed, stateful infrastructure yourself (patching, rebalancing, failure recovery). The real-world companies that self-host at this scale (Twitter's own Kafka/storage stack, for instance) do so only once their scale and cost profile makes the trade-off worth the dedicated infrastructure teams required — not a starting point, a destination reached after outgrowing managed options.
-
-</details>
-
-<details>
-<summary>Show Answer — Where would you use sharding vs replication in this design?</summary>
-
-**Replication** covers durability and read scaling for both the posts database and the follow-graph — read replicas absorb the read-heavy load without changing how data is organized. **Sharding** becomes relevant once a single database can no longer hold the growing volume of posts — sharding the posts table by `user_id` keeps a single user's posts together (so "get this user's own posts" never needs a cross-shard query), which matters since the read path already fans out across many users' data at query/fanout time — you don't want individual USER data ALSO split across shards on top of that. The Redis feed cache is naturally sharded already, since `feed:{user_id}` keys distribute across a Redis Cluster by key, requiring no extra design work beyond choosing that key shape.
 
 </details>
 
@@ -3540,17 +3562,35 @@ User A (connected to Chat Server 1)
 #### High-Level Design
 
 ```text
-Client A ─── WebSocket ──▶ Chat Server 1 ──▶ Redis Pub/Sub ──▶ Chat Server 2 ─── WebSocket ──▶ Client B
-                                │                                       │
-                                ▼                                       ▼
-                          Kafka (message log)                 Kafka (message log)
-                                │
-                                ▼
-                          Message DB (Cassandra)
-                          Push Notification Service (for offline users)
+Client A                                                              Client B
+  │  WebSocket (WSS)                                                    │  WebSocket (WSS)
+  ▼                                                                     ▼
+DNS → Load Balancer (L7, sticky sessions)                    DNS → Load Balancer (same)
+  │                                                                     │
+  ▼                                                                     ▼
+Chat Server 1  ───────────────▶  Redis Pub/Sub  ───────────────▶  Chat Server 2
+  │                                                                     │
+  ▼                                                                     ▼
+Kafka (durable, ordered message log)  ──────────────────────────────────┘
+  │
+  ▼
+Message DB (Cassandra)
+Push Notification Service (for offline users)
 ```
 
-Every message is also written to Kafka as a durable, ordered log BEFORE the client is told it succeeded — this is what makes "at-least-once delivery" a real guarantee rather than a hope: if a chat server crashes right after publishing to Pub/Sub but before persisting, the message still exists in the log and can be replayed (see Message Queues & Event-Driven Architecture, 4.02). Each `message_id` is generated client-side or at the edge as a UUID (see ID Generation Strategies, 3.02) specifically because message creation is fully distributed across many chat servers with no central counter to coordinate through — exactly the scenario 3.02 recommends a UUID for.
+**Walking through every decision in this diagram, and why:**
+
+- **Load Balancer — L7 with sticky sessions (2.02)**: this is the one place across these exercises where load balancer choice really changes shape. A WebSocket connection is long-lived — once Client A upgrades to a WebSocket and connects to Chat Server 1, it must keep talking to THAT SAME server for the life of the connection, unlike a stateless HTTP request the load balancer can freely send anywhere. This requires **session affinity ("sticky sessions")** at L7, routing based on a cookie/connection ID set at the initial handshake so every subsequent frame from that client is pinned to the same backend chat server. A NEW connection still lands on a server via a normal algorithm (Round Robin or Least Connections) — the stickiness only applies once a connection exists.
+
+- **Are the chat servers stateless?** — Not in the same sense as the URL Shortener or Feed API. Each chat server holds an actual open WebSocket connection in memory for every client connected to it — that's real, in-memory state, tied to a specific server. What IS kept stateless is everything ELSE: message history, conversation membership, and delivery status all live in Kafka/Cassandra, not in server memory, so a server crash loses only its currently-open connections (which reconnect elsewhere — see Follow-Up Questions), never any data. This nuance matters: horizontal scaling still works here (add more chat servers to hold more concurrent connections), but scaling is about connection CAPACITY, not about servers being fully interchangeable request-handlers the way they are in the other exercises.
+
+- **Authentication — JWT at the handshake (5.06)**: the client presents a JWT once, as part of the initial WebSocket handshake — the chat server validates it and attaches the resulting identity to that connection for its ENTIRE lifetime, rather than re-checking a token on every individual message (needless overhead for a connection meant to be lightweight and persistent). Authorization matters per-action too: before relaying a message, the server verifies the sender is actually a participant in that conversation/group.
+
+- **Durability — Kafka before acknowledging the client (4.02)**: every message is written to Kafka as a durable, ordered log BEFORE the client is told it succeeded — this is what makes "at-least-once delivery" a real guarantee rather than a hope. If a chat server crashes right after publishing to Pub/Sub but before persisting, the message still exists in the log and can be replayed.
+
+- **ID generation — UUID (3.02)**: each `message_id` is generated as a UUID specifically because message creation is fully distributed across many chat servers with no central counter to coordinate through — exactly the scenario ID Generation Strategies (3.02) recommends a UUID for.
+
+- **Cloud vs self-hosted (5.07)**: managed Kafka and a managed Cassandra-compatible store are the default, removing a large amount of operational burden. Worth knowing: extremely large real-time messaging systems have historically leaned toward SELF-hosting specifically for this workload (WhatsApp famously ran a lean, largely self-managed stack for years), because at truly massive persistent-connection scale the cost/control trade-off can flip — a good "it depends on scale" answer if pushed on this in an interview.
 
 
 #### Message Delivery for Offline Users
@@ -3565,9 +3605,20 @@ Chat Server → check if User B is online (presence service)
 ```
 
 
-#### Database Choice
+#### Database Choice and Schema
 
-Chat is write-heavy with a simple, predictable access pattern (fetch messages for a conversation by time) rather than complex relational queries — exactly the profile NoSQL at Scale (3.04) describes as a good fit for a wide-column store. **Apache Cassandra** is a common choice:
+Chat is write-heavy with a simple, predictable access pattern (fetch messages for a conversation by time) rather than complex relational queries — exactly the profile NoSQL at Scale (3.04) describes as a good fit for a wide-column store. **Apache Cassandra** is a common choice for the messages themselves, paired with a small relational table for conversation membership (a genuinely relational, low-volume concern — a good fit for PostgreSQL):
+
+```text
+conversations              participants                    messages (Cassandra)
+┌───────────┐              ┌─────────────────────┐          ┌───────────────────┐
+│ id (PK)     │◄───────────┤ conversation_id (FK)   │          │ conversation_id (partition key) │
+│ is_group     │      1   * │ user_id (FK)            │          │ created_at (clustering key)      │
+│ created_at    │            │ (composite PK)            │          │ message_id, sender_id, content    │
+└───────────┘              └─────────────────────┘          └───────────────────┘
+```
+
+`conversations` + `participants` (a many-to-many join table, same shape as `follows` in the Social Media Feed exercise) live in PostgreSQL — this data is small, relational, and changes rarely (checking "is this user a participant?" for authorization — see High-Level Design above — is a simple indexed lookup). `messages` lives in Cassandra, partitioned separately, since it's the high-write-volume part of the system:
 
 ```sql
 -- Cassandra table (partition by conversation, cluster by time)
@@ -3581,7 +3632,7 @@ CREATE TABLE messages (
 ) WITH CLUSTERING ORDER BY (created_at DESC);
 ```
 
-Partition key = `conversation_id` ensures all messages for a conversation are on the same node. Clustering by `created_at DESC` makes fetching recent messages fast.
+Partition key = `conversation_id` ensures all messages for a conversation are on the same node. Clustering by `created_at DESC` makes fetching recent messages fast. This partition key is also effectively the SHARD key — Cassandra's replication factor (copying each partition across multiple nodes automatically) and partitioning give you both replication and sharding largely for free, unlike PostgreSQL where sharding is something you'd have to add yourself (see Database Fundamentals, 3.01) once the `participants`/`conversations` tables ever grew large enough to need it, which for this data is unlikely.
 
 
 #### Message Status
@@ -3632,41 +3683,6 @@ The access pattern is narrow and predictable — write a message once, read a co
 
 </details>
 
-<details>
-<summary>Show Answer — What type of load balancer would you use for WebSocket connections, and does it need to work differently from a normal HTTP load balancer?</summary>
-
-Yes — this is the one place in these five exercises where load balancer choice really changes shape. A WebSocket connection is long-lived: once a client is upgraded to a WebSocket and connected to Chat Server 1, it must keep talking to THAT SAME server for the life of the connection — the load balancer can't freely rebalance individual messages the way it would separate stateless HTTP requests. This calls for **session affinity ("sticky sessions")** at the load balancer, commonly done at **L7** — the load balancer level that reads the actual HTTP request instead of just IP/port, see 2.02 — by routing based on a cookie or connection ID set at the initial handshake, so every subsequent frame from that client is pinned to the same backend chat server. Round Robin (cycling through servers in fixed order) or Least Connections (routing to whichever server has the fewest active requests) still decides which server a NEW connection lands on — the stickiness only applies once a connection exists.
-
-</details>
-
-<details>
-<summary>Show Answer — How and when do you authenticate a WebSocket connection?</summary>
-
-Authenticate once, at the WebSocket handshake — the client presents a **JWT** (JSON Web Token — a compact, signed token the server can verify without a database lookup; see Authentication & Authorisation, 5.06) as part of the initial connection request (e.g. a query parameter or header before the upgrade completes), the chat server validates it and attaches the resulting identity to that connection for its entire lifetime. Re-validating a token on every individual message would add needless overhead to a connection that's supposed to be lightweight and persistent; instead, a token nearing expiry can trigger the SERVER to close the connection and require the client to reconnect with a fresh token. Authorization matters per-action too — before relaying a message, the server must verify the sender is actually a participant in that conversation/group, not just that they're logged in as someone.
-
-</details>
-
-<details>
-<summary>Show Answer — What security considerations are specific to a chat system?</summary>
-
-Connections must run over **WSS** (WebSocket over TLS) — never a plain, unencrypted `ws://` connection, for exactly the same reason HTTPS is non-negotiable elsewhere (see Encryption, 5.06). For a privacy-focused product, **end-to-end encryption** is worth naming as an extension: the server would relay only ciphertext it cannot itself read, which changes its role from "reads and routes messages" to "blindly relays opaque bytes between clients who hold the actual encryption keys" — a meaningfully different (and harder) design than the one built above. Message content should also still be treated as untrusted input if it's ever rendered as rich text/markdown on the client — the same XSS concern as the Social Media Feed exercise applies wherever user content gets displayed back to other users.
-
-</details>
-
-<details>
-<summary>Show Answer — Would you run this on managed cloud infrastructure, or self-host?</summary>
-
-Cloud-managed is the default answer (see Cloud & Infrastructure, 5.07) — managed Kafka, managed Cassandra-compatible stores (or a managed Cassandra offering), and auto-scaling groups for the chat server fleet remove a large amount of operational burden. It's worth knowing, though, that extremely large real-time messaging systems have historically leaned toward self-hosting specifically for this workload — WhatsApp famously ran a lean, largely self-managed Erlang stack for years — because at truly massive persistent-connection scale, the cost and control trade-offs shift; this is a good "it depends on scale" answer to give if pushed on the question.
-
-</details>
-
-<details>
-<summary>Show Answer — Where does sharding vs replication show up in this design?</summary>
-
-Cassandra gives you both, largely for free, through the same mechanism: its **replication factor** copies each piece of data across multiple nodes automatically for durability and read availability (no separate "set up a read replica" step the way PostgreSQL requires), while its **partition key** — `conversation_id` in the schema above — is effectively the shard key, determining which nodes own a given conversation's data. This is a good example of NoSQL at Scale's (3.04) point that wide-column stores are BUILT around partitioning as a first-class concept, rather than sharding being something bolted on afterward the way it often is for a relational database (see Sharding under 3.01, which is exactly the retrofit Cassandra avoids needing).
-
-</details>
-
 
 ## 6.04 Design a File Storage System
 
@@ -3697,6 +3713,45 @@ Non-Functional:
 - Durability — files must never be lost, even in the face of hardware failure (see Object Storage, 3.06, for how object stores like S3 achieve this through replication)
 - Highly available — see Availability & Fault Tolerance, 5.03
 - Bandwidth-efficient sync — don't re-upload a file's unchanged parts
+
+
+#### High-Level Design
+
+```text
+Client
+  │
+  ▼
+DNS
+  │
+  ▼
+Load Balancer  (L7)
+  │
+  ▼
+API Servers  (stateless — metadata only)          Object Storage (S3/GCS)
+  │                          │                             ▲
+  ▼                          ▼                             │
+Cache (Redis)          Metadata DB                  (files uploaded/downloaded
+                        (PostgreSQL,                  DIRECTLY by the client —
+                        primary + replicas)            see Upload Flow below)
+```
+
+**Walking through every decision in this diagram, and why:**
+
+- **Load Balancer — L7 (2.02)**: sits in front of the METADATA API only — it needs to inspect requests to authenticate them and route appropriately. The important design point is that it does NOT handle file transfers at all: those bypass the load balancer and API tier entirely (see Upload Flow below).
+
+- **API Servers — stateless (5.01)**: hold no file data and no per-user state; every request (create a file record, list files, generate a share link) is self-contained. This is what makes it possible to scale the metadata tier horizontally, independent of storage.
+
+- **Authentication and authorization**: standard session/JWT (see 5.06) identifies the user for the metadata API. Authorization is more interesting here than in most of these exercises, since it needs PER-RESOURCE, per-user permissions rather than one global role — closer to **ABAC (Attribute-Based Access Control)** than RBAC: access to a specific file depends on an attribute check ("is this user's ID present in `file_shares` for this `file_id`, and what permission do they have?") evaluated per resource, rather than one role granting the same access everywhere.
+
+- **Cache — metadata only**: caches frequently-accessed file metadata (a file listing, a file's share permissions) — never the file bytes themselves, which live in object storage and are typically served/cached at a different layer entirely (a CDN, if downloads are frequent and public — see 2.04).
+
+- **Database — SQL (PostgreSQL)**: file metadata is genuinely relational — a file belongs to an owner, and is shared with potentially many users via a join table (see Database Schema below) — exactly the kind of structured, constraint-heavy data SQL handles well (see SQL at Scale, 3.03). Replicate for read scaling first (file listings are frequent); shard by `owner_id` only once metadata volume genuinely outgrows a single primary (see Database Fundamentals, 3.01) — sharding by owner keeps "list this user's files" a single-shard query.
+
+- **Object Storage — not a traditional database at all**: this is the core insight of the whole design (see below) — binary file data never touches your database or even your API servers; it's uploaded and downloaded DIRECTLY between the client and a purpose-built object store (S3/GCS — see Object Storage, 3.06), which already handles the durability, replication, and raw throughput that would be extremely costly to build yourself.
+
+- **Message Queue — needed, but only behind the scenes**: not shown as a client-facing component, but used internally to process "file uploaded" events (triggering malware scanning, notifying other devices to sync — see Upload Flow below) asynchronously, off the critical path.
+
+- **Cloud vs self-hosted (5.07)**: this is one of the clearest "always cloud" answers of any of these exercises — object storage's durability guarantees come from replicating data across multiple physically separate facilities, infrastructure that would be extraordinarily expensive and operationally demanding to replicate yourself. Essentially no team builds this layer from scratch today.
 
 
 #### Core Insight: Split Metadata from File Data
@@ -3745,6 +3800,19 @@ This is delta sync — only changed parts of a file are transferred.
 
 
 #### Database Schema
+
+```text
+users                 files                     file_shares
+┌───────────┐         ┌──────────────┐           ┌─────────────────┐
+│ id (PK)     │◄───────┤ owner_id (FK)   │           │ file_id (FK)          │
+│ email        │   1  * │ id (PK)           │◄──────────┤ user_id (FK)           │
+└───────────┘         │ name               │      1  * │ permission              │
+                        │ s3_key              │           │ (composite PK)           │
+                        │ status               │           └─────────────────┘
+                        └──────────────┘
+```
+
+One user OWNS many files (1-to-many, via `owner_id`). `file_shares` is a many-to-many join table BETWEEN `files` and `users` — the same shape as `follows` and `participants` in the earlier exercises — recording which OTHER users a file has been shared with, and at what permission level.
 
 ```sql
 CREATE TABLE files (
@@ -3813,37 +3881,9 @@ Generate a signed, time-limited public link — the URL itself embeds a token to
 </details>
 
 <details>
-<summary>Show Answer — What type of load balancer sits in front of this system, and does it handle the actual file transfers?</summary>
-
-An **L7 load balancer** — the kind that reads the actual HTTP request rather than just IP/port, see 2.02 — in front of the metadata API makes sense — it needs to inspect requests to authenticate them and route appropriately. The important design point, though, is that it deliberately does NOT handle file transfers at all: uploads and downloads go directly between the client and object storage via pre-signed URLs (see Upload Flow above), completely bypassing your load balancer and API tier. This is worth stating explicitly in an interview — it shows you've recognized that the load balancer's job here is narrow on purpose, not an oversight.
-
-</details>
-
-<details>
-<summary>Show Answer — What authentication/authorization model fits file sharing with different permission levels?</summary>
-
-Standard session/JWT authentication (a signed token identifying the user, see 5.06) identifies the user for the metadata API; authorization is where this system gets more interesting, since it needs PER-RESOURCE, per-user permissions rather than a single global role. That's closer to **ABAC (Attribute-Based Access Control)** than **RBAC (Role-Based Access Control — a fixed role like "admin" or "editor" applying uniformly across every resource)** (see Authentication & Authorisation, 5.06) — with ABAC, access to a specific file depends on an attribute check ("is this user's ID present in `file_shares` for this specific `file_id`, and what `permission` value do they have — view or edit?") evaluated per resource, rather than one role granting the same access everywhere. Every file operation must re-check this server-side on each request — never assume a client that could see a file once is still authorized to see it now.
-
-</details>
-
-<details>
 <summary>Show Answer — What security measures matter specifically for a file storage system?</summary>
 
 Encryption at rest for the object storage bucket — **SSE-S3/KMS**, server-side encryption where the storage provider encrypts the data on disk automatically — and in transit (pre-signed URLs are HTTPS-only) are the baseline (see Encryption, 5.06). Beyond that: the object storage bucket must never be configured as publicly readable — "an accidentally public S3 bucket" is one of the most common real-world breach causes cited in the Security chapter's Network Security section — access should flow only through your application's pre-signed URLs, never a public bucket policy. The API's **IAM role** (the cloud identity/permission set an application runs under) should have the minimum permissions needed to generate pre-signed URLs and read/write metadata, not broad account-wide storage access (**principle of least privilege** — grant only the access a component actually needs to do its job, nothing more — 5.06), and malware scanning (already discussed above) closes the remaining gap of users uploading harmful content.
-
-</details>
-
-<details>
-<summary>Show Answer — Cloud-managed object storage, or self-hosted?</summary>
-
-This is one of the clearest "always cloud" answers among these five exercises (see Cloud & Infrastructure, 5.07): object storage's durability guarantees come from replicating data across multiple physically separate facilities, infrastructure that would be extraordinarily expensive and operationally demanding to replicate yourself. Essentially no team builds this layer from scratch today — the entire value proposition of the Core Insight (splitting metadata from file data) above depends on offloading file storage to a provider that has already solved durability at this scale.
-
-</details>
-
-<details>
-<summary>Show Answer — Where would sharding or replication apply here?</summary>
-
-The file bytes themselves need neither — object storage already distributes and replicates data across its own infrastructure transparently (see 3.06), which is precisely why splitting metadata from file data (see Core Insight above) is the right call architecturally, not just for cost reasons. The METADATA database is the piece that follows the usual pattern: replicate for read scaling first (file listings and lookups are frequent), and shard by `owner_id` only once metadata volume genuinely outgrows a single primary (see Database Fundamentals, 3.01) — sharding by owner keeps "list all of this user's files" a single-shard query, avoiding a fan-out across shards for one of the most common operations in the system.
 
 </details>
 
@@ -3877,19 +3917,41 @@ Non-Functional:
 #### High-Level Design
 
 ```text
-Triggering Services (Order Service, Auth Service, etc.)
-  ↓
-Notification Service API (validates, applies user preferences)
-  ↓
-Message Queue (Kafka — separate topics per channel)
-  ├── topic: notifications.push  → Push Worker → APNs (iOS) / FCM (Android)
-  ├── topic: notifications.email → Email Worker → SendGrid / SES
-  └── topic: notifications.sms   → SMS Worker  → Twilio / SNS
+Triggering Services  (Order Service, Auth Service, etc. — internal, not shown: DNS/LB/client,
+  │                    since this system is called BY OTHER SERVICES, not directly by end users)
+  ▼
+Load Balancer  (L7)
+  │
+  ▼
+Notification Service API  (stateless — validates, applies user preferences)
+  │                                        │
+  ▼                                        ▼
+Cache (Redis — user preferences)   Database (notification records + status)
+  │
+  ▼
+Message Queue (Kafka — separate topics per channel, and by priority)
+  ├── topic: notifications.push  → Push Workers (consumer group) → APNs (iOS) / FCM (Android)
+  ├── topic: notifications.email → Email Workers (consumer group) → SendGrid / SES
+  └── topic: notifications.sms   → SMS Workers (consumer group)  → Twilio / SNS
   ↓
 Delivery Status Tracker (DB + cache)
 ```
 
-Splitting the queue into one topic per channel (see Message Queues & Event-Driven Architecture, 4.02) means a slowdown or outage in one provider (say, the SMS gateway) only backs up its own topic — push and email keep flowing through their own topics unaffected. A separate priority split (below) applies the same isolation principle to transactional vs marketing traffic.
+**Walking through every decision in this diagram, and why:**
+
+- **No public-facing client/DNS/CDN**: unlike the other exercises, this system's "clients" are OTHER internal services (Order Service, Auth Service), not end-user browsers/apps — so there's a Load Balancer and stateless API tier, but no CDN or public DNS concern for the Notification Service itself.
+
+- **Authentication — mTLS or signed service tokens, not end-user auth (5.06)**: since callers are internal services, not humans, the Notification Service authenticates them with **mutual TLS (mTLS)** — both sides present a certificate proving identity, unlike normal HTTPS where only the server does — or signed service tokens. Without this check, anything reachable on the internal network could trigger arbitrary notifications to any user.
+
+- **API Servers — stateless (5.01)**: validate the request and apply user preferences, then hand off to the queue — no per-request state kept in server memory, so the tier scales horizontally with the volume of triggering calls.
+
+- **Cache — user preferences**: preferences (push/email/SMS enabled, marketing opt-out) are read on EVERY notification, so they're kept in a fast-read store (a Redis hash per user) rather than hitting the database for every single send.
+
+- **Database — SQL (PostgreSQL)**: notification records and delivery status are relational, moderate-volume, and benefit from structured querying (a user's notification history, filtering by status) — a good fit for SQL (see SQL at Scale, 3.03). Replicate first for read scaling (status lookups, history screens); shard by `user_id` only once volume outgrows a single primary (see Database Fundamentals, 3.01) — sharding by user keeps "fetch this user's history" a single-shard query.
+
+- **Message Queue — the central piece of this design (4.02)**: splitting into one topic per CHANNEL means a slowdown or outage in one provider (say, the SMS gateway) only backs up its own topic — push and email keep flowing unaffected. A further PRIORITY split (high-priority partition for transactional/security notifications, low-priority for marketing) applies the same isolation principle to urgency, not just channel. The Kafka partitioning itself is also a form of SHARDING — it's what lets multiple worker instances (a **consumer group**) process in parallel instead of serializing through one worker per channel.
+
+- **Cloud vs self-hosted (5.07)**: managed is the clear default — a managed Kafka (e.g. MSK) for the queue, and third-party providers (SES/SendGrid, Twilio, APNs/FCM) for actual delivery. Running your own SMTP server or SMS gateway is rarely worth it: email/SMS deliverability depends heavily on sender reputation that established providers have spent years building, which a self-hosted mail server starts from zero on.
 
 
 #### User Preference Filtering
@@ -3920,10 +3982,23 @@ Each notification has a unique `notification_id`, generated as a UUID for the sa
 
 #### Database Schema
 
+```text
+users                          notifications              user_notification_prefs
+┌───────────┐                  ┌──────────────────┐        ┌─────────────────────┐
+│ id (PK)     │◄────────────────┤ user_id (FK)         │        │ user_id (PK, FK)          │
+└───────────┘             1  * │ id (PK)                 │        │ push_enabled              │
+        ▲                       │ channel, status, payload │        │ email_enabled              │
+        └───────────────────────┤                          │        │ sms_enabled                │
+                            1  1 └──────────────────┘        │ marketing_opt_out          │
+                                                              └─────────────────────┘
+```
+
+One user has MANY notifications (1-to-many). One user has exactly ONE preferences row (1-to-1) — a separate table rather than columns on `users` itself, since preferences are a distinct concern read/written independently of core user data.
+
 ```sql
 CREATE TABLE notifications (
     id              UUID PRIMARY KEY,
-    user_id         BIGINT NOT NULL,
+    user_id         BIGINT NOT NULL REFERENCES users(id),
     type            VARCHAR NOT NULL,   -- 'push', 'email', 'sms'
     channel         VARCHAR NOT NULL,
     template_id     VARCHAR,
@@ -3932,9 +4007,10 @@ CREATE TABLE notifications (
     sent_at         TIMESTAMP,
     created_at      TIMESTAMP DEFAULT NOW()
 );
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 
 CREATE TABLE user_notification_prefs (
-    user_id         BIGINT PRIMARY KEY,
+    user_id         BIGINT PRIMARY KEY REFERENCES users(id),
     push_enabled    BOOLEAN DEFAULT true,
     email_enabled   BOOLEAN DEFAULT true,
     sms_enabled     BOOLEAN DEFAULT false,
@@ -3989,36 +4065,593 @@ Centralizing notification sending is what makes user preferences, rate limiting,
 </details>
 
 <details>
-<summary>Show Answer — What type of load balancer sits in front of the Notification Service, and do the channel workers need one too?</summary>
-
-An **L7 load balancer** — the kind that reads the actual HTTP request rather than just IP/port, see 2.02 — in front of the Notification Service API makes sense, since it needs to inspect and authenticate incoming requests from triggering services (see below). The channel workers (Push/Email/SMS) are a different story: they're Kafka CONSUMERS, not request-handling servers sitting behind a load balancer — Kafka's own partition assignment across a **consumer group** (a set of worker instances that split up the partitions of a topic between them, so each message is processed by exactly one worker in the group) is what spreads work across multiple worker instances, doing the same job a load balancer would for a request-driven service, just via a different mechanism (see Message Queues & Event-Driven Architecture, 4.02).
-
-</details>
-
-<details>
-<summary>Show Answer — How do triggering services (Order Service, Auth Service, etc.) authenticate to the Notification Service?</summary>
-
-This is internal, service-to-service traffic, not end-user traffic — so it's authenticated differently from a normal user-facing API. The standard approach is **mutual TLS (mTLS)** — both sides of the connection present a certificate proving their identity, not just the server (which is all normal TLS/HTTPS verifies) — or signed service tokens (see Authentication & Authorisation and Network Security, 5.06), where each service proves its own identity to the Notification Service, rather than a human ever logging in. This matters because the Notification Service must be confident a request to "send this user a notification" genuinely came from a legitimate internal service — without that check, anything reachable on the internal network could trigger arbitrary notifications to any user.
-
-</details>
-
-<details>
 <summary>Show Answer — What secrets does this system handle, and how should they be managed?</summary>
 
 Provider credentials — APNs push certificates, FCM server keys, SendGrid/SES API keys, Twilio credentials — are all secrets that, if leaked, let an attacker send arbitrary push notifications, emails, or texts as your product. These belong in a dedicated secrets manager (AWS Secrets Manager, HashiCorp Vault — see Secrets Management, 5.06), fetched at runtime and rotated periodically, never hardcoded or committed to source control. Inbound webhooks from providers (delivery status callbacks) should also have their signatures verified — an unverified webhook endpoint would let anyone forge a "delivered successfully" callback for a notification that never actually sent.
 
 </details>
 
-<details>
-<summary>Show Answer — Cloud-managed queue and providers, or self-hosted?</summary>
 
-Managed is the clear default (see Cloud & Infrastructure, 5.07): a managed Kafka (MSK) for the queue, and third-party providers (SES/SendGrid, Twilio, APNs/FCM) for actual delivery. Running your own SMTP server or SMS gateway is rarely worth considering — email and SMS deliverability depends heavily on sender reputation that established providers have spent years building, and a self-hosted mail server is disproportionately likely to have its messages marked as spam.
+## 6.06 Design an E-Commerce Checkout System
+
+
+### The Problem
+
+Design the checkout flow for an online store (like Amazon):
+- Users browse and search a product catalog
+- Users add items to a cart and place an order
+- Payment is processed and the order is confirmed
+- Inventory must never be oversold
+
+Take 5 minutes to think about this before reading the answer.
+
+
+### Answer
+
+
+#### Requirements
+
+Functional:
+- Browse/search products, view product details
+- Add/remove items from a cart
+- Place an order (checkout) and pay
+- Track order status
+
+Non-Functional:
+- Strong consistency for inventory and payment — this is the opposite of the Social Media Feed's "eventual consistency is fine": you can NEVER sell the same last unit of stock twice, and a payment can never be silently double-charged or lost (see CAP Theorem & Consistency Models, 5.02)
+- Product browsing is read-heavy and highly cacheable; checkout is comparatively low-volume but must-not-fail
+- Must absorb sudden traffic spikes (flash sales, product launches) without falling over
+
+
+#### High-Level Design
+
+```text
+Client
+  │
+  ▼
+DNS → CDN  (product images/video)
+  │
+  ▼
+Load Balancer  (L7)
+  │
+  ▼
+API Gateway  (auth, rate limiting — 2.05)
+  │
+  ├──────────────┬──────────────┬───────────────┬──────────────────┐
+  ▼              ▼              ▼               ▼                  ▼
+Product Svc   Cart Svc      Order Svc       Payment Svc       Inventory Svc
+  │              │              │               │                  │
+  ▼              ▼              ▼               ▼                  ▼
+Search Index  Cache (Redis)  Orders DB      Payment Gateway    Inventory DB
+(Elasticsearch) Cart data    (PostgreSQL)   (Stripe — see       (PostgreSQL,
+                                             below)              row-level locks)
+                    │
+                    ▼
+            Message Queue (Kafka — order events: reserve inventory,
+                            charge payment, send confirmation email)
+```
+
+**Walking through every decision in this diagram, and why:**
+
+- **Microservices, not a monolith (5.04)**: this system is a textbook microservices case, because its parts have genuinely DIFFERENT scaling and reliability needs — Product browsing is read-heavy and can tolerate a cache being slightly stale; Payment must be strongly consistent, PCI-compliant, and isolated for security; Inventory needs strict locking to prevent overselling. Splitting them lets each be built, scaled, and secured to its own requirements instead of one-size-fits-all.
+
+- **CDN (2.04)**: caches product images/video at the edge — large, static, and identical for every viewer, the ideal CDN case.
+
+- **Load Balancer + API Gateway (2.02, 2.05)**: an L7 load balancer in front of an API Gateway, which handles auth and rate limiting ONCE, centrally, before routing to the right microservice — the same "one entry point hides the coordination complexity" idea as a Facade (see the Notification System exercise above), applied to a whole system of services instead of one.
+
+- **Search — Elasticsearch, not the SQL database (3.07)**: product search (free-text, filters, ranking) is a fundamentally different access pattern than the transactional reads/writes the Orders/Inventory services need — a dedicated search engine (see Search Engines, 3.07) handles fuzzy matching and relevance ranking far better than `LIKE '%query%'` on a relational table ever could. The product catalog is written once in PostgreSQL (the source of truth) and asynchronously indexed into Elasticsearch (see Follow-Up Questions below for how these stay in sync).
+
+- **Database — SQL for Orders/Inventory/Payment (3.03)**: these are the parts of the system where correctness is non-negotiable — an order references a user and line items, inventory must never go negative, and a payment must be tied to exactly one order. This is exactly the kind of constraint-heavy, transactional data SQL and ACID transactions are built for (see ACID Properties in the MySQL chapter). A NoSQL store is a reasonable answer specifically for the PRODUCT CATALOG (read-heavy, less relational), but not for the transactional core.
+
+- **Authentication — JWT + a PCI-compliant payment gateway (5.06)**: standard JWT for logged-in users. Payment is handled by a dedicated, PCI-DSS-compliant processor (e.g. Stripe) — the application NEVER stores or even sees raw card numbers; the client tokenizes card details directly with the payment gateway, and your Payment Service only ever handles that TOKEN. This isn't just good practice — handling raw card data yourself brings a massive compliance burden (PCI DSS) most companies deliberately avoid.
+
+- **Cache — Redis, product catalog + cart (3.05)**: product listings are cached aggressively (cache-aside, as in the URL Shortener exercise) since they're read constantly and change rarely. Cart contents are also kept in Redis, keyed by user, for fast read/write during an active shopping session.
+
+- **Message Queue — Kafka, needed for order fan-out (4.02)**: placing an order triggers several things that don't need to happen synchronously before responding to the user — reserving inventory, charging the payment, sending a confirmation email, updating analytics. Publishing an "order placed" event and letting separate consumers handle each concern (the same decoupling pattern as the Social Media Feed's fanout) keeps the checkout request itself fast, and makes it possible to retry an individual failed step (see Bottlenecks below) without redoing the whole order.
+
+- **Cloud vs self-hosted (5.07)**: managed cloud services throughout — managed Postgres, managed Elasticsearch, managed Kafka, and critically, a THIRD-PARTY payment processor rather than building payment infrastructure in-house (see Authentication above). This is a case where "self-hosting" a core piece (payments) isn't even really an option most companies consider, given the compliance burden.
+
+
+#### Preventing Overselling — Inventory Locking
+
+The classic checkout deep-dive: two users try to buy the LAST unit of a product at the same time. Without care, both could read "1 in stock," both decide to proceed, and both succeed — selling one unit twice.
+
+```sql
+-- Wrong: read-then-write, with a race window between the two statements
+SELECT quantity FROM inventory WHERE product_id = 'X';   -- both transactions read quantity = 1
+-- ... both think there's enough stock ...
+UPDATE inventory SET quantity = quantity - 1 WHERE product_id = 'X';  -- both succeed — oversold!
+
+-- Right: an atomic, conditional update — the database itself enforces the check
+UPDATE inventory
+SET quantity = quantity - 1
+WHERE product_id = 'X' AND quantity > 0;
+-- Only ONE of two concurrent transactions can succeed; the second affects 0 rows,
+-- and the application checks the row count to know whether the reservation succeeded.
+```
+
+This works because the `WHERE quantity > 0` check and the decrement happen as ONE atomic database operation — there's no window between "check" and "write" for a second transaction to sneak in, unlike the naive SELECT-then-UPDATE version above.
+
+
+#### Database Schema
+
+```text
+users              orders                  order_items              products           inventory
+┌───────────┐      ┌──────────────┐         ┌─────────────────┐      ┌───────────┐      ┌────────────┐
+│ id (PK)     │◄────┤ user_id (FK)   │         │ order_id (FK)      │◄────┤ id (PK)     │◄────┤ product_id  │
+└───────────┘  1  * │ id (PK)          │◄────┬──┤ product_id (FK)    │  1 *│ name         │ 1 1 │ (PK, FK)      │
+                     │ status            │  1  * │ quantity, price       │      │ price         │      │ quantity       │
+                     │ total              │      └─────────────────┘      └───────────┘      └────────────┘
+                     └──────────────┘
+                            ▲
+                            │ 1 1
+                     ┌──────────────┐
+                     │ payments        │
+                     │ order_id (FK)    │
+                     │ status, token      │
+                     └──────────────┘
+```
+
+```sql
+CREATE TABLE products (
+    id      BIGINT PRIMARY KEY,
+    name    VARCHAR NOT NULL,
+    price   DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE inventory (
+    product_id  BIGINT PRIMARY KEY REFERENCES products(id),
+    quantity    INT NOT NULL CHECK (quantity >= 0)   -- constraint backstops the app-level check above
+);
+
+CREATE TABLE orders (
+    id          BIGINT PRIMARY KEY,
+    user_id     BIGINT NOT NULL REFERENCES users(id),
+    status      VARCHAR DEFAULT 'pending',   -- pending, paid, shipped, cancelled
+    total       DECIMAL(10,2) NOT NULL,
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+    order_id    BIGINT REFERENCES orders(id),
+    product_id  BIGINT REFERENCES products(id),
+    quantity    INT NOT NULL,
+    price       DECIMAL(10,2) NOT NULL,          -- price AT TIME OF ORDER, not a live join to products
+    PRIMARY KEY (order_id, product_id)
+);
+
+CREATE TABLE payments (
+    order_id        BIGINT PRIMARY KEY REFERENCES orders(id),
+    status          VARCHAR DEFAULT 'pending',
+    gateway_token   VARCHAR NOT NULL   -- reference to the payment gateway's charge, never raw card data
+);
+```
+
+`order_items.price` is deliberately duplicated from `products.price` at order time — a product's price can change after an order is placed, but the order must always reflect what the customer actually agreed to pay, not today's price.
+
+
+#### Bottlenecks & Trade-offs
+
+- **Flash sale / traffic spike** → CDN + product cache absorb the read surge; the Message Queue smooths the write surge on Inventory/Payment by processing order events at a sustainable rate instead of all at once
+- **Overselling** → the atomic conditional UPDATE shown above, backed by a `CHECK (quantity >= 0)` constraint as a last line of defense
+- **Payment succeeds but the confirmation never arrives** → see Follow-Up Questions below
+- **Catalog/search index drift** → see Follow-Up Questions below
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — A payment succeeds at the payment gateway, but the response never reaches your server (network failure). What happens?</summary>
+
+This is exactly why the payment gateway integration must be idempotent and reconciliation-friendly, not a fire-and-forget call. The Order/Payment Service generates an idempotency key per checkout attempt (see ID Generation Strategies, 3.02) and passes it to the payment gateway — if the client retries after a timeout, the SAME key is sent again, and the gateway recognizes it as a duplicate rather than charging twice. Separately, the payment gateway sends an asynchronous WEBHOOK confirming the charge, which the system treats as the ultimate source of truth for payment status — so even if the synchronous response is lost, the webhook eventually reconciles the order to "paid." An order stuck in "pending payment" past a reasonable window also triggers a reconciliation job that queries the gateway directly to check the real status, rather than assuming failure.
 
 </details>
 
 <details>
-<summary>Show Answer — Where does sharding or replication apply in this design?</summary>
+<summary>Show Answer — How do you keep the Elasticsearch search index in sync with the PostgreSQL product catalog?</summary>
 
-The Kafka topics are already partitioned (see High-Level Design above) — that partitioning IS a form of sharding, letting multiple worker instances consume and process in parallel rather than serializing through one worker per channel. The notifications database (delivery status, history) follows the more familiar pattern from Database Fundamentals (3.01): replicate first for read scaling (status lookups, user-facing "notification history" screens), and shard by `user_id` only once a single primary can no longer hold the volume — sharding by user keeps "fetch this user's notification history" a single-shard query rather than one that fans out everywhere.
+PostgreSQL is the source of truth; Elasticsearch is a derived, eventually-consistent COPY built for a different access pattern (search), not written to directly by normal product updates. When a product is created/updated in Postgres, an event is published to the Message Queue (4.02), and a consumer updates the corresponding Elasticsearch document asynchronously. This means search results can lag slightly behind the true catalog (e.g. a price change takes a moment to appear in search results) — an acceptable trade-off, since search result staleness for a few seconds is far less costly than making every product write synchronously update two different data stores.
+
+</details>
+
+<details>
+<summary>Show Answer — How would you implement a cart that persists across devices?</summary>
+
+Store the cart server-side, keyed by user ID, rather than only in client-side storage (which wouldn't survive switching devices) — this is exactly the Cart Service + Redis shown in the High-Level Design above. A logged-out/anonymous cart can still work by keying on a temporary device/session ID, and merging it into the user's server-side cart upon login (a common UX pattern: "we found items in your cart, add them?").
+
+</details>
+
+<details>
+<summary>Show Answer — The Order Service crashes after payment succeeds but before the order is marked "confirmed." What happens?</summary>
+
+Because payment confirmation arrives via an idempotent webhook (see the first Follow-Up Question above) rather than being trusted only in server memory mid-request, the crash doesn't lose the payment — the webhook (or a reconciliation job checking the gateway) will still arrive/run once the service recovers, and can safely move the order from "pending" to "confirmed" at that point. This is the same durability principle as the Real-Time Chat exercise's Kafka log: never treat a critical state transition as complete until it's durably recorded somewhere that survives a crash.
+
+</details>
+
+<details>
+<summary>Show Answer — Why use an asynchronous event-driven flow (Message Queue) for parts of checkout instead of doing everything in one big synchronous transaction across services?</summary>
+
+A single ACID transaction spanning Order, Inventory, and Payment services isn't practically possible once they're separate services with separate databases (a "distributed transaction") — coordinating a two-phase commit across services is slow, fragile, and couples services tightly together, defeating much of the point of splitting them apart (see Microservices vs Monolith, 5.04). Instead, the pattern used here is closer to a **Saga**: each step (reserve inventory, charge payment, send confirmation) happens independently, triggered by events, with each step responsible for either succeeding or triggering a COMPENSATING action if a later step fails (e.g. if payment fails after inventory was reserved, a "release inventory" event undoes the reservation) — trading strict atomicity for resilience and loose coupling.
+
+</details>
+
+
+## 6.07 Design a Ride-Hailing App
+
+
+### The Problem
+
+Design a ride-hailing app (like Uber or Bolt):
+- Riders request a ride from their current location to a destination
+- The system matches the rider with a nearby available driver
+- Both parties see the other's live location during the trip
+- The fare is calculated and charged at the end of the trip
+
+Take 5 minutes to think about this before reading the answer.
+
+
+### Answer
+
+
+#### Requirements
+
+Functional:
+- Rider requests a ride (pickup + destination)
+- System matches the rider with a nearby, available driver
+- Real-time location tracking for both parties during the trip
+- Fare calculation and payment at trip completion
+
+Non-Functional:
+- Low-latency matching — a rider waiting a long time for a match is a broken experience
+- Real-time, frequent location updates without excessive battery/bandwidth cost on the driver's phone
+- High availability — this is closer to safety-critical infrastructure than a social app; an outage strands people
+- Geographically distributed — a rider in São Paulo should never be served by a data center in Virginia (see Regions and Availability Zones, 5.07)
+
+
+#### High-Level Design
+
+```text
+Rider App                                              Driver App
+  │  HTTPS + WebSocket                                    │  WebSocket (location pings)
+  ▼                                                        ▼
+DNS → Load Balancer (L7, regional — routes to the nearest region)
+  │                                                        │
+  ▼                                                        ▼
+API Gateway                                        Location Service
+  │                                                        │
+  ▼                                                        ▼
+Matching Service ◄────────────────────────  Geospatial Index (Redis GEO)
+  │
+  ▼
+Trip Service ──────► Message Queue (Kafka — trip lifecycle events)
+  │                          │
+  ▼                          ▼
+Trips DB (PostgreSQL)   Fare/Payment Service, Push Notifications
+```
+
+**Walking through every decision in this diagram, and why:**
+
+- **Load Balancer — L7, regionally aware (2.02, 5.07)**: routes each rider/driver to the nearest region, not just any available server — for a real-time, latency-sensitive system spanning many cities/countries, serving a user from a data center on another continent is itself a bottleneck no amount of backend optimization fixes.
+
+- **WebSockets for location updates (4.03)**: the driver app pushes a location update every few seconds over a persistent WebSocket connection — the same reasoning as the Real-Time Chat exercise (constant HTTP polling would be far too wasteful and slow for something this frequent). Note that, like the Chat exercise, this makes the Location Service connection-STATEFUL (see below) even though the rest of the system stays stateless.
+
+- **Are the servers stateless?** Mostly, but not uniformly. The Matching/Trip services are stateless — any instance can handle any request, all real state lives in the database/geospatial index. The Location Service is the exception: like the chat servers in 6.03, it holds live WebSocket connections in memory, which means the load balancer needs session affinity for those specific connections, even though the rest of the API is freely horizontally scalable.
+
+- **Geospatial Index — Redis GEO, not the SQL database (this is the key deep-dive — see below)**: "find available drivers near this rider" is a fundamentally different query shape than anything the other exercises needed — a normal B-tree index (see Indexes in the SQL chapter) can't efficiently answer "what's near this point," so a dedicated geospatial data structure is required.
+
+- **Database — SQL for trips/payments (3.03), NOT for live location**: trips, fares, and payments are relational and need ACID guarantees (a trip belongs to one rider and one driver, a fare must be calculated correctly exactly once) — a good fit for PostgreSQL, same reasoning as the E-Commerce exercise's Orders service. CURRENT driver location is the opposite: it changes every few seconds, is only ever needed as "the latest value," and doesn't need to be durable history — a poor fit for a row you'd constantly UPDATE in a transactional database, and a great fit for an in-memory store built for exactly this access pattern (see below).
+
+- **Authentication — JWT + phone verification (5.06)**: standard JWT for API calls, but ride-hailing apps typically add SMS-based phone number verification (OTP) at signup, specifically because trust and accountability between strangers meeting in person matters more here than in most consumer apps — a verified phone number is a real-world identity anchor in a way an email alone isn't.
+
+- **Message Queue — Kafka, for the trip lifecycle (4.02)**: a trip moves through states (requested → matched → started → completed) that trigger side effects — fare calculation, driver payout, receipts, analytics — decoupled from the core matching/tracking path the same way order events are in the E-Commerce exercise.
+
+- **Sharding — by geographic region, not by hash (contrast with the other exercises)**: this system's natural partition key is GEOGRAPHY, not an arbitrary hash — drivers and riders in São Paulo essentially never need to be matched with, or queried alongside, drivers/riders in Tokyo. Sharding by region (rather than `hash(id) % N`, as in the URL Shortener) keeps matching queries local to one shard AND happens to align with the regional deployment already needed for latency (see Load Balancer above) — a good example of choosing a shard key based on the DOMINANT query pattern (see the Sharding discussion in Database Fundamentals, 3.01), not a generic default.
+
+- **Cloud vs self-hosted (5.07)**: cloud, multi-region by necessity — running this yourself, globally, with the redundancy a safety-adjacent product needs, is exactly the kind of "undifferentiated heavy lifting" a cloud provider's global infrastructure exists to remove.
+
+
+#### The Key Deep-Dive: Finding Nearby Drivers Efficiently
+
+Scanning every driver in a city to compute the distance to each one on every ride request would be far too slow. The standard solution is a **geospatial index** that lets you query "what's near this point" directly, instead of computing distance to everything.
+
+**Geohashing** is the core technique: it encodes a latitude/longitude pair into a short string, where geographically CLOSE locations tend to share a common string PREFIX — the map is recursively divided into a grid, and each grid cell gets a code.
+
+```text
+Lisbon    (38.72, -9.14)  → geohash "eycs0"
+Nearby     (38.73, -9.15)  → geohash "eycs1"    ← shares prefix "eycs"
+Tokyo      (35.68, 139.65) → geohash "xn76u"    ← completely different prefix
+```
+
+This turns a 2-dimensional "nearby" search into something closer to a 1-dimensional string-prefix search — driver locations can be indexed by geohash, and "find drivers near me" becomes "find drivers whose geohash shares my prefix" (plus checking a few neighboring cells at the grid boundary, so a nearby driver just across a cell edge isn't missed).
+
+**Redis GEO** commands implement exactly this on top of Redis's sorted-set data structure, giving you the geospatial index "for free" without building one from scratch:
+
+```text
+GEOADD drivers -9.14 38.72 "driver_42"        # add a driver's current location
+GEOSEARCH drivers FROMLONLAT -9.14 38.72 BYRADIUS 2 km   # find drivers within 2km
+```
+
+Every location ping from a driver's app updates their entry with `GEOADD` (overwriting the previous position); a ride request runs `GEOSEARCH` to get a short list of nearby candidates, which the Matching Service then filters further (is the driver actually available, not already on a trip?) before proposing a match.
+
+
+#### Database Schema
+
+```text
+users               drivers                      trips                    payments
+┌───────────┐        ┌────────────────┐            ┌──────────────────┐     ┌──────────────┐
+│ id (PK)     │◄──┬───┤ user_id (FK, 1-1) │            │ rider_id (FK)        │◄────┤ trip_id (FK)     │
+└───────────┘    │  │ id (PK)              │◄──────┬────┤ driver_id (FK)        │ 1 1 │ amount, status    │
+                    │  │ vehicle_info          │       │ id (PK)                  │     └──────────────┘
+                    │  │ status (online/offline)│       │ status, fare, created_at │
+                    └──└────────────────┘       └──────────────────┘
+```
+
+A `driver` is a 1-to-1 extension of a `user` (a user who has additionally registered as a driver, with vehicle info) — not every user is a driver, so this is kept as a separate table rather than columns on `users` that are `NULL` for every rider.
+
+```sql
+CREATE TABLE drivers (
+    id              BIGINT PRIMARY KEY,
+    user_id         BIGINT UNIQUE NOT NULL REFERENCES users(id),
+    vehicle_info    JSONB,
+    status          VARCHAR DEFAULT 'offline'   -- offline, available, on_trip
+);
+
+CREATE TABLE trips (
+    id              BIGINT PRIMARY KEY,
+    rider_id        BIGINT NOT NULL REFERENCES users(id),
+    driver_id       BIGINT REFERENCES drivers(id),
+    pickup_location POINT,
+    dropoff_location POINT,
+    status          VARCHAR DEFAULT 'requested',  -- requested, matched, in_progress, completed, cancelled
+    fare            DECIMAL(10,2),
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE payments (
+    trip_id     BIGINT PRIMARY KEY REFERENCES trips(id),
+    amount      DECIMAL(10,2) NOT NULL,
+    status      VARCHAR DEFAULT 'pending'
+);
+```
+
+Note that current LIVE location is deliberately NOT in this schema — it lives in Redis GEO (see above), not PostgreSQL. `pickup_location`/`dropoff_location` here are historical snapshots for a completed trip record, a very different concern from tracking a driver's constantly-changing current position.
+
+
+#### Bottlenecks & Trade-offs
+
+- **Matching latency at scale** → geospatial index means only nearby candidates are ever considered, not the whole city — see the deep-dive above
+- **Location update volume** → tune ping frequency (e.g. every few seconds while actively driving, less often when idle) to balance real-time accuracy against battery/bandwidth cost and Redis write volume
+- **Hot region** → a city with far more ride activity than others may need dedicated capacity within its shard, similar in spirit to the "celebrity problem" in the Social Media Feed exercise, just geographic instead of social
+- **Driver goes offline mid-trip** → see Follow-Up Questions below
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — A driver's app loses connectivity mid-trip. What happens?</summary>
+
+The Location Service stops receiving pings, and after a short timeout, the driver's status can be flagged as "connection lost" (distinct from actually cancelling the trip) — the trip itself isn't automatically cancelled, since a brief connectivity gap (a tunnel, a dead zone) is common and recoverable. The rider's app can show a "driver's location is temporarily unavailable" state rather than an error. If connectivity doesn't recover within a longer threshold, escalate to customer support / a safety flow rather than silently failing — this is a safety-relevant edge case, not just a technical one, given the nature of the product.
+
+</details>
+
+<details>
+<summary>Show Answer — How do you prevent two riders from being matched to the same driver at the same moment?</summary>
+
+Same underlying problem as the E-Commerce exercise's overselling scenario — an atomic, conditional update instead of a read-then-write race:
+
+```sql
+UPDATE drivers SET status = 'on_trip' WHERE id = 'driver_42' AND status = 'available';
+-- Only succeeds if the driver was still 'available' at the moment of the update;
+-- a second, near-simultaneous match attempt affects 0 rows and must try a different driver.
+```
+
+The Matching Service treats a 0-row update as "this driver was just taken, try the next candidate from the geospatial search results," rather than trusting the driver's status as it was read moments earlier.
+
+</details>
+
+<details>
+<summary>Show Answer — How would you implement surge pricing?</summary>
+
+Surge pricing needs a real-time signal for supply/demand imbalance in a given area — e.g. periodically computing a ratio of open ride requests to available drivers per geographic cell (the same geohash-based grid used for matching, see the deep-dive above), and applying a price multiplier when that ratio crosses a threshold. This is naturally an asynchronous, continuously-recomputed background process (a good fit for a scheduled job or a stream-processing consumer of trip/location events via Kafka — see 4.02), not something computed fresh, synchronously, on every single ride request.
+
+</details>
+
+<details>
+<summary>Show Answer — Why store current driver location in Redis instead of the main PostgreSQL database?</summary>
+
+Current location is updated every few seconds per active driver — an extremely high write rate for data that's only ever needed as "the latest value," with no need to retain history of every intermediate position. Writing this at that frequency to a durable, transactional relational database would create enormous unnecessary write load and WAL/replication overhead (see Durability in the MySQL chapter) for data that's disposable the moment a newer ping arrives. Redis (in-memory, and with GEO commands built for exactly this access pattern — see the deep-dive above) is a far better fit: fast writes, no durability guarantee needed for a value that's stale within seconds anyway.
+
+</details>
+
+<details>
+<summary>Show Answer — Why shard by geographic region here, when the URL Shortener sharded by a hash of the code?</summary>
+
+The right shard key depends entirely on the DOMINANT query pattern (see Database Fundamentals, 3.01) — the URL Shortener's only query is "look up this exact code," so hashing spreads load evenly with no other constraint to satisfy. This system's dominant query is "find drivers NEAR this rider," which is fundamentally geographic — a hash-based shard key would scatter geographically close drivers across random, unrelated shards, turning every matching query into an expensive fan-out across every shard. Sharding by region instead keeps a matching query confined to the ONE shard that actually contains geographically relevant data, and conveniently lines up with the regional deployment the system already needs for latency reasons (see High-Level Design above).
+
+</details>
+
+
+## 6.08 Design a Banking/Payment Transaction System
+
+
+### The Problem
+
+Design the core of a banking/payment system:
+- Customers hold accounts with a balance
+- Money can be transferred between accounts
+- Every balance must be correct at all times, and every transaction must be auditable
+- The system must never lose, duplicate, or corrupt a transaction, even under failures
+
+Take 5 minutes to think about this before reading the answer.
+
+
+### Answer
+
+
+#### Requirements
+
+Functional:
+- Transfer funds between two accounts
+- View current balance and transaction history
+- Support external deposits/withdrawals
+
+Non-Functional:
+- **Strong consistency is non-negotiable** — this is the one exercise in this guide where "eventual consistency is acceptable" is NEVER the answer. Two people must never see conflicting balances, and money can never be created or destroyed by a bug.
+- **Atomicity** — a transfer debits one account and credits another together, or neither happens; there is no valid state where only one side occurred.
+- **Durability** — once a transaction is confirmed to the customer, it must survive any subsequent crash, with no exceptions.
+- **Auditability** — every balance change must be traceable to exactly one transaction, permanently.
+- If forced to choose under a network partition, this system chooses **Consistency over Availability** — a CP system in CAP Theorem terms (5.02), the opposite choice from the Social Media Feed's AP-leaning design. Refusing a transfer temporarily is an acceptable failure mode; incorrectly processing one is not.
+
+
+#### High-Level Design
+
+```text
+Client
+  │
+  ▼
+DNS → Load Balancer (L7)
+  │
+  ▼
+API Gateway  (strict auth + rate limiting — 2.05)
+  │
+  ▼
+Stateless API Servers
+  │
+  ▼
+Ledger Service  (the core — all money movement goes through here, synchronously)
+  │
+  ▼
+Primary Database  (PostgreSQL, SYNCHRONOUS replication — see below)
+  │
+  ▼
+Message Queue (Kafka) ── ASYNC side effects ONLY: receipts, fraud-detection feed,
+                          read-only reporting replica — NEVER the money movement itself
+```
+
+**Walking through every decision in this diagram, and why:**
+
+- **Database — SQL, and this is the clearest "must be SQL" answer of any exercise (3.03)**: a bank ledger needs real ACID transactions (see ACID Properties, MySQL chapter), foreign key integrity between accounts and transactions, and — critically — the ability to enforce invariants (a balance can't go negative, a transfer's debit and credit must sum to zero) at the database level, not just hoped for in application code. NoSQL's usual advantages (flexible schema, horizontal write scaling, eventual consistency) are actively UNDESIRABLE here — this system wants the opposite of all three.
+
+- **The core transfer — ONE atomic transaction with row locking**: debiting and crediting two accounts must happen as a single, indivisible unit, with locking to prevent a race between concurrent transfers touching the same account (see the deep-dive below).
+
+- **Authentication — strong, with MFA (5.06)**: financial actions require multi-factor authentication, not just a password — a compromised password alone must not be enough to move money. Third-party access (budgeting apps, Open Banking-style integrations) uses OAuth2 with narrowly SCOPED tokens (read-only balance access is a different, much lower-risk grant than initiating a transfer). Authorization is strict RBAC (customer / support agent / admin, each with tightly defined permissions) plus extensive, immutable audit logging of every read and write — not just writes — since even VIEWING sensitive financial data is something regulators expect to be traceable.
+
+- **Encryption — mandatory, no exceptions (5.06)**: encryption at rest and in transit isn't a "nice to have" discussion here the way it might be elsewhere — it's a baseline regulatory requirement, alongside strict network segmentation (the database has no public IP and is reachable only from the Ledger Service — see Network Security, 5.06).
+
+- **Replication — SYNCHRONOUS, not asynchronous (contrast with every other exercise)**: every other exercise in this guide used ASYNCHRONOUS replication for read scaling, accepting that a replica might lag slightly behind the primary. That trade-off is unacceptable here: if the primary commits a transfer and crashes before an asynchronous replica received it, failing over to that replica would silently LOSE a confirmed transaction — a customer would correctly remember money left their account, with no record of where it went. Synchronous replication (the primary waits for at least one replica to confirm before considering a transaction committed) trades some write latency for the guarantee that a committed transaction can never vanish on failover.
+
+- **Message Queue — side effects only, never the money movement itself (4.02)**: unlike the E-Commerce or Notification exercises, the queue here is deliberately NOT in the critical path of the transfer itself — sending a receipt, feeding a fraud-detection pipeline, or updating a read-only reporting replica are all fine to happen asynchronously, but the actual debit/credit must complete synchronously, inside one transaction, before the customer is told it succeeded. Using a queue for the core transfer would reintroduce exactly the "was it applied or not?" uncertainty the whole design exists to avoid.
+
+- **Cloud vs self-hosted (5.07) — genuinely more nuanced than other exercises**: many banks DO use managed cloud databases today, but this is also the one domain where self-hosting the core ledger, in a dedicated, heavily audited environment, remains common — driven by regulatory data-residency requirements and compliance certifications that not every cloud region/service satisfies. This is worth raising explicitly in an interview as a case where the "always cloud" default doesn't automatically apply.
+
+
+#### The Key Deep-Dive: Atomic Transfers and Preventing Race Conditions
+
+Two withdrawals hitting the same account at the same moment must never both succeed if only one can be covered by the balance.
+
+```sql
+BEGIN;
+
+-- Lock the row before reading it, so no other transaction can read/modify it until this one commits
+SELECT balance FROM accounts WHERE id = 'A' FOR UPDATE;
+-- (application checks balance >= transfer_amount)
+
+UPDATE accounts SET balance = balance - 100 WHERE id = 'A';
+UPDATE accounts SET balance = balance + 100 WHERE id = 'B';
+
+INSERT INTO transactions (id, from_account, to_account, amount) VALUES ('tx_1', 'A', 'B', 100);
+
+COMMIT;
+-- If ANYTHING fails before COMMIT, the entire transaction rolls back —
+-- account A is never left debited without B being credited, or vice versa.
+```
+
+`SELECT ... FOR UPDATE` takes a row-level lock (see Locks in the SQL chapter) on account A's row — a second, concurrent transaction trying to touch the SAME account blocks until the first one commits or rolls back, closing the race window that a plain read-then-write would leave open (the same category of bug as the overselling problem in the E-Commerce exercise, with much higher stakes).
+
+**Double-entry bookkeeping**: rather than only storing a running `balance` column, real systems also record every transaction as a pair of LEDGER ENTRIES — a debit on one account and a credit on another, which must always sum to zero across the whole system. This isn't just tradition — it makes the ledger self-auditing: at any point, summing all entries should reconcile exactly to zero, and any discrepancy immediately signals a bug or fraud, something a single running balance number can't offer on its own.
+
+
+#### Database Schema
+
+```text
+users                accounts                       transactions
+┌───────────┐        ┌────────────────┐              ┌───────────────────────┐
+│ id (PK)     │◄──────┤ user_id (FK)      │              │ id (PK)                    │
+└───────────┘   1  * │ id (PK)              │◄──────┬──────┤ from_account (FK)          │
+                       │ balance                │       │      │ to_account (FK)             │
+                       └────────────────┘       │      │ amount, created_at            │
+                                ▲                │      └───────────────────────┘
+                                └────────────────┘
+                                  (an account can appear as
+                                   from_account OR to_account
+                                   on many transactions)
+```
+
+```sql
+CREATE TABLE accounts (
+    id          BIGINT PRIMARY KEY,
+    user_id     BIGINT NOT NULL REFERENCES users(id),
+    balance     DECIMAL(15,2) NOT NULL CHECK (balance >= 0),   -- constraint backstops app-level checks
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE transactions (
+    id              UUID PRIMARY KEY,        -- see ID Generation Strategies, 3.02 — client-generated,
+    from_account    BIGINT REFERENCES accounts(id),   -- doubles as the idempotency key (see below)
+    to_account      BIGINT REFERENCES accounts(id),
+    amount          DECIMAL(15,2) NOT NULL CHECK (amount > 0),
+    status          VARCHAR DEFAULT 'completed',
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_tx_from ON transactions(from_account, created_at DESC);
+CREATE INDEX idx_tx_to ON transactions(to_account, created_at DESC);
+```
+
+`transactions` is append-only in practice — rows are never updated or deleted, only inserted, which is exactly what an audit trail requires (see Auditability in the Requirements above). Every transaction row IS simultaneously the audit log for that transfer.
+
+
+#### Bottlenecks & Trade-offs
+
+- **Hot account contention** → a popular merchant account receiving many simultaneous credits creates row-lock contention (see the deep-dive above) — mitigated by keeping the locked critical section as short as possible, and, at extreme volume, techniques like splitting a hot balance into multiple internal "shards" that are periodically reconciled (an advanced pattern, not a default)
+- **Synchronous replication latency** → every write waits for a replica acknowledgment, trading some latency for the durability guarantee described above — an explicit, deliberate cost, not an oversight
+- **Audit log growth** → the append-only `transactions` table grows forever by design; older data is archived to cheaper storage (not deleted) once it's no longer part of the active operational window
+- **Cross-shard transfers** → see Follow-Up Questions below
+
+
+#### Follow-Up Questions
+
+<details>
+<summary>Show Answer — How would you design this to survive a full data-center outage without losing a single committed transaction?</summary>
+
+This is exactly what synchronous replication (see High-Level Design above) is for, extended across data centers: the primary requires acknowledgment from at least one replica in a DIFFERENT physical location before a transaction is considered committed, so a transaction the customer was told succeeded is guaranteed to already exist in a second location before that confirmation is ever sent. If the primary's entire data center goes down, the replica in the other location has everything up to the last committed transaction and can be promoted, with zero data loss (see Availability & Fault Tolerance, 5.03) — at the cost of every write paying the latency of a cross-data-center round trip, a trade-off this system accepts deliberately.
+
+</details>
+
+<details>
+<summary>Show Answer — How do you handle a transfer between two accounts that live on different shards?</summary>
+
+This is one of the hardest problems in this entire guide, precisely because sharding and atomic cross-account transfers pull in opposite directions — a single-shard transaction (like the `SELECT ... FOR UPDATE` example above) is easy; a transaction spanning two databases is not. Real systems typically use a **Saga**-style pattern (the same one introduced in the E-Commerce exercise) adapted for money: reserve/hold the debit on shard A, then apply the credit on shard B, with a compensating reversal on A if the credit fails — plus careful ordering and idempotency to make retries safe. Some systems instead constrain the DATA MODEL to avoid the problem entirely — e.g. co-locating accounts likely to transact together on the same shard, or routing all transfers through a smaller number of "hub" ledger shards. There is no fully painless answer here; naming the trade-off explicitly (strict cross-shard atomicity is expensive and complex, so real systems constrain the problem rather than solving it in full generality) is what a strong answer sounds like.
+
+</details>
+
+<details>
+<summary>Show Answer — What is double-entry bookkeeping, and why not just store a running balance?</summary>
+
+See the deep-dive above — a running `balance` column alone tells you the CURRENT state but nothing about how it got there, and offers no built-in way to detect corruption (a bug that silently adds money to one account without a matching entry elsewhere would go unnoticed). Recording every transaction as a debit/credit pair that must always net to zero across the system turns the ledger into something that can be independently VERIFIED at any time — a fundamental requirement for anything handling other people's money, not just a nice-to-have.
+
+</details>
+
+<details>
+<summary>Show Answer — What audit/compliance requirements does a system like this typically need to satisfy?</summary>
+
+Beyond the technical design, real banking systems operate under regulatory regimes (varying by country/region) that typically require: an immutable, tamper-evident audit trail of every transaction and every access to sensitive data (not just changes — reads too); data retention for a legally mandated number of years; strong customer authentication (MFA) for financial actions; encryption at rest and in transit as a baseline, not a choice; and regular independent audits/penetration testing. This is exactly why the Cloud vs self-hosted question (see High-Level Design above) is genuinely more nuanced here than elsewhere — not every cloud region or service configuration satisfies every jurisdiction's requirements, which is a real, common reason financial institutions keep certain systems on-premises or in specifically certified cloud environments.
+
+</details>
+
+<details>
+<summary>Show Answer — A client submits the same transfer request twice (e.g. a double-tap, or a retry after a slow response). How do you avoid double-processing it?</summary>
+
+The client generates the transaction ID itself (a UUID, per the schema above) BEFORE submitting — the exact same idempotency pattern as the E-Commerce and Notification exercises, just with much higher stakes here. The `transactions.id` primary key means a retried request with the same ID either fails on the uniqueness constraint (if a naive re-insert is attempted) or is explicitly checked for existence first, returning the ORIGINAL result rather than processing a second transfer. This is precisely why relying on "the client won't double-submit" is never acceptable in a financial system — idempotency has to be enforced by the server, unconditionally.
+
 
 </details>
