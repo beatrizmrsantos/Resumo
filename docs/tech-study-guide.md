@@ -5493,6 +5493,63 @@ app.get("/download", (req, res) => {
 ```
 
 
+### Project Configuration Files (npm & Node.js Tooling)
+
+When you scaffold a React app (`npm create vite@latest`) or an Angular app (`ng new`), most of the files that appear aren't actually React- or Angular-specific — they come from **npm** (Node's package manager) and the Node.js/TypeScript tooling underneath. Both frameworks are built and run using Node.js tooling even though the CODE they produce runs in the browser (see Overview above) — this is exactly why these config files look nearly identical across a React project, an Angular project, or a plain Node.js backend.
+
+| File | Owned by | Purpose |
+|---|---|---|
+| `package.json` | npm | project manifest — name, scripts, dependencies |
+| `package-lock.json` | npm | exact, reproducible dependency tree |
+| `node_modules/` | npm | where installed packages physically live (never committed) |
+| `tsconfig.json` (+ variants) | TypeScript | compiler options — see 1.03 for the full breakdown |
+| `vite.config.ts` | Vite | dev server + build config — see 3.09 |
+| `angular.json` | Angular CLI | workspace/build config — see below |
+
+**`package.json`** — the project's manifest. Declares the project's name/version, the `scripts` you run via `npm run <name>` (e.g. `dev`, `build`, `test` — this is what `ng serve`/`vite` are wired up through under the hood), and two separate dependency lists:
+
+```json
+{
+  "name": "my-app",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "^18.3.1"          // needed at RUNTIME, shipped to production
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",      // only needed to BUILD/test the project, never shipped
+    "vite": "^5.4.0"
+  }
+}
+```
+
+**`dependencies` vs `devDependencies`**: `dependencies` are needed for the app to actually RUN (React itself, a UI library); `devDependencies` are only needed while developing/building (TypeScript, the bundler, testing tools, linters) and are never bundled into what ships to users. The `^`/`~` prefixes are semver ranges — `^18.3.1` allows any `18.x.x` update (new features, no breaking changes, following Semantic Versioning's promise), `~18.3.1` allows only patch updates (`18.3.x`).
+
+**`package-lock.json`** — records the EXACT version of every installed package AND every one of ITS dependencies (the full transitive tree), down to the specific resolved version and integrity hash. `package.json` alone only specifies acceptable RANGES (`^18.3.1`), which means two installs at different times could resolve to different actual versions — the lockfile pins this down exactly, so every developer and every CI run installs the IDENTICAL dependency tree. This is why it must always be committed to version control (see the Git chapter), never gitignored. `npm install` can update the lockfile if ranges allow a newer version; `npm ci` (used in CI pipelines) instead installs EXACTLY what the lockfile says, failing if `package.json` and the lockfile disagree — guaranteeing a clean, reproducible build.
+
+**`node_modules/`** — the actual downloaded package code lives here, one folder per dependency (including transitive dependencies). It's large, entirely regenerable from `package.json` + `package-lock.json` (`npm install` rebuilds it from scratch), and therefore always `.gitignore`d (see the Git chapter) — committing it would bloat the repository with files nobody should be editing or reviewing by hand.
+
+**`tsconfig.json` and friends** — covered in depth in How TypeScript Compilation Works (1.03); the short version is that it configures the TypeScript compiler (target JS version, strictness, module system). What's worth explaining here is why a project often has MORE than one:
+
+```text
+tsconfig.json          — the root config; often just "references" the others below
+tsconfig.app.json       — settings for YOUR application code (runs in the browser)
+tsconfig.node.json      — settings for tooling config files like vite.config.ts (runs in Node.js)
+tsconfig.spec.json      — settings for test files (Angular; needs test-framework types the app doesn't)
+```
+
+The reason for the split: application code (browser APIs, DOM types) and a build tool's own config file (`vite.config.ts`, which runs in Node.js and needs Node's types, not the DOM's) genuinely need DIFFERENT compiler settings — a single shared tsconfig can't correctly type-check both at once. Rather than compromise, modern tooling (Vite's React+TS template, Angular CLI) splits configuration into multiple files, each `extends`-ing a shared base and adding only what that specific part of the project needs — this is TypeScript's **Project References** feature, letting `tsc` treat each as a related-but-independent sub-project.
+
+**`vite.config.ts`** (React/Vite projects — see 3.09): configures the dev server and production build — which plugins to use (`@vitejs/plugin-react` for JSX support), path aliases, proxy rules for API calls during development.
+
+**`angular.json`** (Angular projects): the Angular CLI's workspace configuration — declares each project in the workspace and its `build`/`serve`/`test` targets, which files count as global styles/assets, and build-time budgets (e.g. warn if the bundle exceeds a size limit). This is what `ng build`/`ng serve` (see Angular CLI, 3.02) actually read to know what to do — the Angular equivalent of `vite.config.ts`, just declarative JSON instead of a JS/TS config file.
+
+**Rule of thumb**: if a config file's name matches a TOOL (`vite.config.ts` → Vite, `angular.json` → Angular CLI, `tsconfig.json` → the TypeScript compiler), that tool is what actually reads it — `npm run dev`/`ng serve` are just thin commands that launch the right tool, which then goes looking for its own config file by convention.
+
+
 
 ## 2.03 REST APIs
 
@@ -7258,6 +7315,51 @@ function Counter() {
 **Rule of thumb**: start with `useState`/Context for local/simple shared state; reach for Zustand when you need genuinely global state with good performance and minimal boilerplate (the common modern default for new projects); reach for Redux when a team specifically wants its stricter conventions, time-travel debugging, and extensive middleware ecosystem — often on larger, more established codebases that already use it.
 
 
+### Project Structure (Files Created by Vite)
+
+Running `npm create vite@latest my-app -- --template react-ts` (the modern standard way to start a React project, having largely replaced the older Create React App) scaffolds a project that looks roughly like this:
+
+```text
+my-app/
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
+│   └── assets/
+├── public/
+├── index.html
+├── vite.config.ts
+├── package.json
+├── package-lock.json
+├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
+└── node_modules/
+```
+
+`package.json`, `package-lock.json`, `node_modules/`, and the `tsconfig*.json` files are npm/TypeScript tooling shared with virtually every Node-based project, not React-specific — see Project Configuration Files (npm & Node.js Tooling) in the Node.js chapter for what each does and why there's more than one `tsconfig` file. What's specific to this React/Vite setup:
+
+- **`index.html`** — the ONE static HTML page for the entire app (see What is a SPA in the Angular chapter — the whole point of a Single-Page Application is that this is the only HTML file the browser ever loads). It's intentionally close to empty: a `<div id="root"></div>` and a `<script type="module" src="/src/main.tsx"></script>` tag — everything visible on the page is generated by React at runtime, not written in this file.
+
+- **`src/main.tsx`** — the actual entry point. Imports React, the root `App` component, and calls `createRoot()` to mount the entire component tree into the `<div id="root">` from `index.html`:
+
+```tsx
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+
+createRoot(document.getElementById("root")!).render(<App />);
+```
+
+- **`src/App.tsx`** — the root/top-level component, and typically where a new React project's own code actually starts (most tutorials begin editing here).
+
+- **`src/App.css` / `src/index.css`** — plain CSS stylesheets, imported directly into `App.tsx`/`main.tsx`. `index.css` is usually global (applies everywhere); `App.css` scoped by convention to `App.tsx`, though nothing enforces that split — it's just a common convention, not a rule Vite/React impose.
+
+- **`src/assets/`** — images and other static files that are IMPORTED directly into components (`import logo from "./assets/logo.svg"`) — Vite processes and bundles these, optimizing/hashing filenames for production.
+
+- **`public/`** — static files served exactly as-is, at the root path, WITHOUT being processed or bundled by Vite — referenced by absolute path (`/favicon.ico`) rather than imported. Use `assets/` for anything referenced from within component code; use `public/` only for files that must keep an exact, predictable filename/path (like `favicon.ico`, or a `robots.txt`).
+
+- **`vite.config.ts`** — configures the dev server and production build: which plugins to use (`@vitejs/plugin-react`, which adds JSX/Fast Refresh support), path aliases, and proxy rules for API calls during local development.
+
+
 ## 3.02 Angular
 
 
@@ -7270,7 +7372,7 @@ Angular is a complete framework — not just a library like React. It includes r
 
 **Component-based architecture**: an Angular application is a tree of components — each one a self-contained unit combining a template (HTML — what's shown), styles (CSS — how it looks), and logic (a TypeScript class — how it behaves). Complex UIs are built by composing many small, focused components together, each responsible for one part of the screen (see Components below).
 
-**Angular vs React**: React (see the React chapter) is a UI library focused purely on rendering — routing, HTTP calls, forms, and state management are all separate libraries you choose and wire together yourself. Angular is a full, opinionated framework that ships all of that built in, with its own conventions for each. React uses JSX (HTML-like syntax inside JavaScript/TypeScript) and plain functions/hooks; Angular uses separate HTML template files (or inline templates) with its own template syntax (`*ngIf`, `{{ }}`, etc. — see Directives and Data Binding below) and TypeScript classes decorated with `@Component`. React re-renders via the Virtual DOM (see the React chapter); Angular uses Change Detection (see below) to detect what changed and update the real DOM directly. Neither is "better" — Angular trades flexibility for consistency and built-in tooling, which many larger teams value; React trades a smaller, less opinionated core for the freedom to pick your own routing/state/data-fetching libraries.
+**Angular vs React**: React (see the React chapter) is a UI library focused purely on rendering — routing, HTTP calls, forms, and state management are all separate libraries you choose and wire together yourself. Angular is a full, opinionated framework that ships all of that built in, with its own conventions for each. React uses JSX (HTML-like syntax inside JavaScript/TypeScript) and plain functions/hooks; Angular uses separate HTML template files (or inline templates) with its own template syntax (`@if`, `{{ }}`, etc. — see Directives and Control Flow, and Data Binding, below) and TypeScript classes decorated with `@Component`. React re-renders via the Virtual DOM (see the React chapter); Angular uses Change Detection (see below) to detect what changed and update the real DOM directly. Neither is "better" — Angular trades flexibility for consistency and built-in tooling, which many larger teams value; React trades a smaller, less opinionated core for the freedom to pick your own routing/state/data-fetching libraries.
 
 
 ### Angular CLI
@@ -7351,36 +7453,57 @@ Data binding is how a component's TypeScript class and its HTML template stay in
 **Rule of thumb**: `{{ }}` and `[ ]` for pushing data OUT to the template; `( )` for reacting to events coming FROM the template; `[( )]` only when you genuinely need both directions kept in sync automatically, like a simple form field.
 
 
-### Directives
+### Directives and Control Flow
 
-Directives are instructions attached to an HTML element that change its behavior or appearance. The three most common, built-in "structural" and "attribute" directives:
+**As of Angular 17+, conditionals and loops in templates are no longer written as `*ngIf`/`*ngFor` directives** — they're built-in template syntax blocks (`@if`, `@for`, `@switch`) instead, and this is now the default/recommended way to write Angular templates. This is a real, fairly recent change worth knowing explicitly if you've seen older Angular code (or tutorials) full of `*ngIf`/`*ngFor` — that "ng"-prefixed syntax is the OLDER approach, still supported for backward compatibility, but no longer what new Angular code is written with.
 
-**`*ngIf`** — adds or removes an element from the DOM entirely, based on a condition (unlike CSS `display: none`, which just hides it visually while keeping it in the DOM).
+**`@if` / `@else`** — adds or removes an element from the DOM entirely, based on a condition (unlike CSS `display: none`, which just hides it visually while keeping it in the DOM):
 
 ```html
-<div *ngIf="user">{{ user.name }}</div>
-<div *ngIf="user; else loading">{{ user.name }}</div>
-<ng-template #loading><p>Loading...</p></ng-template>
+@if (user) {
+  <h2>{{ user.name }}</h2>
+} @else {
+  <p>Loading...</p>
+}
 ```
 
-**`*ngFor`** — repeats an element once per item in a list, the Angular equivalent of JavaScript's `.map()` in JSX (see the React chapter).
+**`@for`** — repeats an element once per item in a list, the Angular equivalent of JavaScript's `.map()` in JSX (see the React chapter). Unlike the old `*ngFor`, a `track` expression is now MANDATORY, not optional:
 
 ```html
 <ul>
-  <li *ngFor="let user of users; trackBy: trackByUserId">{{ user.name }}</li>
+  @for (user of users; track user.id) {
+    <li>{{ user.name }}</li>
+  } @empty {
+    <li>No users found</li>
+  }
 </ul>
 ```
 
-`trackBy` tells Angular how to identify each item across re-renders (by a stable ID rather than by array position) — exactly the same purpose as a `key` prop in React's list rendering (see Lists and Keys in the React chapter), and just as important for avoiding subtle rendering bugs when a list is reordered or filtered.
+`track` tells Angular how to identify each item across re-renders (by a stable ID rather than by array position) — exactly the same purpose as a `key` prop in React's list rendering (see Lists and Keys in the React chapter), and just as important for avoiding subtle rendering bugs when a list is reordered or filtered. Making it mandatory (rather than an easy-to-forget optional `trackBy`, as before) was a deliberate design choice — forgetting it was a common source of real performance bugs. The optional `@empty` block renders when the list has zero items, replacing what used to require a separate manual `*ngIf="list.length === 0"` check.
 
-**`[ngClass]`** — conditionally applies one or more CSS classes.
+**`@switch`** — replaces `*ngSwitch`, for branching on more than two cases:
+
+```html
+@switch (status) {
+  @case ('active') { <span>Active</span> }
+  @case ('inactive') { <span>Inactive</span> }
+  @default { <span>Unknown</span> }
+}
+```
+
+**What DIDN'T change**: attribute directives (ones that modify an EXISTING element rather than adding/removing/repeating DOM) are unaffected by this — `[ngClass]` still works exactly as before:
 
 ```html
 <div [ngClass]="{ active: isActive, disabled: isDisabled }">...</div>
-<div [ngClass]="isActive ? 'active' : ''">...</div>
 ```
 
-The leading `*` on `*ngIf`/`*ngFor` marks them as **structural directives** — they add/remove/repeat entire chunks of DOM, unlike `[ngClass]`, an **attribute directive** that only changes something about an element that's already there.
+Angular also increasingly favors direct class/style bindings over `[ngClass]`/`[ngStyle]` for simple cases, since they're slightly more efficient and don't need an object literal for a single condition:
+
+```html
+<div [class.active]="isActive">...</div>
+```
+
+**Rule of thumb**: write new Angular templates with `@if`/`@for`/`@switch` — they're more readable (no separate `<ng-template>` needed for an `else` branch), enforce good practice (`track` is mandatory), and are compiled more efficiently by Angular internally. You'll still need to recognize `*ngIf`/`*ngFor`/`*ngSwitch` when reading existing codebases and older tutorials, since they still work and haven't been removed — but they're the legacy syntax now, not the current teaching default.
 
 
 ### Components, Templates, and Change Detection
@@ -7399,11 +7522,12 @@ By default (**Default** strategy), Angular checks every component on every brows
 @Component({
     selector: "app-user-card",
     template: `
-      <div *ngIf="user; else loading">
+      @if (user) {
         <h2>{{ user.name }}</h2>
         <button (click)="onEdit()">Edit</button>
-      </div>
-      <ng-template #loading><p>Loading...</p></ng-template>
+      } @else {
+        <p>Loading...</p>
+      }
     `,
     changeDetection: ChangeDetectionStrategy.OnPush   // only check on new ref or input
 })
@@ -7624,7 +7748,9 @@ Use for: login button (ignore extra clicks while request is in-flight)
 ```html
 <!-- async pipe in template — subscribes and auto-unsubscribes, see Pipes below -->
 <ul>
-  <li *ngFor="let user of users$ | async">{{ user.name }}</li>
+  @for (user of (users$ | async); track user.id) {
+    <li>{{ user.name }}</li>
+  }
 </ul>
 ```
 
@@ -7655,9 +7781,9 @@ export class SignupComponent {
 ```html
 <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
     <input formControlName="email">
-    <div *ngIf="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
-        Invalid email
-    </div>
+    @if (signupForm.get('email')?.invalid && signupForm.get('email')?.touched) {
+        <div>Invalid email</div>
+    }
     <input formControlName="password" type="password">
     <button type="submit" [disabled]="signupForm.invalid">Sign up</button>
 </form>
@@ -7735,7 +7861,9 @@ A pipe transforms a value directly in the template, using the `|` syntax — a s
 
 ```html
 <ul>
-  <li *ngFor="let user of users$ | async">{{ user.name }}</li>
+  @for (user of (users$ | async); track user.id) {
+    <li>{{ user.name }}</li>
+  }
 </ul>
 <!-- users$ is an Observable<User[]> property on the component — no .subscribe() call needed anywhere -->
 ```
@@ -7777,14 +7905,41 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 ### Angular Project Structure
 
-Knowing what each generated file is FOR matters more than memorizing the exact folder layout:
+Running `ng new my-app` (see Angular CLI above) scaffolds a project that looks roughly like this:
 
-- **`app.component`** (`.ts`/`.html`/`.css`) — the root component of the application; every other component eventually nests inside its template (typically via `<router-outlet>` — see Routing above).
-- **`main.ts`** — the actual entry point of the application; bootstraps (starts) the root `AppComponent` and mounts it into the page's `index.html`.
+```text
+my-app/
+├── src/
+│   ├── app/
+│   │   ├── app.component.ts / .html / .css / .spec.ts
+│   │   ├── app.config.ts
+│   │   └── app.routes.ts
+│   ├── assets/
+│   ├── environments/
+│   │   ├── environment.ts
+│   │   └── environment.prod.ts
+│   ├── index.html
+│   ├── main.ts
+│   └── styles.css
+├── angular.json
+├── package.json
+├── package-lock.json
+├── tsconfig.json / tsconfig.app.json / tsconfig.spec.json
+└── node_modules/
+```
+
+`package.json`, `package-lock.json`, `node_modules/`, and the `tsconfig*.json` files are npm/TypeScript tooling, not Angular-specific — see Project Configuration Files (npm & Node.js Tooling) in the Node.js chapter for what each of those does and why there are several `tsconfig` variants. What's specific to Angular:
+
+- **`index.html`** — the SINGLE static HTML page for the whole app (the same "one HTML shell" concept as a Vite React app — see Project Structure in the React chapter). It contains just a `<app-root></app-root>` tag — an empty custom element with no content of its own — which Angular fills in at runtime.
+- **`main.ts`** — the actual entry point of the application; calls `bootstrapApplication(AppComponent, appConfig)`, which finds `<app-root>` in `index.html` and renders the root component into it — mounting the whole app the same way React's `main.tsx` mounts into `<div id="root">`.
+- **`app.component`** (`.ts`/`.html`/`.css`) — the root component of the application, rendered into `<app-root>` by `main.ts`; every other component eventually nests inside its template (typically via `<router-outlet>` — see Routing above).
 - **`app.config.ts`** (modern, standalone-component apps) — registers app-wide providers (the router, HTTP client, etc.) in one place, replacing the older `app.module.ts`.
 - **`app.module.ts`** (older, NgModule-based apps) — the older way of declaring which components/services/directives belong to the app and wiring up providers; still common in existing/legacy Angular codebases, though new Angular projects default to the simpler standalone-component model (`app.config.ts`) instead.
+- **`app.routes.ts`** — the route table passed to `provideRouter()` in `app.config.ts` (see Routing above) — a plain array of `{ path, component }` objects, kept in its own file since it tends to grow as an app gains pages.
+- **`styles.css`** — GLOBAL styles that apply to the whole app, as opposed to a component's own `.css` file, which is scoped to that component only by default.
 - **`assets/`** — static files (images, fonts, JSON data) copied as-is into the build output, referenced directly by path in templates/CSS.
 - **`environments/`** — per-environment configuration (`environment.ts` for development, `environment.prod.ts` for production) — typically API base URLs and feature flags that differ between environments, imported into services instead of hardcoded (see the Configuration/Profiles pattern in the Spring Boot chapter for the same underlying idea on the backend).
+- **`angular.json`** — the Angular CLI's workspace configuration file; declares each project's `build`/`serve`/`test` targets, which files count as global styles/assets, and build-time budgets. This is what `ng build`/`ng serve` actually read to know what to do — the Angular equivalent of a bundler config file (like `vite.config.ts` in a React project).
 
 
 ## 3.03 Three.js
@@ -8036,6 +8191,55 @@ Pros:
 
 Cons:
 - Data is not instantly updated
+
+
+### Project Structure (Files Created by create-next-app)
+
+Running `npx create-next-app@latest` scaffolds a project that looks roughly like this:
+
+```text
+my-app/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── public/
+├── next.config.ts
+├── next-env.d.ts
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+└── node_modules/
+```
+
+`package.json`, `package-lock.json`, `node_modules/`, and `tsconfig.json` are the same npm/TypeScript tooling files covered in Project Configuration Files (npm & Node.js Tooling) in the Node.js chapter — nothing Next.js-specific about those. What IS specific here, and worth contrasting directly with the React/Vite and Angular chapters:
+
+**There is no `index.html`, and no separate JavaScript entry point file (no `main.tsx`/`main.ts`).** This is a direct consequence of WHY Next.js exists (see Overview above) — a plain Vite/React app ships one static, near-empty `index.html` that JavaScript fills in entirely client-side; Next.js instead generates the actual HTML on the SERVER for each request, so there's no static HTML shell to ship in the first place. Instead:
+
+- **`app/layout.tsx`** — this is BOTH the root layout (see App Router File Conventions below) AND, unlike `layout.tsx` files deeper in the route tree, the file that defines the actual `<html>` and `<body>` tags — it IS the closest thing this project has to an `index.html`, except it's a React component that runs on the server, not a static file:
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+- **`app/page.tsx`** — the homepage (the `"/"` route) — see App Router File Conventions below for the full routing convention this participates in.
+
+- **`app/globals.css`** — global styles, imported once into the root `layout.tsx` (the Next.js equivalent of `index.css`/`styles.css` in the React/Angular chapters).
+
+- **`public/`** — static assets served as-is at the root path (`/logo.png`) — same concept as the `public/` folder in the React/Vite chapter.
+
+- **`next.config.ts`** (or `.js`) — Next.js-specific build/runtime configuration: allowed external image domains (see Next/Image below), redirects/rewrites, and which environment variables are exposed to the browser.
+
+- **`next-env.d.ts`** — auto-generated by Next.js to make TypeScript aware of Next's own ambient types; the file itself explicitly says not to edit it manually, and it's safe to regenerate/ignore.
+
+- **`.env.local`** (not shown above — created as needed, not by default) — environment variables for local development, following the same "don't commit secrets" principle as `.gitignore` in the Git chapter, and conceptually similar to Spring Boot's Profiles (environment-specific configuration kept out of the codebase itself).
 
 
 ### APP ROUTER FILE CONVENTIONS (NEXT.JS 13+)
